@@ -8,7 +8,7 @@ public class ApplicationSession
     public required string DeviceFingerprint { get; set; }
     public required bool IsRevoked { get; set; }
 
-    public required Account Account { get; set; }
+    public required ApplicationAccount Account { get; set; }
     public required Application Application { get; set; }
     public required Device Device { get; set; }
 
