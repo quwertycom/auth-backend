@@ -7,6 +7,8 @@ public class Device
     public required DateTime LastUsed { get; set; } = DateTime.UtcNow;
     public required string Platform { get; set; }
 
+    public required User User { get; set; }
+
     public required List<string> Fingerprint { get; set; } = new();
     public required List<AccountSession> AccountSessions { get; set; } = new();
     public required List<UserSession> UserSessions { get; set; } = new();
