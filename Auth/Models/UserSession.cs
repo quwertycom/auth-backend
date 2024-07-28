@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Auth.Models;
 
 public class UserSession
@@ -13,6 +15,9 @@ public class UserSession
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [ForeignKey(nameof(Models.User))]
     public required string UserId { get; set; }
+
+    [ForeignKey(nameof(Models.Device))]
     public required string DeviceId { get; set; }
 }

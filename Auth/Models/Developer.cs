@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Auth.Models;
 
 public class Developer
@@ -14,5 +16,6 @@ public class Developer
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [ForeignKey(nameof(Models.Account))]
     public required string AccountId { get; set; }
 }
