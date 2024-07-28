@@ -15,4 +15,7 @@ public class Account
     public required List<Developer> Developers { get; set; } = new();
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public string? OrganizationId { get; set; }
+    public required string UserId { get; set; }
 }

@@ -15,4 +15,6 @@ public class Device
     public required List<ApplicationSession> ApplicationSessions { get; set; } = new();
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public required string UserId { get; set; }
 }

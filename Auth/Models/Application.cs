@@ -9,7 +9,12 @@ public class Application
     public required string Status { get; set; } = "created";
     public required string Url { get; set; }
 
+    public required Developer Developer { get; set; }
+
     public required List<ApplicationAccount> Accounts { get; set; } = new();
+    public required List<ApplicationSession> Sessions { get; set; } = new();
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public required string DeveloperId { get; set; }
 }

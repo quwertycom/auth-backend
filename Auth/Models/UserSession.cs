@@ -12,4 +12,7 @@ public class UserSession
     public required Device Device { get; set; }
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public required string UserId { get; set; }
+    public required string DeviceId { get; set; }
 }

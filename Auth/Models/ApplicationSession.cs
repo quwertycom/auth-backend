@@ -13,4 +13,8 @@ public class ApplicationSession
     public required Device Device { get; set; }
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public required string AccountId { get; set; }
+    public required string ApplicationId { get; set; }
+    public required string DeviceId { get; set; }
 }

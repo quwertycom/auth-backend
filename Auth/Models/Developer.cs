@@ -13,4 +13,6 @@ public class Developer
     public required List<Account> Accounts { get; set; } = new();
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public required string AccountId { get; set; }
 }
