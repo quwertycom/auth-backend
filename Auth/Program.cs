@@ -1,4 +1,5 @@
 using Auth.Data;
+using Auth.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     var connectionString = builder.Configuration["postgres:connectionString"];
     options.UseNpgsql(connectionString);
 });
+
+Services.Initialize(builder);
 
 var app = builder.Build();
 
