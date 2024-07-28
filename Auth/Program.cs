@@ -3,14 +3,12 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddEnvironmentVariables();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetValue<string>("POSTGRESQL_CONNECTION");
+    var connectionString = builder.Configuration["postgres:connectionString"];
     options.UseNpgsql(connectionString);
 });
 
