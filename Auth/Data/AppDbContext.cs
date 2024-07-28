@@ -24,6 +24,9 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Set default schema
+        modelBuilder.HasDefaultSchema("auth");
+
         // Organization
         modelBuilder.Entity<Organization>()
             .HasMany(o => o.Accounts)
@@ -89,7 +92,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ApplicationAccount>()
             .HasMany(aa => aa.Sessions)
             .WithOne(s => s.Account)
-            .HasForeignKey(s => s.AccountId);
+            .HasForeignKey(s => new { s.ApplicationId, s.AccountId });
 
         // Application
         modelBuilder.Entity<Application>()
@@ -129,7 +132,6 @@ public class AppDbContext : DbContext
             .HasForeignKey(s => s.DeviceId);
 
         // Developer
-
         modelBuilder.Entity<Developer>()
             .HasMany(d => d.Applications)
             .WithOne(a => a.Developer)
@@ -166,7 +168,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ApplicationSession>()
             .HasOne(s => s.Account)
             .WithMany(aa => aa.Sessions)
-            .HasForeignKey(s => s.AccountId);
+            .HasForeignKey(s => new { s.ApplicationId, s.AccountId });
 
         modelBuilder.Entity<ApplicationSession>()
             .HasOne(s => s.Application)
