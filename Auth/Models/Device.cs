@@ -8,6 +8,9 @@ public class Device
     public required string Platform { get; set; }
 
     public required List<string> Fingerprint { get; set; } = new();
+    public required List<AccountSession> AccountSessions { get; set; } = new();
+    public required List<UserSession> UserSessions { get; set; } = new();
+    public required List<ApplicationSession> ApplicationSessions { get; set; } = new();
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
