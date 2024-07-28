@@ -3,6 +3,7 @@ using Auth.Helpers;
 using Auth.Models;
 using Auth.Models.RequestModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Auth.Services;
 
@@ -31,6 +32,17 @@ public class UserService : IUserService
     {
         try
         {
+            if (await _context.Users.AnyAsync(x => x.Username == model.Username))
+            {
+                return (false, "USERNAME_EXISTS");
+            } else if (await _context.Users.AnyAsync(x => x.Email == model.Email))
+            {
+                return (false, "EMAIL_EXISTS");
+            } else if (model.Phone != null && await _context.Users.AnyAsync(x => x.Phone == model.Phone))
+            {
+                return (false, "PHONE_EXISTS");
+            }
+
             var passwordSalt = Password.GenerateSalt();
             var passwordHash = Password.HashPassword(model.Password, passwordSalt);
 
