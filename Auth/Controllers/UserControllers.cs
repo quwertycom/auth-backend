@@ -63,7 +63,7 @@ public class UserController : ControllerBase
         {
             return Ok(new UserRegisterResponseModel
             {
-                Status = "Success"
+                Status = "SUCCESS"
             });
         }
         else
