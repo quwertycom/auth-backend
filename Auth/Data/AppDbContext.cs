@@ -110,7 +110,7 @@ public class AppDbContext : DbContext
             .WithOne(s => s.Application)
             .HasForeignKey(s => s.ApplicationId);
 
-        // Device
+        // Fingerprint
         modelBuilder.Entity<Device>()
             .HasOne(d => d.User)
             .WithMany(u => u.Devices)

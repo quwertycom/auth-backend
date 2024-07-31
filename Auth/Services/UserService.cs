@@ -2,28 +2,153 @@ using Auth.Data;
 using Auth.Helpers;
 using Auth.Models;
 using Auth.Models.RequestModels;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Device = Auth.Models.Device;
 
 namespace Auth.Services;
 
 public class UserService : IUserService
 {
     private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public UserService(AppDbContext context)
+    public UserService(AppDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
-    public async Task<(bool isSuccess, string status, string? accessToken, string? refreshToken)> Login(UserLoginRequestModel model)
+    public async Task<(bool isSuccess, string status, string? accessToken, string? refreshToken)> Login(UserLoginRequestModel model, HttpContext httpContext)
     {
         try
         {
-            return (true, "OK", "accessToken", "refreshToken");
+            var @user = await _context.Users.FirstOrDefaultAsync(u => u.Username == model.Username);
+
+            if (@user == null)
+            {
+                return (false, "USER_NOT_FOUND", null, null);
+            }
+
+            var passwordHash = Password.HashPassword(model.Password, @user.PasswordSalt);
+            if (@user.PasswordHash != passwordHash)
+            {
+                return (false, "INVALID_PASSWORD", null, null);
+            }
+
+            var screenResolution = httpContext.Request.Headers["Screen-Resolution"].ToString();
+            var language = httpContext.Request.Headers["Accept-Language"].ToString();
+            var platform = httpContext.Request.Headers["User-Agent"].ToString(); // Simplified for example
+            var doNotTrackStatus = httpContext.Request.Headers["DNT"].ToString();
+
+            var deviceFingerprint = Fingerprint.GenerateDeviceFingerprint(screenResolution, language, platform, doNotTrackStatus);
+
+            var @device = await _context.Devices.FirstOrDefaultAsync(d => d.Fingerprint.Contains(deviceFingerprint) && d.User == @user);
+
+            if (@device != null)
+            {
+                @device.LastUsed = DateTime.UtcNow;
+
+                var newSessionId = Snowflake.Next();
+
+                var refreshToken = JWT.User.GenerateRefreshToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
+                var accessToken = JWT.User.GenerateAccessToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
+
+                var @newSession = new UserSession
+                {
+                    Id = newSessionId,
+                    RefreshToken = refreshToken,
+                    AccessToken = accessToken,
+                    DeviceFingerprint = deviceFingerprint,
+                    IsRevoked = false,
+                    User = @user,
+                    Device = @device,
+                    CreatedAt = DateTime.UtcNow,
+                    UserId = @user.Id,
+                    DeviceId = @device.Id,
+                };
+
+                @device.UserSessions.Add(@newSession);
+                @user.Sessions.Add(@newSession);
+
+                _context.UserSessions.Add(@newSession);
+
+                await _context.SaveChangesAsync();
+
+                return (true, "OK", accessToken, refreshToken);
+            }
+            else
+            {
+                string deviceName = "";
+
+                var deviceMappings = new Dictionary<string, string>
+                {
+                    { "Windows", "Windows" },
+                    { "Mac", "Mac" },
+                    { "Linux", "Linux" },
+                    { "Android", "Android Phone" },
+                    { "iOS", "iPhone" }
+                };
+
+                foreach (var mapping in deviceMappings)
+                {
+                    if (platform.Contains(mapping.Key))
+                    {
+                        deviceName = mapping.Value;
+                        break;
+                    }
+                }
+
+                var @newDevice = new Device
+                {
+                    Id = Snowflake.Next(),
+                    Name = deviceName,
+                    LastUsed = DateTime.UtcNow,
+                    Platform = platform,
+                    User = @user,
+                    Fingerprint = new List<string>
+                    {
+                        deviceFingerprint
+                    },
+                    AccountSessions = new List<AccountSession>(),
+                    UserSessions = new List<UserSession>(),
+                    ApplicationSessions = new List<ApplicationSession>(),
+                    CreatedAt = DateTime.UtcNow,
+                    UserId = @user.Id
+                };
+
+                var newSessionId = Snowflake.Next();
+
+                var refreshToken = JWT.User.GenerateRefreshToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
+                var accessToken = JWT.User.GenerateAccessToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
+
+                var @newSession = new UserSession
+                {
+                    Id = newSessionId,
+                    RefreshToken = refreshToken,
+                    AccessToken = accessToken,
+                    DeviceFingerprint = deviceFingerprint,
+                    IsRevoked = false,
+                    User = @user,
+                    Device = @newDevice,
+                    CreatedAt = DateTime.UtcNow,
+                    UserId = @user.Id,
+                    DeviceId = @newDevice.Id,
+                };
+
+                @newDevice.UserSessions.Add(@newSession);
+                @user.Sessions.Add(@newSession);
+
+                _context.UserSessions.Add(@newSession);
+                _context.Devices.Add(@newDevice);
+
+                await _context.SaveChangesAsync();
+
+                return (true, "OK", accessToken, refreshToken);
+            }
         }
-        catch
+        catch (Exception e)
         {
+            Console.WriteLine(e);
             return (false, "ERROR", null, null);
         }
     }
@@ -77,6 +202,7 @@ public class UserService : IUserService
                 UserId = @user.Id
             };
 
+
             @user.Accounts.Add(@personalAccount);
 
             _context.Users.Add(@user);
@@ -93,7 +219,7 @@ public class UserService : IUserService
 
 public interface IUserService
 {
-    Task<(bool isSuccess, string status, string? accessToken, string? refreshToken)> Login(UserLoginRequestModel model);
+    Task<(bool isSuccess, string status, string? accessToken, string? refreshToken)> Login(UserLoginRequestModel model, HttpContext httpContext);
     Task<(bool isSuccess, string status)> Register(UserRegisterRequestModel model);
 
 }

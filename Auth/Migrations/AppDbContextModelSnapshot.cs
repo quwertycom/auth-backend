@@ -257,7 +257,7 @@ namespace Auth.Migrations
                     b.ToTable("Developers", "auth");
                 });
 
-            modelBuilder.Entity("Auth.Models.Device", b =>
+            modelBuilder.Entity("Auth.Models.Fingerprint", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -444,7 +444,7 @@ namespace Auth.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Auth.Models.Device", "Device")
+                    b.HasOne("Auth.Models.Fingerprint", "Fingerprint")
                         .WithMany("AccountSessions")
                         .HasForeignKey("DeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -452,7 +452,7 @@ namespace Auth.Migrations
 
                     b.Navigation("Account");
 
-                    b.Navigation("Device");
+                    b.Navigation("Fingerprint");
                 });
 
             modelBuilder.Entity("Auth.Models.Application", b =>
@@ -493,7 +493,7 @@ namespace Auth.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Auth.Models.Device", "Device")
+                    b.HasOne("Auth.Models.Fingerprint", "Fingerprint")
                         .WithMany("ApplicationSessions")
                         .HasForeignKey("DeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -509,10 +509,10 @@ namespace Auth.Migrations
 
                     b.Navigation("Application");
 
-                    b.Navigation("Device");
+                    b.Navigation("Fingerprint");
                 });
 
-            modelBuilder.Entity("Auth.Models.Device", b =>
+            modelBuilder.Entity("Auth.Models.Fingerprint", b =>
                 {
                     b.HasOne("Auth.Models.User", "User")
                         .WithMany("Devices")
@@ -525,7 +525,7 @@ namespace Auth.Migrations
 
             modelBuilder.Entity("Auth.Models.UserSession", b =>
                 {
-                    b.HasOne("Auth.Models.Device", "Device")
+                    b.HasOne("Auth.Models.Fingerprint", "Fingerprint")
                         .WithMany("UserSessions")
                         .HasForeignKey("DeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -537,7 +537,7 @@ namespace Auth.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Device");
+                    b.Navigation("Fingerprint");
 
                     b.Navigation("User");
                 });
@@ -566,7 +566,7 @@ namespace Auth.Migrations
                     b.Navigation("Applications");
                 });
 
-            modelBuilder.Entity("Auth.Models.Device", b =>
+            modelBuilder.Entity("Auth.Models.Fingerprint", b =>
                 {
                     b.Navigation("AccountSessions");
 

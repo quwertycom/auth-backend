@@ -7,33 +7,25 @@ namespace Auth.Helpers
 {
     public static class JWT
     {
-        private static readonly string _secretKey;
-        private static readonly string _issuer;
+        private static readonly string Issuer;
+        private static readonly string Audience;
+        private static readonly string Key;
 
         static JWT()
         {
             var configuration = new ConfigurationBuilder()
-                .AddUserSecrets<Program>()
+                .AddJsonFile("appsettings.json")
                 .Build();
 
-            _secretKey = configuration["JWT:SecretKey"];
-            _issuer = configuration["JWT:Issuer"];
-
-            if (string.IsNullOrEmpty(_secretKey))
-            {
-                throw new ArgumentException("JWT:SecretKey is not set in the configuration.");
-            }
-
-            if (string.IsNullOrEmpty(_issuer))
-            {
-                throw new ArgumentException("JWT:Issuer is not set in the configuration.");
-            }
+            Issuer = configuration["JWT:Issuer"] ?? throw new ArgumentException("JWT:Issuer is not set in the configuration.");
+            Audience = configuration["JWT:Audience"] ?? throw new ArgumentException("JWT:Audience is not set in the configuration.");
+            Key = configuration["JWT:Key"] ?? throw new ArgumentException("JWT:Key is not set in the configuration.");
         }
 
         public static (bool isValid, string? type) VerifyToken(string token, string audience)
         {
             var tokenHandler = new JsonWebTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
+            var key = Encoding.ASCII.GetBytes(Key);
 
             var validationParameters = new TokenValidationParameters
             {
@@ -41,7 +33,7 @@ namespace Auth.Helpers
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = _issuer,
+                ValidIssuer = Issuer,
                 ValidAudience = audience,
                 IssuerSigningKey = new SymmetricSecurityKey(key)
             };
@@ -72,7 +64,7 @@ namespace Auth.Helpers
         public static string GetUserIdFromToken(string token)
         {
             var tokenHandler = new JsonWebTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
+            var key = Encoding.ASCII.GetBytes(Key);
 
             var validationParameters = new TokenValidationParameters
             {
@@ -105,7 +97,7 @@ namespace Auth.Helpers
             public static string GenerateAccessToken(string userId, string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -116,7 +108,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddDays(7),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -128,7 +120,7 @@ namespace Auth.Helpers
             public static string GenerateRefreshToken(string userId, string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -139,7 +131,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddDays(30),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -151,7 +143,7 @@ namespace Auth.Helpers
             public static string GenerateServiceToken(string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -161,7 +153,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddMinutes(15),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -176,7 +168,7 @@ namespace Auth.Helpers
             public static string GenerateAccessToken(string userId, string accountId, string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -188,7 +180,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddDays(7),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -201,7 +193,7 @@ namespace Auth.Helpers
                 string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -213,7 +205,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddDays(30),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -225,7 +217,7 @@ namespace Auth.Helpers
             public static string GenerateServiceToken(string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -235,7 +227,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddMinutes(15),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -251,7 +243,7 @@ namespace Auth.Helpers
                 string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -264,7 +256,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddDays(7),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -277,7 +269,7 @@ namespace Auth.Helpers
                 string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -290,7 +282,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddDays(30),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)
@@ -301,7 +293,7 @@ namespace Auth.Helpers
             public static string GenerateServiceToken(string sessionId, string audience)
             {
                 var tokenHandler = new JsonWebTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_secretKey);
+                var key = Encoding.ASCII.GetBytes(Key);
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
@@ -311,7 +303,7 @@ namespace Auth.Helpers
                         new Claim("JTI", Guid.NewGuid().ToString())
                     }),
                     Expires = DateTime.UtcNow.AddMinutes(15),
-                    Issuer = _issuer,
+                    Issuer = Issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature)

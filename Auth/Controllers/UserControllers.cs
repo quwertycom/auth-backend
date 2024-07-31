@@ -19,10 +19,24 @@ public class UserController : ControllerBase
     [HttpPost("auth/login")]
     public async Task<ActionResult<UserLoginResponseModel>> Login([FromBody] UserLoginRequestModel request)
     {
-        return Ok(new UserLoginResponseModel
+        var result = await _userService.Login(request, HttpContext);
+
+        if (result.isSuccess)
         {
-            Status = "Success",
-        });
+            return Ok(new UserLoginResponseModel
+            {
+                Status = "Success",
+                AccessToken = result.accessToken,
+                RefreshToken = result.refreshToken
+            });
+        }
+        else
+        {
+            return BadRequest(new UserLoginResponseModel
+            {
+                Status = result.status
+            });
+        }
     }
 
     [HttpPost("auth/register")]
