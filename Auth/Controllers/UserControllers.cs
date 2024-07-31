@@ -30,13 +30,19 @@ public class UserController : ControllerBase
                 RefreshToken = result.refreshToken
             });
         }
-        else
+
+        if (result.status == "USER_NOT_FOUND" || result.status == "INVALID_PASSWORD")
         {
-            return BadRequest(new UserLoginResponseModel
+            return Unauthorized(new UserLoginResponseModel
             {
-                Status = result.status
+                Status = "INVALID_CREDENTIALS"
             });
         }
+
+        return BadRequest(new UserLoginResponseModel
+        {
+            Status = result.status
+        });
     }
 
     [HttpPost("auth/register")]
