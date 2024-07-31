@@ -50,8 +50,8 @@ public class UserService : IUserService
 
                 var newSessionId = Snowflake.Next();
 
-                var refreshToken = JWT.User.GenerateRefreshToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
-                var accessToken = JWT.User.GenerateAccessToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
+                var refreshToken = JWT.User.GenerateRefreshToken(@user.Id, newSessionId, _configuration["JWT:Audience"] ?? "unknown");
+                var accessToken = JWT.User.GenerateAccessToken(@user.Id, newSessionId, _configuration["JWT:Audience"] ?? "unknown");
 
                 var @newSession = new UserSession
                 {
@@ -118,8 +118,8 @@ public class UserService : IUserService
 
                 var newSessionId = Snowflake.Next();
 
-                var refreshToken = JWT.User.GenerateRefreshToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
-                var accessToken = JWT.User.GenerateAccessToken(@user.Id, newSessionId, _configuration["JWT:Audience"]??"unknown");
+                var refreshToken = JWT.User.GenerateRefreshToken(@user.Id, newSessionId, _configuration["JWT:Audience"] ?? "unknown");
+                var accessToken = JWT.User.GenerateAccessToken(@user.Id, newSessionId, _configuration["JWT:Audience"] ?? "unknown");
 
                 var @newSession = new UserSession
                 {
@@ -160,10 +160,12 @@ public class UserService : IUserService
             if (await _context.Users.AnyAsync(x => x.Username == model.Username))
             {
                 return (false, "USERNAME_EXISTS");
-            } else if (await _context.Users.AnyAsync(x => x.Email == model.Email))
+            }
+            else if (await _context.Users.AnyAsync(x => x.Email == model.Email))
             {
                 return (false, "EMAIL_EXISTS");
-            } else if (model.Phone != null && await _context.Users.AnyAsync(x => x.Phone == model.Phone))
+            }
+            else if (model.Phone != null && await _context.Users.AnyAsync(x => x.Phone == model.Phone))
             {
                 return (false, "PHONE_EXISTS");
             }

@@ -11,13 +11,14 @@ public class AccountSession
     public required bool IsRevoked { get; set; }
 
     public required Account Account { get; set; }
-    public required Device Device { get; set; }
+public required Device Device { get; set; }
 
-    public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+public required DateTime CreatedAt
+{ get; set; } = DateTime.UtcNow;
 
-    [ForeignKey(nameof(Models.Account))]
-    public required string AccountId { get; set; }
+[ForeignKey(nameof(Models.Account))]
+public required string AccountId { get; set; }
 
-    [ForeignKey(nameof(Models.Device))]
-    public required string DeviceId { get; set; }
+[ForeignKey(nameof(Models.Device))]
+public required string DeviceId { get; set; }
 }

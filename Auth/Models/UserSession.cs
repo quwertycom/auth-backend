@@ -11,13 +11,14 @@ public class UserSession
     public required bool IsRevoked { get; set; }
 
     public required User User { get; set; }
-    public required Device Device { get; set; }
+public required Device Device { get; set; }
 
-    public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+public required DateTime CreatedAt
+{ get; set; } = DateTime.UtcNow;
 
-    [ForeignKey(nameof(Models.User))]
-    public required string UserId { get; set; }
+[ForeignKey(nameof(Models.User))]
+public required string UserId { get; set; }
 
-    [ForeignKey(nameof(Models.Device))]
-    public required string DeviceId { get; set; }
+[ForeignKey(nameof(Models.Device))]
+public required string DeviceId { get; set; }
 }

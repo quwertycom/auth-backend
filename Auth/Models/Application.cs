@@ -13,11 +13,11 @@ public class Application
 
     public required Developer Developer { get; set; }
 
-    public required List<ApplicationAccount> Accounts { get; set; } = new();
+public required List<ApplicationAccount> Accounts { get; set; } = new();
     public required List<ApplicationSession> Sessions { get; set; } = new();
 
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    [ForeignKey(nameof(Models.Developer))]
-    public required string DeveloperId { get; set; }
+[ForeignKey(nameof(Models.Developer))]
+public required string DeveloperId { get; set; }
 }

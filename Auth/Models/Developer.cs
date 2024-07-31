@@ -17,5 +17,5 @@ public class Developer
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [ForeignKey(nameof(Models.Account))]
-    public required string AccountId { get; set; }
+public required string AccountId { get; set; }
 }
