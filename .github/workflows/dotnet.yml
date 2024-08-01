@@ -46,4 +46,4 @@ jobs:
       run: |
         dotnet sonarscanner begin /k:"your_project_key" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
         dotnet build
-        dotnet sonarscanner end /d:sonar.login="${{ 8ca735425085ca2c9d8c55073e23c73edd24a29a }}"
+        dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
