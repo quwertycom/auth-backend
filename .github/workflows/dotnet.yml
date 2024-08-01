@@ -1,30 +1,49 @@
-name: "CodeQL"
+name: .NET
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "auth-system/user-auth" ]
   pull_request:
-    branches: [ "main" ]
-  schedule:
-    - cron: '0 0 * * 0'
+    branches: [ "*" ]
 
 permissions:
-  contents: read
   security-events: write
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+
   analyze:
-    name: Analyze
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
       with:
-        languages: 'csharp'
-    - name: Build the code
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Install SonarCloud Scanner
+      run: dotnet tool install --global dotnet-sonarscanner
+    - name: Run SonarCloud Analysis
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
+        dotnet sonarscanner begin /k:"your_project_key" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
         dotnet build
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+        dotnet sonarscanner end /d:sonar.login="${{ 8ca735425085ca2c9d8c55073e23c73edd24a29a }}"
