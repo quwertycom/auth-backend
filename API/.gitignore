@@ -1,0 +1,23 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio cache/options directory
+.vs/
+
+# NuGet Packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Client-side dependencies
+node_modules/
