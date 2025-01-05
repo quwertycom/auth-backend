@@ -1,0 +1,43 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+**/.git
+
+# Development environments
+.vs/
+.vscode/
+.idea/
+*.swo
+*.swp
+*.*~
+
+# Build output
+**/[Bb]in/
+**/[Oo]bj/
+**/[Dd]ebug/
+**/[Rr]elease/
+**/node_modules/
+**/dist
+
+# Docker files
+.docker
+.dockerignore
+Dockerfile*
+docker-compose*
+
+# Documentation
+README.md
+LICENSE
+*.md
+
+# Test files
+**/TestResults/
+*.Tests
+*.test
+*.testing
+
+# Misc
+.DS_Store
+.env*
+*.log 

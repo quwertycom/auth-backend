@@ -1,0 +1,27 @@
+# Production compose file
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qauth-api
+    ports:
+      - "8000:80"
+    networks:
+      - qauth-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - Kestrel__Endpoints__Http__Url=http://+:80
+      - Kestrel__Endpoints__Http__Protocols=Http1AndHttp2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3 
+
+networks:
+  qauth-network:
+    driver: bridge 

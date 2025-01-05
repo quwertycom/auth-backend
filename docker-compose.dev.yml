@@ -1,0 +1,30 @@
+# Development compose file
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: qauth-api-dev
+    ports:
+      - "8000:80"
+    networks:
+      - qauth-network
+    volumes:
+      - .:/src
+      - ${HOME}/.nuget/packages:/root/.nuget/packages:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      # Enable detailed error messages
+      - ASPNETCORE_DETAILED_ERRORS=1
+      # Add Kestrel specific options
+      - Kestrel__Endpoints__Http__Url=http://+:80
+      - Kestrel__Endpoints__Http__Protocols=Http1AndHttp2
+
+networks:
+  qauth-network:
+    driver: bridge 
