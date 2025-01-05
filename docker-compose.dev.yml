@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: build
+      target: development
     container_name: qauth-api-dev
     ports:
       - "8000:80"
@@ -24,10 +24,6 @@ services:
       # Add Kestrel specific options
       - Kestrel__Endpoints__Http__Url=http://+:80
       - Kestrel__Endpoints__Http__Protocols=Http1AndHttp2
-    entrypoint: >
-      /bin/sh -c "
-        dotnet restore ./API/API.csproj &&
-        dotnet watch --project ./API/API.csproj run --no-restore" 
 
 networks:
   qauth-network:
