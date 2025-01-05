@@ -1,0 +1,24 @@
+# Production compose file
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qauth-api
+    ports:
+      - "5166:80"
+      - "7207:443"  # HTTPS port
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80;https://+:443
+    volumes:
+      # Mount SSL certificates for HTTPS in production
+      - ${HOME}/.aspnet/https:/root/.aspnet/https:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3 
