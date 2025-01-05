@@ -26,4 +26,4 @@ watch:
 	dotnet watch --project API/API.csproj run
 
 # Combined commands
-rebuild: clean restore build run 
+rebuild: clean restore build run
