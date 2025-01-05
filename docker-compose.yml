@@ -8,17 +8,20 @@ services:
       dockerfile: Dockerfile
     container_name: qauth-api
     ports:
-      - "5166:80"
-      - "7207:443"  # HTTPS port
+      - "8000:80"
+    networks:
+      - qauth-network
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:80;https://+:443
-    volumes:
-      # Mount SSL certificates for HTTPS in production
-      - ${HOME}/.aspnet/https:/root/.aspnet/https:ro
-    restart: unless-stopped
+      - ASPNETCORE_URLS=http://+:80
+      - Kestrel__Endpoints__Http__Url=http://+:80
+      - Kestrel__Endpoints__Http__Protocols=Http1AndHttp2
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/api"]
       interval: 30s
       timeout: 10s
       retries: 3 
+
+networks:
+  qauth-network:
+    driver: bridge 

@@ -9,21 +9,26 @@ services:
       target: build
     container_name: qauth-api-dev
     ports:
-      - "5166:80"
-      - "7207:443"  # HTTPS port from your launchSettings.json
+      - "8000:80"
+    networks:
+      - qauth-network
     volumes:
       - .:/src
       - ${HOME}/.nuget/packages:/root/.nuget/packages:ro
-      # Mount SSL certificates for HTTPS
-      - ${HOME}/.aspnet/https:/root/.aspnet/https:ro
-      - ${HOME}/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80;https://+:443
+      - ASPNETCORE_URLS=http://+:80
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       # Enable detailed error messages
       - ASPNETCORE_DETAILED_ERRORS=1
+      # Add Kestrel specific options
+      - Kestrel__Endpoints__Http__Url=http://+:80
+      - Kestrel__Endpoints__Http__Protocols=Http1AndHttp2
     entrypoint: >
       /bin/sh -c "
         dotnet restore ./API/API.csproj &&
         dotnet watch --project ./API/API.csproj run --no-restore" 
+
+networks:
+  qauth-network:
+    driver: bridge 
