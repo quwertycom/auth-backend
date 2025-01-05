@@ -1,0 +1,12 @@
+{
+    "dotnet.defaultSolution": "Auth.sln",
+    "editor.formatOnSave": true,
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true
+    },
+    "omnisharp.useModernNet": true,
+    "omnisharp.path": "latest",
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.enableEditorConfigSupport": true
+} 
