@@ -1,0 +1,29 @@
+# Development compose file
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    container_name: qauth-api-dev
+    ports:
+      - "5166:80"
+      - "7207:443"  # HTTPS port from your launchSettings.json
+    volumes:
+      - .:/src
+      - ${HOME}/.nuget/packages:/root/.nuget/packages:ro
+      # Mount SSL certificates for HTTPS
+      - ${HOME}/.aspnet/https:/root/.aspnet/https:ro
+      - ${HOME}/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80;https://+:443
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      # Enable detailed error messages
+      - ASPNETCORE_DETAILED_ERRORS=1
+    entrypoint: >
+      /bin/sh -c "
+        dotnet restore ./API/API.csproj &&
+        dotnet watch --project ./API/API.csproj run --no-restore" 
