@@ -143,6 +143,23 @@
             ],
             "problemMatcher": "$msCompile",
             "group": "test"
+        },
+        {
+            "label": "🧪 Run Unit Tests",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Tests/API.UnitTests/API.UnitTests.csproj",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
         }
     ]
 } 
