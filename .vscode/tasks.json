@@ -14,7 +14,9 @@
         {
             "label": "🚀 Run Development (Local)",
             "dependsOrder": "sequence",
-            "dependsOn": ["🛢️ Start Database"],
+            "dependsOn": [
+                "🛢️ Start Database"
+            ],
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -64,7 +66,11 @@
             "label": "⏹️ Stop All",
             "type": "shell",
             "command": "docker compose -f docker-compose.dev.yml down && docker compose down",
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         },
         {
             "label": "⏹️ Stop Database",
@@ -75,7 +81,11 @@
         {
             "label": "🧹 Clean Project",
             "dependsOrder": "sequence",
-            "dependsOn": ["Clean", "Restore Packages", "Build"],
+            "dependsOn": [
+                "Clean",
+                "Restore Packages",
+                "Build"
+            ],
             "problemMatcher": []
         },
         {
@@ -132,10 +142,7 @@
                 "--logger:trx"
             ],
             "problemMatcher": "$msCompile",
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
+            "group": "test"
         }
     ]
 } 
