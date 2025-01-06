@@ -43,6 +43,8 @@ ENV DOTNET_USE_POLLING_FILE_WATCHER=1 \
     ASPNETCORE_ENVIRONMENT=Development \
     ASPNETCORE_URLS=http://+:80
 
+ENV DOCKER_RUNNING=true
+
 # Set the entry point for development
 ENTRYPOINT ["dotnet", "watch", "run", "--no-restore"]
 
@@ -61,6 +63,8 @@ RUN adduser --disabled-password --gecos "" appuser \
 ENV ASPNETCORE_URLS=http://+:80 \
     DOTNET_RUNNING_IN_CONTAINER=true \
     ASPNETCORE_ENVIRONMENT=Production
+
+ENV DOCKER_RUNNING=true
 
 # Expose port
 EXPOSE 80
