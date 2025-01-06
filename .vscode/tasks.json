@@ -164,6 +164,27 @@
                 "panel": "dedicated",
                 "clear": true
             }
+        },
+        {
+            "label": "🧪 Run Integration Tests",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "🛢️ Start Database"
+            ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Tests/API.IntegrationTests/API.IntegrationTests.csproj",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
         }
     ]
 } 
