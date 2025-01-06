@@ -43,14 +43,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          dotnet-quality: 'preview'
       - name: Restore Cache
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+      - name: Clear NuGet Cache
+        run: dotnet nuget locals all --clear
       - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
+        run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
       - name: Cache Restored Project
         uses: actions/cache@v4
         with:
@@ -59,7 +60,7 @@ jobs:
 
   code-quality:
     name: Code Quality
-    needs: setup
+    needs: restore
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -71,7 +72,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          dotnet-quality: 'preview'
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -95,7 +95,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          dotnet-quality: 'preview'
       - name: Restore Cache
         uses: actions/cache@v4
         with:
@@ -116,14 +115,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          dotnet-quality: 'preview'
       - name: Restore Cache
         uses: actions/cache@v4
         with:
           path: .
           key: ${{ github.sha }}-project-restored
+      - name: Restore Dependencies
+        run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
       - name: Build
-        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
