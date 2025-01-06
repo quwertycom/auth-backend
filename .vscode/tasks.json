@@ -63,14 +63,10 @@
             }
         },
         {
-            "label": "⏹️ Stop All",
+            "label": "⏹️ Stop All Services",
             "type": "shell",
             "command": "docker compose -f docker-compose.dev.yml down && docker compose down",
-            "problemMatcher": [],
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
+            "problemMatcher": []
         },
         {
             "label": "⏹️ Stop Database",
@@ -79,45 +75,7 @@
             "problemMatcher": []
         },
         {
-            "label": "🧹 Clean Project",
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Clean",
-                "Restore Packages",
-                "Build"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "Clean",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "clean",
-                "${workspaceFolder}/API/API.csproj"
-            ],
-            "problemMatcher": "$msCompile",
-            "presentation": {
-                "reveal": "silent",
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "Restore Packages",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "restore",
-                "${workspaceFolder}/Auth.sln"
-            ],
-            "problemMatcher": "$msCompile",
-            "presentation": {
-                "reveal": "silent",
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "Build",
+            "label": "🧹 Build Project",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -133,7 +91,45 @@
             }
         },
         {
-            "label": "🧪 Run Tests",
+            "label": "🔄 Clean & Rebuild",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "🧹 Clean",
+                "📦 Restore Packages",
+                "🧹 Build Project"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "🧹 Clean",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "clean",
+                "${workspaceFolder}/API/API.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "📦 Restore Packages",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "restore",
+                "${workspaceFolder}/Auth.sln"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "🧪 Run All Tests",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -142,7 +138,15 @@
                 "--logger:trx"
             ],
             "problemMatcher": "$msCompile",
-            "group": "test"
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
         },
         {
             "label": "🧪 Run Unit Tests",
