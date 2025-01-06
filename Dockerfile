@@ -67,19 +67,24 @@ WORKDIR /app
 # Copy published files from build stage
 COPY --from=build /app/publish .
 
-# Add non-root user for security
-RUN adduser --disabled-password --gecos "" appuser \
-    && chown -R appuser:appuser /app
+# Create directory for certificates
+RUN mkdir -p /https && \
+    adduser --disabled-password --gecos "" appuser && \
+    chown -R appuser:appuser /app && \
+    chown -R appuser:appuser /https
 
 # Configure environment
-ENV ASPNETCORE_URLS=http://+:80 \
+ENV ASPNETCORE_URLS=http://+:80;https://+:443 \
     DOTNET_RUNNING_IN_CONTAINER=true \
-    ASPNETCORE_ENVIRONMENT=Production
+    ASPNETCORE_ENVIRONMENT=Production \
+    ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx \
+    ASPNETCORE_Kestrel__Certificates__Default__Password=YourSecurePassword123!
 
 ENV DOCKER_RUNNING=true
 
-# Expose port
+# Expose ports
 EXPOSE 80
+EXPOSE 443
 
 # Switch to non-root user
 USER appuser
