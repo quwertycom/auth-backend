@@ -1,48 +1,53 @@
 using FluentAssertions;
 using API.Controllers;
-using API.UnitTests.Utilities;
-using System.Net;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc;
+using NSubstitute;
 
 namespace API.UnitTests.Controllers;
 
 public class ApiControllerTests : TestBase
 {
-    [Theory]
-    [InlineData("/api")]
-    public async Task Endpoints_ReturnSuccessAndCorrectContentType(string endpoint)
+    private readonly ApiController _controller;
+    private readonly ILogger<ApiController> _mockLogger;
+
+    public ApiControllerTests()
     {
-        // Arrange
-        // (using base class setup)
-
-        // Act
-        var response = await _client.GetAsync(endpoint);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.ToString()
-            .Should().Be("application/json; charset=utf-8");
+        // Create mock logger
+        _mockLogger = GetMock<ILogger<ApiController>>();
+        
+        // Create controller with mock dependencies
+        _controller = new ApiController(_mockLogger);
     }
 
     [Fact]
-    public async Task Get_ReturnsApiStatus()
+    public void Get_ReturnsOkResultWithCorrectData()
     {
-        // Arrange
-        const string EXPECTED_MESSAGE = "API is running";
-
         // Act
-        var response = await _client.GetAndDeserialize<ApiResponse>("/api");
+        var result = _controller.Get() as OkObjectResult;
 
         // Assert
-        response.Should().NotBeNull();
-        response!.Message.Should().Be(EXPECTED_MESSAGE);
-        response.Status.Should().Be("healthy");
-        response.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
-    }
-}
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be(200);
 
-public class ApiResponse
-{
-    public required string Message { get; set; }
-    public DateTime Timestamp { get; set; }
-    public required string Status { get; set; }
+        var value = result.Value as dynamic;
+        ((string)value!.message).Should().Be("API is running");
+        ((string)value.status).Should().Be("healthy");
+        ((DateTime)value.timestamp).Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void Get_LogsInformation()
+    {
+        // Act
+        _ = _controller.Get();
+
+        // Assert
+        _mockLogger.Received(1).Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(o => o.ToString()!.Contains("Executing GET request")),
+            null,
+            Arg.Any<Func<object, Exception?, string>>());
+    }
 } 
