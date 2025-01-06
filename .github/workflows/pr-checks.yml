@@ -8,7 +8,7 @@ on:
       - '!dev'
 
 env:
-  DOTNET_VERSION: '9.0.x'
+  DOTNET_VERSION: '8.0.x'
   SOLUTION_FILE: 'Auth.sln'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -25,7 +25,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: 'preview'
       - name: Cache .NET
         uses: actions/cache@v4
         with:
