@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy only solution and project files first
@@ -23,7 +23,7 @@ RUN dotnet build "API/API.csproj" -c Release -o /app/build
 RUN dotnet publish "API/API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Development stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS development
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS development
 WORKDIR /app
 
 # Copy solution and project files
@@ -50,7 +50,7 @@ WORKDIR /app/API
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1 \
     ASPNETCORE_ENVIRONMENT=Development \
     ASPNETCORE_URLS=http://+:80 \
-    ASPNETCORE_Kestrel__Endpoints__Http__Url=http://+:80
+    ASPNETCORE_Kestrel__EndpointDefaults__Protocols=Http1
 
 ENV DOCKER_RUNNING=true
 
@@ -61,7 +61,7 @@ EXPOSE 80
 ENTRYPOINT ["dotnet", "watch", "run", "--no-restore", "--urls", "http://+:80"]
 
 # Production stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS production
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS production
 WORKDIR /app
 
 # Copy published files from build stage
