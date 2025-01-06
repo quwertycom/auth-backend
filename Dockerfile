@@ -1,12 +1,16 @@
 # syntax=docker/dockerfile:1
 
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy only solution and project files first
 COPY ["Auth.sln", "."]
 COPY ["API/API.csproj", "API/"]
+COPY ["Tests/API.UnitTests/API.UnitTests.csproj", "Tests/API.UnitTests/"]
+COPY ["Tests/API.IntegrationTests/API.IntegrationTests.csproj", "Tests/API.IntegrationTests/"]
+COPY ["Tests/API.FunctionalTests/API.FunctionalTests.csproj", "Tests/API.FunctionalTests/"]
+COPY ["Tests/API.PerformanceTests/API.PerformanceTests.csproj", "Tests/API.PerformanceTests/"]
 
 # Restore NuGet packages
 RUN dotnet restore "Auth.sln"
@@ -19,12 +23,16 @@ RUN dotnet build "API/API.csproj" -c Release -o /app/build
 RUN dotnet publish "API/API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Development stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS development
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS development
 WORKDIR /app
 
 # Copy solution and project files
 COPY ["Auth.sln", "."]
 COPY ["API/API.csproj", "API/"]
+COPY ["Tests/API.UnitTests/API.UnitTests.csproj", "Tests/API.UnitTests/"]
+COPY ["Tests/API.IntegrationTests/API.IntegrationTests.csproj", "Tests/API.IntegrationTests/"]
+COPY ["Tests/API.FunctionalTests/API.FunctionalTests.csproj", "Tests/API.FunctionalTests/"]
+COPY ["Tests/API.PerformanceTests/API.PerformanceTests.csproj", "Tests/API.PerformanceTests/"]
 
 # Restore packages in the correct location
 RUN dotnet restore "Auth.sln"
@@ -41,15 +49,19 @@ WORKDIR /app/API
 # Set environment variables
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1 \
     ASPNETCORE_ENVIRONMENT=Development \
-    ASPNETCORE_URLS=http://+:80
+    ASPNETCORE_URLS=http://+:80 \
+    ASPNETCORE_Kestrel__Endpoints__Http__Url=http://+:80
 
 ENV DOCKER_RUNNING=true
 
+# Expose the port
+EXPOSE 80
+
 # Set the entry point for development
-ENTRYPOINT ["dotnet", "watch", "run", "--no-restore"]
+ENTRYPOINT ["dotnet", "watch", "run", "--no-restore", "--urls", "http://+:80"]
 
 # Production stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview AS production
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS production
 WORKDIR /app
 
 # Copy published files from build stage

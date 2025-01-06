@@ -41,3 +41,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Test Results
+**/TestResults/
+*.trx

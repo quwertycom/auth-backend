@@ -10,11 +10,14 @@ services:
     container_name: qauth-api
     ports:
       - "8000:80"
+      - "8800:443"
     networks:
       - qauth-network
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=http://+:80;https://+:443
+      - ASPNETCORE_HTTPS_PORT=8800
+      - DOCKER_RUNNING=true
       - ConnectionStrings__DefaultConnection=Host=db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       - db
