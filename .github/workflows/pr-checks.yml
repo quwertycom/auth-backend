@@ -178,15 +178,27 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          dotnet-quality: 'preview'
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-output
-      - name: Start API
+      - name: Restore Dependencies
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+      - name: Build API
+        run: dotnet build API/API.csproj --configuration Release
+      - name: Start API and Wait
         run: |
-          dotnet run --project API/API.csproj --configuration Release &
-          sleep 15
-      - name: Check Health
+          dotnet run --project API/API.csproj --configuration Release --no-build &
+          echo "Waiting for API to start..."
+          # Wait for up to 30 seconds for the API to start
+          for i in {1..30}; do
+            if curl -s -f http://localhost:5000/health > /dev/null 2>&1; then
+              echo "API is up!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "API failed to start within 30 seconds"
+              exit 1
+            fi
+            echo "Attempt $i: API not ready yet..."
+            sleep 1
+          done
+      - name: Check API Endpoint
         run: |
-          curl -v -H "Accept: application/json" http://localhost:8000/api || exit 1 
+          curl -v -H "Accept: application/json" http://localhost:5000/api || exit 1 
