@@ -36,10 +36,10 @@ public abstract class TestBase
         _services.AddSingleton(mock);
     }
 
-    protected void RegisterService<TService, TImplementation>() 
-        where TService : class 
+    protected void RegisterService<TService, TImplementation>()
+        where TService : class
         where TImplementation : class, TService
     {
         _services.AddScoped<TService, TImplementation>();
     }
-} 
+}

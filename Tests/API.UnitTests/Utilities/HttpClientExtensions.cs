@@ -10,4 +10,4 @@ public static class HttpClientExtensions
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<T>();
     }
-} 
+}

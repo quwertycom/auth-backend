@@ -70,4 +70,4 @@ public abstract class TestBase : IDisposable
         _client.Dispose();
         _factory.Dispose();
     }
-} 
+}
