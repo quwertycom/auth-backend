@@ -22,7 +22,7 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 {
     var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
     var host = isRunningInDocker ? "db" : "localhost";
-    
+
     var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
     {
         Host = host,
