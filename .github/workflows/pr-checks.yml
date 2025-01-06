@@ -188,7 +188,7 @@ jobs:
           echo "Waiting for API to start..."
           # Wait for up to 30 seconds for the API to start
           for i in {1..30}; do
-            if curl -s -f http://localhost:5000/health > /dev/null 2>&1; then
+            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
               echo "API is up!"
               break
             fi
@@ -201,4 +201,4 @@ jobs:
           done
       - name: Check API Endpoint
         run: |
-          curl -v -H "Accept: application/json" http://localhost:5000/api || exit 1 
+          curl -v -H "Accept: application/json" http://localhost:8000/api || exit 1 
