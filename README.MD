@@ -1,47 +1,118 @@
 # qAuth API
 
-## Environment Setup
+## 🚀 Quick Start
 
-### Development
-1. Copy `.env.example` to `.env`:
+### Prerequisites
+- .NET 9.0
+- Docker
+- Docker Compose
+
+### Development Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/QUWERTYCOM/auth-backend.git
+   cd auth-backend
+   ```
+
+2. Set up environment variables:
    ```bash
    cp .env.example .env
    ```
-2. Modify the values in `.env` according to your needs
+   Edit `.env` with your settings.
 
-### Production
-For production deployment, set the following environment variables on your host system:
-- `POSTGRES_USER`: Database username
-- `POSTGRES_PASSWORD`: Database password
-- `POSTGRES_DB`: Database name
+### 💻 Development
 
-Do not commit the `.env` file to source control.
+You have two options for running the application in development:
 
-## Running the Application
-
-### Local Development
-1. Start the database and application:
+1. **Full Docker Setup** (recommended):
    ```bash
    # Using VS Code
-   Run task: "(dev) run app - local"
-   ```
-   Or manually:
-   ```bash
-   # Start database
-   docker compose -f docker-compose.dev.yml up db -d
+   Run Task: "🚀 Run Development (Docker)"
    
-   # Start application
+   # Or using terminal
+   docker compose -f docker-compose.dev.yml up --build
+   ```
+
+2. **Local API with Docker Database**:
+   ```bash
+   # Using VS Code
+   Run Task: "🚀 Run Development (Local)"
+   
+   # Or using terminal
+   docker compose -f docker-compose.dev.yml up db -d
    cd API && dotnet watch run
    ```
 
-### Production
-1. Set the required environment variables
+### 🏭 Production
+
+1. Set required environment variables on your host system:
+   - `POSTGRES_USER`
+   - `POSTGRES_PASSWORD`
+   - `POSTGRES_DB`
+
 2. Run the application:
    ```bash
-   docker compose up -d
+   # Using VS Code
+   Run Task: "🚀 Run Production"
+   
+   # Or using terminal
+   docker compose up --build
    ```
 
-## Development Tools
-- .NET 8.0
-- PostgreSQL 15
-- Docker
+## 🛠️ Available Tasks
+
+VS Code tasks are organized by function:
+
+### Running Applications
+- `🚀 Run Development (Docker)` - Full stack in Docker
+- `🚀 Run Development (Local)` - API locally with Docker DB
+- `🚀 Run Production` - Production setup
+
+### Database Operations
+- `🛢️ Start Database` - Start PostgreSQL
+- `⏹️ Stop Database` - Stop PostgreSQL
+
+### Maintenance
+- `⏹️ Stop All` - Stop all containers
+- `🧹 Clean Project` - Clean, restore, and build
+- `🧪 Run Tests` - Run test suite
+
+## 📁 Project Structure
+
+```
+auth-backend/
+├── API/                # Main API project
+├── docker-compose.yml  # Production Docker setup
+├── docker-compose.dev.yml # Development Docker setup
+├── Dockerfile         # Multi-stage Docker build
+└── .env.example      # Environment variables template
+```
+
+## 🔒 Environment Variables
+
+Required environment variables:
+```env
+# Database Configuration
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=your_database
+
+# API Configuration
+ASPNETCORE_ENVIRONMENT=Development
+ASPNETCORE_URLS=http://+:80
+```
+
+## 🤝 Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Run tests: `🧪 Run Tests`
+4. Submit a pull request
+
+## 📝 License
+
+[MIT License](LICENSE)
+
+## 👥 Authors
+
+- QUWERTY Team
