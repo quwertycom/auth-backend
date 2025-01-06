@@ -187,6 +187,51 @@
             }
         },
         {
+            "label": "🧪 Run Functional Tests",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Start API for Functional Tests"
+            ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Tests/API.FunctionalTests/API.FunctionalTests.csproj",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "Start API for Functional Tests",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up --build -d api",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Starting.*",
+                    "endsPattern": ".*Application started.*"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            },
+            "hide": true
+        },
+        {
             "label": "🧪 Run Performance Tests",
             "dependsOrder": "sequence",
             "dependsOn": [
