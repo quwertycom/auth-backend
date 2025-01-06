@@ -2,6 +2,7 @@ using NBomber.Contracts;
 using NBomber.CSharp;
 using NBomber.Http.CSharp;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http;
 
 namespace API.PerformanceTests;
 
@@ -11,7 +12,7 @@ public abstract class TestBase
     protected readonly IServiceCollection Services;
     protected readonly ServiceProvider ServiceProvider;
 
-    protected TestBase(string baseUrl = "http://localhost:5000")
+    protected TestBase(string baseUrl = "http://localhost:8000")
     {
         BaseUrl = baseUrl;
         Services = new ServiceCollection();
@@ -24,40 +25,36 @@ public abstract class TestBase
         // Override this in derived classes to configure specific services
     }
 
-    protected IClientFactory CreateHttpClientFactory()
+    protected ScenarioProps CreateScenario(string name, string endpoint, int ratePerSecond = 10, TimeSpan? duration = null)
     {
-        return ClientFactory.Create(
-            httpClientFactory: () => new HttpClient(),
-            name: "performance_test_client"
-        );
-    }
+        var httpClient = new HttpClient();
 
-    protected IScenario CreateScenario(string name, string endpoint, int ratePerSecond = 10, TimeSpan? duration = null)
-    {
-        var clientFactory = CreateHttpClientFactory();
-        
-        return ScenarioBuilder
-            .CreateScenario(name, async context =>
+        return Scenario.Create(name, async context =>
+        {
+            try
             {
-                var request = Http.CreateRequest("GET", $"{BaseUrl}{endpoint}")
-                    .WithHeader("Accept", "application/json");
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}{endpoint}");
+                request.Headers.Add("Accept", "application/json");
 
-                var response = await Http.Send(clientFactory, request);
-                
+                var response = await httpClient.SendAsync(request);
+
                 return response.IsSuccessStatusCode
                     ? Response.Ok()
                     : Response.Fail();
-            })
-            .WithLoadSimulations(
-                Simulation.RatePerSecond(rate: ratePerSecond, duration: duration ?? TimeSpan.FromSeconds(30))
-            );
-    }
-
-    protected void RunScenario(IScenario scenario)
-    {
-        NBomberRunner
-            .RegisterScenarios(scenario)
-            .Run();
+            }
+            catch (Exception ex)
+            {
+                return Response.Fail(ex);
+            }
+        })
+        .WithWarmUpDuration(TimeSpan.FromSeconds(5))
+        .WithLoadSimulations(
+            Simulation.Inject(
+                rate: ratePerSecond,
+                interval: TimeSpan.FromSeconds(1),
+                during: duration ?? TimeSpan.FromSeconds(30)
+            )
+        );
     }
 
     protected T GetRequiredService<T>() where T : notnull
