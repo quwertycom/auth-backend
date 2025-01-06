@@ -1,5 +1,7 @@
 using Microsoft.OpenApi.Models;
 using DotNetEnv;
+using API.Data;
+using Microsoft.EntityFrameworkCore;
 
 // Load .env file
 if (File.Exists("../.env"))
@@ -8,6 +10,12 @@ if (File.Exists("../.env"))
 }
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<AuthDbContext>(options =>
+{
+    var connectionString = $"Host=localhost;Database={Environment.GetEnvironmentVariable("POSTGRES_DB")};Username={Environment.GetEnvironmentVariable("POSTGRES_USER")};Password={Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")}";
+    options.UseNpgsql(connectionString);
+});
 
 builder.Services.AddCors(options =>
 {
