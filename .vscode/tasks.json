@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "(dev) run app - docker",
+            "label": "🚀 Run Development (Docker)",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml up",
+            "command": "docker compose -f docker-compose.dev.yml up --build",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -12,13 +12,9 @@
             }
         },
         {
-            "label": "(prod) run app - docker",
-            "type": "shell",
-            "command": "docker compose up",
-            "problemMatcher": []
-        },
-        {
-            "label": "(dev) run app - local",
+            "label": "🚀 Run Development (Local)",
+            "dependsOrder": "sequence",
+            "dependsOn": ["🛢️ Start Database"],
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -29,35 +25,89 @@
                 "--environment",
                 "Development"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
         },
         {
-            "label": "(prod) run app - local",
+            "label": "🚀 Run Production",
+            "type": "shell",
+            "command": "docker compose up --build",
+            "problemMatcher": []
+        },
+        {
+            "label": "🛢️ Start Database",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up db",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Starting.*",
+                    "endsPattern": ".*database system is ready to accept connections.*"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "⏹️ Stop All",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml down && docker compose down",
+            "problemMatcher": []
+        },
+        {
+            "label": "⏹️ Stop Database",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml stop db",
+            "problemMatcher": []
+        },
+        {
+            "label": "🧹 Clean Project",
+            "dependsOrder": "sequence",
+            "dependsOn": ["Clean", "Restore Packages", "Build"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
             "command": "dotnet",
             "type": "process",
             "args": [
-                "run",
-                "--project",
-                "${workspaceFolder}/API/API.csproj",
-                "--environment",
-                "Production"
+                "clean",
+                "${workspaceFolder}/API/API.csproj"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
         },
         {
-            "label": "(dev) build app - docker",
-            "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml build",
-            "problemMatcher": []
+            "label": "Restore Packages",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "restore",
+                "${workspaceFolder}/Auth.sln"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
         },
         {
-            "label": "(prod) build app - docker",
-            "type": "shell",
-            "command": "docker compose build",
-            "problemMatcher": []
-        },
-        {
-            "label": "(dev) build app - local",
+            "label": "Build",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -66,59 +116,26 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
         },
         {
-            "label": "(prod) build app - local",
+            "label": "🧪 Run Tests",
             "command": "dotnet",
             "type": "process",
             "args": [
-                "publish",
-                "${workspaceFolder}/API/API.csproj",
-                "-c",
-                "Release",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "test",
+                "${workspaceFolder}/Auth.sln",
+                "--logger:trx"
             ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "(dev) stop app - docker",
-            "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml down",
-            "problemMatcher": []
-        },
-        {
-            "label": "(prod) stop app - docker",
-            "type": "shell",
-            "command": "docker compose down",
-            "problemMatcher": []
-        },
-        {
-            "label": "(util) clean",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "clean",
-                "${workspaceFolder}/API/API.csproj"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "(util) restore",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "restore",
-                "${workspaceFolder}/Auth.sln"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "(util) clean-build",
-            "dependsOrder": "sequence",
-            "dependsOn": ["(util) clean", "(util) restore", "(dev) build app - local"],
-            "problemMatcher": []
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         }
     ]
 } 
