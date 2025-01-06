@@ -1,29 +1,19 @@
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using API;
+using NSubstitute;
+using FluentAssertions;
 
 namespace API.UnitTests;
 
-public abstract class TestBase : IDisposable
+public abstract class TestBase
 {
-    protected readonly WebApplicationFactory<Program> _factory;
-    protected readonly HttpClient _client;
-    protected readonly IServiceScope _scope;
+    protected readonly IServiceCollection _services;
+    protected readonly ServiceProvider _serviceProvider;
 
     protected TestBase()
     {
-        _factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    // Configure test services
-                    ConfigureTestServices(services);
-                });
-            });
-
-        _client = _factory.CreateClient();
-        _scope = _factory.Services.CreateScope();
+        _services = new ServiceCollection();
+        ConfigureTestServices(_services);
+        _serviceProvider = _services.BuildServiceProvider();
     }
 
     protected virtual void ConfigureTestServices(IServiceCollection services)
@@ -31,10 +21,25 @@ public abstract class TestBase : IDisposable
         // Override this in derived classes to configure specific test services
     }
 
-    public void Dispose()
+    protected T GetRequiredService<T>() where T : notnull
     {
-        _scope.Dispose();
-        _client.Dispose();
-        _factory.Dispose();
+        return _serviceProvider.GetRequiredService<T>();
+    }
+
+    protected T GetMock<T>() where T : class
+    {
+        return Substitute.For<T>();
+    }
+
+    protected void RegisterMock<T>(T mock) where T : class
+    {
+        _services.AddSingleton(mock);
+    }
+
+    protected void RegisterService<TService, TImplementation>() 
+        where TService : class 
+        where TImplementation : class, TService
+    {
+        _services.AddScoped<TService, TImplementation>();
     }
 } 
