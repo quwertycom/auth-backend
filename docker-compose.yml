@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: production
     container_name: qauth-api
     ports:
       - "8000:80"
@@ -14,13 +15,27 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
-      - Kestrel__Endpoints__Http__Url=http://+:80
-      - Kestrel__Endpoints__Http__Protocols=Http1AndHttp2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/api"]
-      interval: 30s
-      timeout: 10s
-      retries: 3 
+      - ConnectionStrings__DefaultConnection=Host=db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    container_name: qauth-db
+    restart: always
+    networks:
+      - qauth-network
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
 
 networks:
   qauth-network:

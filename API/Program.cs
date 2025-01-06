@@ -1,6 +1,44 @@
 using Microsoft.OpenApi.Models;
+using DotNetEnv;
+using API.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load .env file before configuration setup
+if (File.Exists("../.env"))
+{
+    Env.Load("../.env");
+}
+
+// Add configuration sources
+builder.Configuration
+    .SetBasePath(builder.Environment.ContentRootPath)
+    .AddEnvironmentVariables();
+
+// Configure database connection
+builder.Services.AddDbContext<AuthDbContext>(options =>
+{
+    var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
+    var host = isRunningInDocker ? "db" : "localhost";
+    
+    var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = host,
+        Database = builder.Configuration["POSTGRES_DB"],
+        Username = builder.Configuration["POSTGRES_USER"],
+        Password = builder.Configuration["POSTGRES_PASSWORD"],
+        Pooling = true,
+        MinPoolSize = 5,
+        MaxPoolSize = 100
+    };
+
+    options.UseNpgsql(connectionStringBuilder.ConnectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure(3);
+    });
+});
 
 builder.Services.AddCors(options =>
 {
