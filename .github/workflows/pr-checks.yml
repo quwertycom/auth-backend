@@ -8,7 +8,7 @@ on:
       - '!dev'
 
 env:
-  DOTNET_VERSION: '9.x.x'
+  DOTNET_VERSION: '9.0.x'
   SOLUTION_FILE: 'Auth.sln'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -25,6 +25,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-quality: 'preview'
       - name: Cache .NET
         uses: actions/cache@v4
         with:
@@ -43,6 +44,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          dotnet-quality: 'preview'
       - name: Restore Cache
         uses: actions/cache@v4
         with:
@@ -70,6 +72,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          dotnet-quality: 'preview'
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -93,6 +96,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          dotnet-quality: 'preview'
       - name: Restore Cache
         uses: actions/cache@v4
         with:
@@ -113,6 +117,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          dotnet-quality: 'preview'
       - name: Restore Cache
         uses: actions/cache@v4
         with:
@@ -138,6 +143,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          dotnet-quality: 'preview'
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -155,6 +161,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          dotnet-quality: 'preview'
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -172,6 +179,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          dotnet-quality: 'preview'
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
