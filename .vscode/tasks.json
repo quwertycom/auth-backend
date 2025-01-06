@@ -2,7 +2,62 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "(dev) run app - docker",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "(prod) run app - docker",
+            "type": "shell",
+            "command": "docker compose up",
+            "problemMatcher": []
+        },
+        {
+            "label": "(dev) run app - local",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/API/API.csproj",
+                "--environment",
+                "Development"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "(prod) run app - local",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/API/API.csproj",
+                "--environment",
+                "Production"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "(dev) build app - docker",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml build",
+            "problemMatcher": []
+        },
+        {
+            "label": "(prod) build app - docker",
+            "type": "shell",
+            "command": "docker compose build",
+            "problemMatcher": []
+        },
+        {
+            "label": "(dev) build app - local",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -11,57 +66,36 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
-            "problemMatcher": "$msCompile",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "problemMatcher": "$msCompile"
         },
         {
-            "label": "clean-build",
-            "dependsOrder": "sequence",
-            "dependsOn": ["clean", "restore", "build"],
-            "problemMatcher": []
-        },
-        {
-            "label": "watch",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/API/API.csproj"
-            ],
-            "problemMatcher": "$msCompile",
-            "group": "build"
-        },
-        {
-            "label": "publish",
+            "label": "(prod) build app - local",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "publish",
                 "${workspaceFolder}/API/API.csproj",
+                "-c",
+                "Release",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "docker-compose-up-dev",
+            "label": "(dev) stop app - docker",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml up",
+            "command": "docker compose -f docker-compose.dev.yml down",
             "problemMatcher": []
         },
         {
-            "label": "docker-compose-down",
+            "label": "(prod) stop app - docker",
             "type": "shell",
-            "command": "docker compose down && docker compose -f docker-compose.dev.yml down",
+            "command": "docker compose down",
             "problemMatcher": []
         },
         {
-            "label": "clean",
+            "label": "(util) clean",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -71,7 +105,7 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "restore",
+            "label": "(util) restore",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -79,6 +113,12 @@
                 "${workspaceFolder}/Auth.sln"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "(util) clean-build",
+            "dependsOrder": "sequence",
+            "dependsOn": ["(util) clean", "(util) restore", "(dev) build app - local"],
+            "problemMatcher": []
         }
     ]
 } 
