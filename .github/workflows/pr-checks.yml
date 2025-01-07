@@ -125,7 +125,7 @@ jobs:
 
   build:
     name: Build Solution
-    needs: [format-check, code-quality, security-scan]
+    needs: [restore]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -165,18 +165,27 @@ jobs:
         with:
           name: build-output
       - name: Run Unit Tests
-        run: dotnet test Tests/API.UnitTests/API.UnitTests.csproj --no-build --verbosity normal --configuration Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
+        run: |
+          mkdir -p TestResults
+          dotnet test Tests/API.UnitTests/API.UnitTests.csproj \
+            --no-build \
+            --verbosity normal \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults \
+            --logger "trx;LogFileName=unit_tests.trx"
       - name: Test Report
         uses: dorny/test-reporter@v1
-        if: success() || failure()
+        if: always()
         with:
           name: Unit Tests Results
-          path: "**/TestResults/*.trx"
+          path: TestResults/unit_tests.trx
           reporter: dotnet-trx
+          fail-on-error: true
       - name: Generate Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: '**/TestResults/**/coverage.cobertura.xml'
+          filename: 'TestResults/**/coverage.cobertura.xml'
           badge: true
           format: 'markdown'
           output: 'both'
@@ -216,14 +225,22 @@ jobs:
         with:
           name: build-output
       - name: Run Integration Tests
-        run: dotnet test Tests/API.IntegrationTests/API.IntegrationTests.csproj --no-build --verbosity normal --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: |
+          mkdir -p TestResults
+          dotnet test Tests/API.IntegrationTests/API.IntegrationTests.csproj \
+            --no-build \
+            --verbosity normal \
+            --configuration Release \
+            --results-directory TestResults \
+            --logger "trx;LogFileName=integration_tests.trx"
       - name: Test Report
         uses: dorny/test-reporter@v1
-        if: success() || failure()
+        if: always()
         with:
           name: Integration Tests Results
-          path: "**/TestResults/*.trx"
+          path: TestResults/integration_tests.trx
           reporter: dotnet-trx
+          fail-on-error: true
 
   functional-tests:
     name: Functional Tests
@@ -240,14 +257,22 @@ jobs:
         with:
           name: build-output
       - name: Run Functional Tests
-        run: dotnet test Tests/API.FunctionalTests/API.FunctionalTests.csproj --no-build --verbosity normal --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: |
+          mkdir -p TestResults
+          dotnet test Tests/API.FunctionalTests/API.FunctionalTests.csproj \
+            --no-build \
+            --verbosity normal \
+            --configuration Release \
+            --results-directory TestResults \
+            --logger "trx;LogFileName=functional_tests.trx"
       - name: Test Report
         uses: dorny/test-reporter@v1
-        if: success() || failure()
+        if: always()
         with:
           name: Functional Tests Results
-          path: "**/TestResults/*.trx"
+          path: TestResults/functional_tests.trx
           reporter: dotnet-trx
+          fail-on-error: true
 
   performance-tests:
     name: Performance Tests
@@ -264,14 +289,22 @@ jobs:
         with:
           name: build-output
       - name: Run Performance Tests
-        run: dotnet test Tests/API.PerformanceTests/API.PerformanceTests.csproj --no-build --verbosity normal --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: |
+          mkdir -p TestResults
+          dotnet test Tests/API.PerformanceTests/API.PerformanceTests.csproj \
+            --no-build \
+            --verbosity normal \
+            --configuration Release \
+            --results-directory TestResults \
+            --logger "trx;LogFileName=performance_tests.trx"
       - name: Test Report
         uses: dorny/test-reporter@v1
-        if: success() || failure()
+        if: always()
         with:
           name: Performance Tests Results
-          path: "**/TestResults/*.trx"
+          path: TestResults/performance_tests.trx
           reporter: dotnet-trx
+          fail-on-error: true
 
   test-summary:
     name: Test Summary
@@ -284,6 +317,21 @@ jobs:
           echo "# Test Results Summary" >> $GITHUB_STEP_SUMMARY
           echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
           echo "✅ All tests completed" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Code Quality" >> $GITHUB_STEP_SUMMARY
+          echo "- 🛡️ Security Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- 📚 Documentation" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏗️ Assembly" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔧 Project Structure" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 API Compatibility" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Integration Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Functional Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance Tests" >> $GITHUB_STEP_SUMMARY
 
   api-health:
     name: API Health Check
@@ -337,3 +385,102 @@ jobs:
           tags: auth-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  dependency-check:
+    name: Dependency Analysis
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Check Package Dependencies
+        run: |
+          # Check for duplicate packages
+          dotnet list package > packages.txt
+          echo "Checking for duplicate package references..."
+          cat packages.txt | grep '>' | sort | uniq -d
+          
+          # Check for package version consistency
+          echo "Checking package version consistency..."
+          dotnet list package --vulnerable --include-transitive
+          
+          # Check for deprecated packages
+          echo "Checking for deprecated packages..."
+          dotnet list package --deprecated
+
+  documentation-check:
+    name: Documentation Check
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Check XML Documentation
+        run: |
+          echo "Checking XML documentation warnings..."
+          dotnet build ${{ env.SOLUTION_FILE }} /p:TreatWarningsAsErrors=true /p:DocumentationFile=bin\Debug\netcoreapp3.1\doc.xml /warnaserror:CS1591
+
+  assembly-check:
+    name: Assembly Validation
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Check Assembly Info
+        run: |
+          echo "Checking assembly versions..."
+          find . -name "*.csproj" -type f -exec grep -l "<Version>" {} \; | while read file; do
+            echo "Checking $file"
+            cat "$file" | grep "<Version>"
+          done
+          
+          echo "Checking for strong naming..."
+          find . -name "*.csproj" -type f -exec grep -l "<SignAssembly>" {} \;
+
+  project-structure:
+    name: Project Structure Check
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Validate Project Structure
+        run: |
+          echo "Checking project references..."
+          dotnet list reference API/API.csproj
+          
+          echo "Checking solution structure..."
+          dotnet sln ${{ env.SOLUTION_FILE }} list
+          
+          echo "Checking for circular dependencies..."
+          dotnet build ${{ env.SOLUTION_FILE }} --no-restore /p:CheckForCircularDependencies=true
+
+  api-compatibility:
+    name: API Compatibility Check
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Install ApiPort
+        run: dotnet tool install -g Microsoft.DotNet.ApiCompat.Tool
+      - name: Check API Compatibility
+        run: |
+          echo "Checking API surface..."
+          find . -name "*.dll" -path "*/bin/Release/*" -not -path "*/ref/*" -not -path "*/Tests/*" -exec dotnet-api-compare {} \;
