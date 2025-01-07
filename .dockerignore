@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker
+
+# .NET
+**/bin/
+**/obj/
+**/out/
+
+# IDE
+.idea/
+.vs/
+.vscode/
+
+# Environment
+.env
+.env.*
+
+# Misc
+README.md
+*.md
+*.log 
