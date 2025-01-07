@@ -1,0 +1,280 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🚀 Run Development (Docker)",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up --build",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "🚀 Run Development (Local)",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "🛢️ Start Database"
+            ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/API/API.csproj",
+                "--environment",
+                "Development"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "🚀 Run Production",
+            "type": "shell",
+            "command": "docker compose up --build",
+            "problemMatcher": []
+        },
+        {
+            "label": "🛢️ Start Database",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up db",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Starting.*",
+                    "endsPattern": ".*database system is ready to accept connections.*"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "⏹️ Stop All Services",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml down && docker compose down",
+            "problemMatcher": []
+        },
+        {
+            "label": "⏹️ Stop Database",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml stop db",
+            "problemMatcher": []
+        },
+        {
+            "label": "🧹 Build Project",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/API/API.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "🔄 Clean & Rebuild",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "🧹 Clean",
+                "📦 Restore Packages",
+                "🧹 Build Project"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "🧹 Clean",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "clean",
+                "${workspaceFolder}/API/API.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "📦 Restore Packages",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "restore",
+                "${workspaceFolder}/Auth.sln"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "🧪 Run All Tests",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Auth.sln",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "🧪 Run Unit Tests",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Tests/API.UnitTests/API.UnitTests.csproj",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "🧪 Run Integration Tests",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "🛢️ Start Database"
+            ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Tests/API.IntegrationTests/API.IntegrationTests.csproj",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "🧪 Run Functional Tests",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Start API for Functional Tests"
+            ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Tests/API.FunctionalTests/API.FunctionalTests.csproj",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "Start API for Functional Tests",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up --build -d api",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Starting.*",
+                    "endsPattern": ".*Application started.*"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            },
+            "hide": true
+        },
+        {
+            "label": "🧪 Run Performance Tests",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Start API for Performance Tests"
+            ],
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Tests/API.PerformanceTests/API.PerformanceTests.csproj",
+                "--logger:trx"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "Start API for Performance Tests",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up --build -d api",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Starting.*",
+                    "endsPattern": ".*Application started.*"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            },
+            "hide": true
+        }
+    ]
+} 
