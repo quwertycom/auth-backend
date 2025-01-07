@@ -165,36 +165,7 @@ jobs:
         with:
           name: build-output
       - name: Run Unit Tests
-        run: |
-          mkdir -p TestResults
-          dotnet test Tests/API.UnitTests/API.UnitTests.csproj \
-            --no-build \
-            --verbosity normal \
-            --configuration Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory TestResults \
-            --logger "trx;LogFileName=unit_tests.trx"
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Unit Tests Results
-          path: TestResults/unit_tests.trx
-          reporter: dotnet-trx
-          fail-on-error: true
-      - name: Generate Code Coverage Report
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        with:
-          filename: 'TestResults/**/coverage.cobertura.xml'
-          badge: true
-          format: 'markdown'
-          output: 'both'
-      - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request'
-        with:
-          recreate: true
-          path: code-coverage-results.md
+        run: dotnet test Tests/API.UnitTests/API.UnitTests.csproj --no-build --verbosity normal --configuration Release
 
   integration-tests:
     name: Integration Tests
@@ -225,22 +196,7 @@ jobs:
         with:
           name: build-output
       - name: Run Integration Tests
-        run: |
-          mkdir -p TestResults
-          dotnet test Tests/API.IntegrationTests/API.IntegrationTests.csproj \
-            --no-build \
-            --verbosity normal \
-            --configuration Release \
-            --results-directory TestResults \
-            --logger "trx;LogFileName=integration_tests.trx"
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Integration Tests Results
-          path: TestResults/integration_tests.trx
-          reporter: dotnet-trx
-          fail-on-error: true
+        run: dotnet test Tests/API.IntegrationTests/API.IntegrationTests.csproj --no-build --verbosity normal --configuration Release
 
   functional-tests:
     name: Functional Tests
@@ -257,22 +213,7 @@ jobs:
         with:
           name: build-output
       - name: Run Functional Tests
-        run: |
-          mkdir -p TestResults
-          dotnet test Tests/API.FunctionalTests/API.FunctionalTests.csproj \
-            --no-build \
-            --verbosity normal \
-            --configuration Release \
-            --results-directory TestResults \
-            --logger "trx;LogFileName=functional_tests.trx"
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Functional Tests Results
-          path: TestResults/functional_tests.trx
-          reporter: dotnet-trx
-          fail-on-error: true
+        run: dotnet test Tests/API.FunctionalTests/API.FunctionalTests.csproj --no-build --verbosity normal --configuration Release
 
   performance-tests:
     name: Performance Tests
@@ -289,49 +230,7 @@ jobs:
         with:
           name: build-output
       - name: Run Performance Tests
-        run: |
-          mkdir -p TestResults
-          dotnet test Tests/API.PerformanceTests/API.PerformanceTests.csproj \
-            --no-build \
-            --verbosity normal \
-            --configuration Release \
-            --results-directory TestResults \
-            --logger "trx;LogFileName=performance_tests.trx"
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Performance Tests Results
-          path: TestResults/performance_tests.trx
-          reporter: dotnet-trx
-          fail-on-error: true
-
-  test-summary:
-    name: Test Summary
-    needs: [unit-tests, integration-tests, functional-tests, performance-tests]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Create Test Summary
-        run: |
-          echo "# Test Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
-          echo "✅ All tests completed" >> $GITHUB_STEP_SUMMARY
-          
-          echo "## Check Results" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔍 Code Quality" >> $GITHUB_STEP_SUMMARY
-          echo "- 🛡️ Security Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "- 📦 Dependencies" >> $GITHUB_STEP_SUMMARY
-          echo "- 📚 Documentation" >> $GITHUB_STEP_SUMMARY
-          echo "- 🏗️ Assembly" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔧 Project Structure" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔄 API Compatibility" >> $GITHUB_STEP_SUMMARY
-          
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "- Unit Tests" >> $GITHUB_STEP_SUMMARY
-          echo "- Integration Tests" >> $GITHUB_STEP_SUMMARY
-          echo "- Functional Tests" >> $GITHUB_STEP_SUMMARY
-          echo "- Performance Tests" >> $GITHUB_STEP_SUMMARY
+        run: dotnet test Tests/API.PerformanceTests/API.PerformanceTests.csproj --no-build --verbosity normal --configuration Release
 
   api-health:
     name: API Health Check
