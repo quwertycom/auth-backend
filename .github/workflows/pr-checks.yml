@@ -125,7 +125,7 @@ jobs:
 
   build:
     name: Build Solution
-    needs: [format-check, code-quality, security-scan, dependency-check, assembly-check, project-structure]
+    needs: [restore]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -270,7 +270,7 @@ jobs:
 
   docker-build:
     name: Docker Build & Test
-    needs: api-health
+    needs: [unit-tests, integration-tests, functional-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
