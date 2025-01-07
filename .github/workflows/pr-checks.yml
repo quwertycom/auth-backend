@@ -76,6 +76,50 @@ jobs:
           dotnet list package --vulnerable --include-transitive
           dotnet build ${{ env.SOLUTION_FILE }} /warnaserror /p:TreatWarningsAsErrors=true --configuration Release
 
+  dependency-check:
+    name: Dependency Analysis
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Restore Dependencies
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+      - name: Check Package Dependencies
+        run: |
+          echo "Checking for duplicate packages..."
+          dotnet list ${{ env.SOLUTION_FILE }} package > packages.txt
+          cat packages.txt | grep '>' | sort | uniq -d || true
+          
+          echo "Checking package version consistency..."
+          dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive
+          
+          echo "Checking for deprecated packages..."
+          dotnet list ${{ env.SOLUTION_FILE }} package --deprecated
+
+  format-check:
+    name: Check Code Format
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .
+          key: ${{ github.sha }}-project-restored
+      - name: Install dotnet-format
+        run: dotnet tool install -g dotnet-format
+      - name: Check Format
+        run: dotnet format --verify-no-changes ${{ env.SOLUTION_FILE }}
+
   code-quality:
     name: Code Quality
     needs: restore
@@ -103,8 +147,8 @@ jobs:
         with:
           category: "/language:csharp"
 
-  format-check:
-    name: Check Code Format
+  project-structure:
+    name: Project Structure Check
     needs: restore
     runs-on: ubuntu-latest
     steps:
@@ -113,19 +157,40 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
-        uses: actions/cache@v4
+      - name: Restore Dependencies
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+      - name: Validate Project Structure
+        run: |
+          echo "Checking solution structure..."
+          dotnet sln ${{ env.SOLUTION_FILE }} list
+          
+          echo "Checking for circular dependencies..."
+          dotnet build ${{ env.SOLUTION_FILE }} --no-restore
+
+  assembly-check:
+    name: Assembly Validation
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-      - name: Install dotnet-format
-        run: dotnet tool install -g dotnet-format
-      - name: Check Format
-        run: dotnet format --verify-no-changes ${{ env.SOLUTION_FILE }}
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Check Assembly Info
+        run: |
+          echo "Checking assembly versions..."
+          find . -name "*.csproj" -type f -exec grep -l "<Version>" {} \; | while read file; do
+            echo "Checking $file"
+            cat "$file" | grep "<Version>"
+          done
+          
+          echo "Checking for strong naming..."
+          find . -name "*.csproj" -type f -exec grep -l "<SignAssembly>" {} \;
 
   build:
     name: Build Solution
-    needs: [restore]
+    needs: [restore, security-scan, dependency-check, format-check, code-quality, project-structure, assembly-check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -232,6 +297,23 @@ jobs:
       - name: Run Performance Tests
         run: dotnet test Tests/API.PerformanceTests/API.PerformanceTests.csproj --no-build --verbosity normal --configuration Release
 
+  api-compatibility:
+    name: API Compatibility Check
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Install ApiPort
+        run: dotnet tool install -g Microsoft.DotNet.ApiCompat.Tool
+      - name: Check API Compatibility
+        run: |
+          echo "Checking API surface..."
+          find . -name "*.dll" -path "*/bin/Release/*" -not -path "*/ref/*" -not -path "*/Tests/*" -exec dotnet-api-compare {} \;
+
   api-health:
     name: API Health Check
     needs: [unit-tests, integration-tests, functional-tests]
@@ -270,7 +352,7 @@ jobs:
 
   docker-build:
     name: Docker Build & Test
-    needs: [unit-tests, integration-tests, functional-tests]
+    needs: [unit-tests, integration-tests, functional-tests, api-health]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -284,85 +366,3 @@ jobs:
           tags: auth-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  dependency-check:
-    name: Dependency Analysis
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
-      - name: Check Package Dependencies
-        run: |
-          echo "Checking for duplicate packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package > packages.txt
-          cat packages.txt | grep '>' | sort | uniq -d || true
-          
-          echo "Checking package version consistency..."
-          dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive
-          
-          echo "Checking for deprecated packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package --deprecated
-
-  assembly-check:
-    name: Assembly Validation
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Check Assembly Info
-        run: |
-          echo "Checking assembly versions..."
-          find . -name "*.csproj" -type f -exec grep -l "<Version>" {} \; | while read file; do
-            echo "Checking $file"
-            cat "$file" | grep "<Version>"
-          done
-          
-          echo "Checking for strong naming..."
-          find . -name "*.csproj" -type f -exec grep -l "<SignAssembly>" {} \;
-
-  project-structure:
-    name: Project Structure Check
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
-      - name: Validate Project Structure
-        run: |
-          echo "Checking solution structure..."
-          dotnet sln ${{ env.SOLUTION_FILE }} list
-          
-          echo "Checking for circular dependencies..."
-          dotnet build ${{ env.SOLUTION_FILE }} --no-restore
-
-  api-compatibility:
-    name: API Compatibility Check
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Install ApiPort
-        run: dotnet tool install -g Microsoft.DotNet.ApiCompat.Tool
-      - name: Check API Compatibility
-        run: |
-          echo "Checking API surface..."
-          find . -name "*.dll" -path "*/bin/Release/*" -not -path "*/ref/*" -not -path "*/Tests/*" -exec dotnet-api-compare {} \;
