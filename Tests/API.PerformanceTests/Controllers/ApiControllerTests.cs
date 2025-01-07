@@ -43,7 +43,7 @@ public class ApiControllerTests : TestBase
         // Assert success rate (should be 100%)
         scenarioStats.Ok.Request.Count.Should().BeGreaterThan(0);
         scenarioStats.Fail.Request.Count.Should().Be(0);
-        
+
         // Assert throughput (should handle our target rate)
         scenarioStats.Ok.Request.RPS.Should().BeGreaterThanOrEqualTo(45); // Allow for small variations
     }
@@ -52,4 +52,4 @@ public class ApiControllerTests : TestBase
 public class SkipException : Exception
 {
     public SkipException(string message) : base(message) { }
-} 
+}

@@ -66,7 +66,7 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddHealthChecks();
         builder.Services.AddProblemDetails(); // Add ProblemDetails service
-        
+
         // Configure CORS
         builder.Services.AddCors(options =>
         {

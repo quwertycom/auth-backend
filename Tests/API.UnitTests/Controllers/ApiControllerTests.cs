@@ -15,7 +15,7 @@ public class ApiControllerTests : TestBase
     {
         // Create mock logger
         _mockLogger = GetMock<ILogger<ApiController>>();
-        
+
         // Create controller with mock dependencies
         _controller = new ApiController(_mockLogger);
     }
@@ -50,4 +50,4 @@ public class ApiControllerTests : TestBase
             null,
             Arg.Any<Func<object, Exception?, string>>());
     }
-} 
+}
