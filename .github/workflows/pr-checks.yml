@@ -190,7 +190,7 @@ jobs:
 
   build:
     name: Build Solution
-    needs: [restore, security-scan, dependency-check, format-check, code-quality, project-structure, assembly-check]
+    needs: restore
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
