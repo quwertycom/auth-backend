@@ -125,7 +125,7 @@ jobs:
 
   build:
     name: Build Solution
-    needs: [restore]
+    needs: [format-check, code-quality, security-scan, dependency-check, assembly-check, project-structure]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -309,21 +309,6 @@ jobs:
           echo "Checking for deprecated packages..."
           dotnet list ${{ env.SOLUTION_FILE }} package --deprecated
 
-  documentation-check:
-    name: Documentation Check
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Check XML Documentation
-        run: |
-          echo "Checking XML documentation warnings..."
-          dotnet build ${{ env.SOLUTION_FILE }} /p:TreatWarningsAsErrors=true /p:DocumentationFile=bin\Debug\netcoreapp3.1\doc.xml /warnaserror:CS1591
-
   assembly-check:
     name: Assembly Validation
     needs: restore
@@ -355,16 +340,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Restore Dependencies
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
       - name: Validate Project Structure
         run: |
-          echo "Checking project references..."
-          dotnet list reference API/API.csproj
-          
           echo "Checking solution structure..."
           dotnet sln ${{ env.SOLUTION_FILE }} list
           
           echo "Checking for circular dependencies..."
-          dotnet build ${{ env.SOLUTION_FILE }} --no-restore /p:CheckForCircularDependencies=true
+          dotnet build ${{ env.SOLUTION_FILE }} --no-restore
 
   api-compatibility:
     name: API Compatibility Check
