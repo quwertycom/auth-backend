@@ -16,6 +16,9 @@ public class User {
     [Required]
     public virtual ICollection<UserEmail> Emails { get; set; } = new List<UserEmail>();
     
+    [Required]
+    public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
+    
     [Phone]
     public string? PhoneNumber { get; set; } = null;
     
