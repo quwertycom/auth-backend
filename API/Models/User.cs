@@ -14,8 +14,7 @@ public class User {
     public required string LastName { get; set; }
     
     [Required]
-    [EmailAddress]
-    public required string Email { get; set; }
+    public virtual ICollection<UserEmail> Emails { get; set; } = new List<UserEmail>();
     
     [Phone]
     public string? PhoneNumber { get; set; }
@@ -27,4 +26,6 @@ public class User {
     public required string PasswordSalt { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public DateTime? LastLoginAt { get; set; }
 }
