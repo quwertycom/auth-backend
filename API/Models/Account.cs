@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using API.Common.Enums;
 
 public class Account {
     [Key]
