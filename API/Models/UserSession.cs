@@ -2,7 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API.Models;
 
-public class UserSession {
+public class UserSession
+{
     [Key]
     public long Id { get; set; }
 

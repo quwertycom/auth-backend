@@ -3,7 +3,8 @@ using API.Common.Enums;
 
 namespace API.Models;
 
-public class Application {
+public class Application
+{
     [Key]
     public long Id { get; set; }
 

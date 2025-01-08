@@ -2,7 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API.Models;
 
-public class ApplicationAccount {
+public class ApplicationAccount
+{
     [Key]
     public long Id { get; set; }
 

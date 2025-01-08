@@ -1,6 +1,7 @@
 namespace API.Common.Enums;
 
-public enum UserState {
+public enum UserState
+{
     Active,
     Suspended,
     Deleted

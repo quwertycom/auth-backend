@@ -1,6 +1,7 @@
 namespace API.Common.Enums;
 
-public enum TokenType {
+public enum TokenType
+{
     Access,
     Refresh
 }

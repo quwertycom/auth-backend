@@ -1,6 +1,7 @@
 namespace API.Common.Enums;
 
-public enum ApplicationStatus {
+public enum ApplicationStatus
+{
     Development,
     Testing,
     Verification,

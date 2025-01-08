@@ -3,12 +3,13 @@ using API.Common.Enums;
 
 namespace API.Models;
 
-public class UserEmail {
+public class UserEmail
+{
     [Key]
     public long Id { get; set; }
 
     [Required]
-    [EmailAddress] 
+    [EmailAddress]
     public required string Email { get; set; }
 
     [Required]

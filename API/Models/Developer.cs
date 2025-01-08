@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 namespace API.Models;
 
 [Index(nameof(Type), IsUnique = true, Name = "IX_OnePersonalDeveloperPerAccount")]
-public class Developer {
+public class Developer
+{
     [Key]
     public long Id { get; set; }
 

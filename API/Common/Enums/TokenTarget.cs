@@ -1,6 +1,7 @@
 namespace API.Common.Enums;
 
-public enum TokenTarget {
+public enum TokenTarget
+{
     User,
     Account,
     Application

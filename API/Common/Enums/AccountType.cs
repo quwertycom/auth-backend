@@ -1,6 +1,7 @@
 namespace API.Common.Enums;
 
-public enum AccountType {
+public enum AccountType
+{
     Personal,
     Organization
 }

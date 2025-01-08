@@ -2,7 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using API.Common.Enums;
 namespace API.Models;
 
-public class Token {
+public class Token
+{
     [Key]
     public long Id { get; set; }
 

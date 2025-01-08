@@ -1,6 +1,7 @@
 namespace API.Common.Enums;
 
-public enum DeveloperStatus {
+public enum DeveloperStatus
+{
     NotVerified,
     Verified,
     Suspended,

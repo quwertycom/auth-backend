@@ -1,6 +1,7 @@
 namespace API.Common.Enums;
 
-public enum DeveloperType {
+public enum DeveloperType
+{
     Personal,
     Company,
     Group
