@@ -16,5 +16,6 @@ public class UserEmail {
     [Required]
     public required User User { get; set; }
 
+    [Required]
     public long UserId { get; set; }
 }

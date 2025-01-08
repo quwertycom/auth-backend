@@ -17,13 +17,16 @@ public class User {
     public virtual ICollection<UserEmail> Emails { get; set; } = new List<UserEmail>();
     
     [Phone]
-    public string? PhoneNumber { get; set; }
+    public string? PhoneNumber { get; set; } = null;
     
     [Required]
     public required string PasswordHash { get; set; }
     
     [Required]
     public required string PasswordSalt { get; set; }
+
+    [Required]
+    public UserState State { get; set; } = UserState.Active;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
