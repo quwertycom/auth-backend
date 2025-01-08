@@ -58,6 +58,27 @@ jobs:
           path: .
           key: ${{ github.sha }}-project-restored
 
+  db-model-check:
+    name: Database Model Check
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .
+          key: ${{ github.sha }}-project-restored
+      - name: Verify Database Context
+        run: |
+          echo "Verifying database context and models..."
+          dotnet ef dbcontext info --project API/API.csproj
+          dotnet ef dbcontext list --project API/API.csproj
+
   code-quality:
     name: Code Quality
     needs: restore

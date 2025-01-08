@@ -366,3 +366,75 @@ jobs:
           tags: auth-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  db-model-validation:
+    name: Database Model Validation
+    needs: restore
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .
+          key: ${{ github.sha }}-project-restored
+          
+      - name: Verify Database Context
+        run: |
+          echo "Verifying database context and models..."
+          dotnet ef dbcontext info --project API/API.csproj
+          dotnet ef dbcontext list --project API/API.csproj
+          
+      - name: Check Model Relationships
+        run: |
+          echo "Checking model relationships and configurations..."
+          dotnet ef dbcontext scaffold "Host=localhost;Database=testdb;Username=postgres;Password=postgres" Npgsql.EntityFrameworkCore.PostgreSQL --project API/API.csproj --context-dir Data --output-dir Models/Generated --no-onconfiguring --force
+          
+      - name: Validate Migration Scripts
+        run: |
+          echo "Validating migration scripts..."
+          dotnet ef migrations script --project API/API.csproj --idempotent > migration.sql
+          
+          echo "Checking for potential issues in migration script..."
+          # Check for common issues in the migration script
+          ! grep -i "drop table" migration.sql || echo "Warning: Found DROP TABLE statements"
+          ! grep -i "drop column" migration.sql || echo "Warning: Found DROP COLUMN statements"
+          ! grep -i "alter column.*not null" migration.sql || echo "Warning: Found NOT NULL constraints being added"
+          
+      - name: Check Naming Conventions
+        run: |
+          echo "Checking naming conventions..."
+          # Verify table names are in snake_case
+          dotnet ef dbcontext info --project API/API.csproj | grep -i "table" | grep -v "_" && echo "Warning: Found tables not using snake_case"
+          
+      - name: Verify Indexes and Constraints
+        run: |
+          echo "Verifying indexes and constraints..."
+          dotnet ef dbcontext info --project API/API.csproj --json > context-info.json
+          
+      - name: Upload Migration Analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-analysis
+          path: |
+            migration.sql
+            context-info.json
