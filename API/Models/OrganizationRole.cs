@@ -17,7 +17,7 @@ public class OrganizationRole {
     public required long OrganizationId { get; set; }
 
     [Required]
-    public required ICollection<Account> Members { get; set; }
+    public virtual ICollection<Account> Members { get; set; } = new List<Account>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
