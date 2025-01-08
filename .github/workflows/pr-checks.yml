@@ -402,22 +402,48 @@ jobs:
           dotnet tool install dotnet-ef
           
       - name: Verify Database Context
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=testdb;Username=postgres;Password=postgres"
         run: |
           echo "Verifying database context and models..."
-          dotnet ef dbcontext info --project API/API.csproj
-          dotnet ef dbcontext list --project API/API.csproj
+          dotnet ef dbcontext info --project API/API.csproj --verbose
+          dotnet ef dbcontext list --project API/API.csproj --verbose
           
       - name: Check Model Relationships
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=testdb;Username=postgres;Password=postgres"
         run: |
           echo "Checking model relationships and configurations..."
-          dotnet ef dbcontext scaffold "Host=localhost;Database=testdb;Username=postgres;Password=postgres" Npgsql.EntityFrameworkCore.PostgreSQL --project API/API.csproj --context-dir Data --output-dir Models/Generated --no-onconfiguring --force
+          # Add verbose output for debugging
+          echo "Current directory: $(pwd)"
+          echo "Project path: $(realpath API/API.csproj)"
+          echo "Connection string: $ConnectionStrings__DefaultConnection"
+          
+          dotnet ef dbcontext scaffold "Host=localhost;Database=testdb;Username=postgres;Password=postgres" Npgsql.EntityFrameworkCore.PostgreSQL --project API/API.csproj --context-dir Data --output-dir Models/Generated --no-onconfiguring --force --verbose
           
       - name: Validate Migration Scripts
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=testdb;Username=postgres;Password=postgres"
         run: |
           echo "Validating migration scripts..."
-          dotnet ef migrations script --project API/API.csproj --idempotent > migration.sql
+          # Add verbose output for debugging
+          echo "Current directory: $(pwd)"
+          echo "Project path: $(realpath API/API.csproj)"
+          echo "Migrations directory content:"
+          ls -la API/Data/Migrations || echo "Migrations directory not found"
           
-          echo "Checking for potential issues in migration script..."
+          # Run migration script generation with verbose output
+          dotnet ef migrations script --project API/API.csproj --idempotent --verbose || {
+            echo "Error generating migration script. Exit code: $?"
+            echo "Project structure:"
+            find API -type f -name "*.cs" -o -name "*.csproj"
+            exit 1
+          }
+          
+          echo "Migration script generated successfully. Checking for potential issues..."
+          echo "Migration script content preview:"
+          head -n 20 migration.sql || echo "Migration script is empty"
+          
           # Check for common issues in the migration script
           ! grep -i "drop table" migration.sql || echo "Warning: Found DROP TABLE statements"
           ! grep -i "drop column" migration.sql || echo "Warning: Found DROP COLUMN statements"
