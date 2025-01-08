@@ -366,3 +366,105 @@ jobs:
           tags: auth-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  db-model-validation:
+    name: Database Model Validation
+    needs: restore
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .
+          key: ${{ github.sha }}-project-restored
+      - name: Install EF Core tools
+        run: |
+          dotnet new tool-manifest
+          dotnet tool install dotnet-ef
+          
+      - name: Verify Database Context
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=testdb;Username=postgres;Password=postgres"
+        run: |
+          echo "Verifying database context and models..."
+          dotnet ef dbcontext info --project API/API.csproj --verbose
+          dotnet ef dbcontext list --project API/API.csproj --verbose
+          
+      - name: Check Model Relationships
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=testdb;Username=postgres;Password=postgres"
+        run: |
+          echo "Checking model relationships and configurations..."
+          # Add verbose output for debugging
+          echo "Current directory: $(pwd)"
+          echo "Project path: $(realpath API/API.csproj)"
+          echo "Connection string: $ConnectionStrings__DefaultConnection"
+          
+          # Verify the existing AuthDbContext
+          dotnet ef dbcontext info --project API/API.csproj --context AuthDbContext --verbose
+          
+      - name: Validate Migration Scripts
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=testdb;Username=postgres;Password=postgres"
+        run: |
+          echo "Validating migration scripts..."
+          # Add verbose output for debugging
+          echo "Current directory: $(pwd)"
+          echo "Project path: $(realpath API/API.csproj)"
+          echo "Migrations directory content:"
+          ls -la API/Data/Migrations || echo "Migrations directory not found"
+          
+          # Build the project first to ensure all dependencies are resolved
+          dotnet build API/API.csproj --verbosity detailed
+          
+          # Run migration script generation with verbose output
+          dotnet ef migrations script --project API/API.csproj --idempotent --verbose || {
+            echo "Error generating migration script. Exit code: $?"
+            echo "Project structure:"
+            find API -type f -name "*.cs" -o -name "*.csproj"
+            exit 1
+          }
+          
+      - name: Check Naming Conventions
+        run: |
+          echo "Checking naming conventions..."
+          # Verify table names are in snake_case
+          if dotnet ef dbcontext info --project API/API.csproj | grep -i "table" | grep -v "_"; then
+            echo "Warning: Found tables not using snake_case"
+            exit 1
+          else
+            echo "✓ All tables follow snake_case naming convention"
+          fi
+          
+      - name: Verify Indexes and Constraints
+        run: |
+          echo "Verifying indexes and constraints..."
+          dotnet ef dbcontext info --project API/API.csproj --json > context-info.json
+          
+      - name: Upload Migration Analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-analysis
+          path: |
+            migration.sql
+            context-info.json

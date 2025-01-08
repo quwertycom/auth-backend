@@ -275,6 +275,43 @@
                 "panel": "dedicated"
             },
             "hide": true
+        },
+        {
+            "label": "🧪 Format Code",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "format",
+                "${workspaceFolder}/Auth.sln",
+                "--verify-no-changes",
+                "--verbosity",
+                "detailed"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "group": "none"
+        },
+        {
+            "label": "🎨 Format Code (Fix)",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "format",
+                "${workspaceFolder}/Auth.sln",
+                "--verbosity",
+                "detailed"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "group": "none"
         }
     ]
 } 
