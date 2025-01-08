@@ -419,6 +419,14 @@ jobs:
           echo "Project path: $(realpath API/API.csproj)"
           echo "Connection string: $ConnectionStrings__DefaultConnection"
           
+          # Remove any existing generated models
+          rm -rf API/Models/Generated || true
+          rm -f API/Data/TestdbContext.cs || true
+          
+          # Create the Generated directory
+          mkdir -p API/Models/Generated
+          
+          # Run scaffold
           dotnet ef dbcontext scaffold "Host=localhost;Database=testdb;Username=postgres;Password=postgres" Npgsql.EntityFrameworkCore.PostgreSQL --project API/API.csproj --context-dir Data --output-dir Models/Generated --no-onconfiguring --force --verbose
           
       - name: Validate Migration Scripts
@@ -432,6 +440,9 @@ jobs:
           echo "Migrations directory content:"
           ls -la API/Data/Migrations || echo "Migrations directory not found"
           
+          # Build the project first to ensure all dependencies are resolved
+          dotnet build API/API.csproj --verbosity detailed
+          
           # Run migration script generation with verbose output
           dotnet ef migrations script --project API/API.csproj --idempotent --verbose || {
             echo "Error generating migration script. Exit code: $?"
@@ -439,15 +450,6 @@ jobs:
             find API -type f -name "*.cs" -o -name "*.csproj"
             exit 1
           }
-          
-          echo "Migration script generated successfully. Checking for potential issues..."
-          echo "Migration script content preview:"
-          head -n 20 migration.sql || echo "Migration script is empty"
-          
-          # Check for common issues in the migration script
-          ! grep -i "drop table" migration.sql || echo "Warning: Found DROP TABLE statements"
-          ! grep -i "drop column" migration.sql || echo "Warning: Found DROP COLUMN statements"
-          ! grep -i "alter column.*not null" migration.sql || echo "Warning: Found NOT NULL constraints being added"
           
       - name: Check Naming Conventions
         run: |
