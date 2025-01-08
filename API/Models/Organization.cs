@@ -18,5 +18,7 @@ public class Organization {
     [Required]
     public virtual ICollection<OrganizationRole> Roles { get; set; } = new List<OrganizationRole>();
 
+    public virtual ICollection<Developer> DeveloperProfiles { get; set; } = new List<Developer>();
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

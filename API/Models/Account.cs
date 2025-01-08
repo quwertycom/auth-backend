@@ -28,5 +28,7 @@ public class Account {
 
     public virtual ICollection<OrganizationRole>? Roles { get; set; }
 
+    public virtual ICollection<Developer> Developers { get; set; } = new List<Developer>();
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
