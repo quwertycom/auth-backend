@@ -22,4 +22,10 @@ public class Token {
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? ExpiresAt { get; set; } = null;
+
+    [Required]
+    public required UserSession UserSession { get; set; }
+
+    [Required]
+    public required long UserSessionId { get; set; }
 }
