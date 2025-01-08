@@ -1,4 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using API.Common.Enums;
+
+namespace API.Models;
 
 public class UserEmail {
     [Key]

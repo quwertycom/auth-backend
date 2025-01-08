@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using API.Common.Enums;
 
+namespace API.Models;
+
 public class Account {
     [Key]
     public long Id { get; set; }

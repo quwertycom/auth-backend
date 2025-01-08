@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+namespace API.Models;
+
 public class OrganizationRole {
     [Key]
     public long Id { get; set; }
