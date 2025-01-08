@@ -419,15 +419,8 @@ jobs:
           echo "Project path: $(realpath API/API.csproj)"
           echo "Connection string: $ConnectionStrings__DefaultConnection"
           
-          # Remove any existing generated models
-          rm -rf API/Models/Generated || true
-          rm -f API/Data/TestdbContext.cs || true
-          
-          # Create the Generated directory
-          mkdir -p API/Models/Generated
-          
-          # Run scaffold
-          dotnet ef dbcontext scaffold "Host=localhost;Database=testdb;Username=postgres;Password=postgres" Npgsql.EntityFrameworkCore.PostgreSQL --project API/API.csproj --context-dir Data --output-dir Models/Generated --no-onconfiguring --force --verbose
+          # Verify the existing AuthDbContext
+          dotnet ef dbcontext info --project API/API.csproj --context AuthDbContext --verbose
           
       - name: Validate Migration Scripts
         env:
