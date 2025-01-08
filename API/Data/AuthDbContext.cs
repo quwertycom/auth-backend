@@ -141,12 +141,25 @@ public class AuthDbContext : DbContext
             // Custom columns
             entity.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
             entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
 
-            // Add ApiKeys relationship
-            entity.HasMany<ApiKey>()
-                .WithOne(k => k.Application)
+        // ApiKey configurations
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.HasIndex(k => k.ApplicationId);
+            entity.HasIndex(k => k.Status);
+            entity.HasIndex(k => k.ExpiresAt);
+            
+            // Application relationship
+            entity.HasOne(k => k.Application)
+                .WithMany(a => a.ApiKeys)
                 .HasForeignKey(k => k.ApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(k => k.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(k => k.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(k => k.LastUsedAt).HasColumnType("timestamp");
+            entity.Property(k => k.ExpiresAt).HasColumnType("timestamp");
         });
 
         // Token configurations
