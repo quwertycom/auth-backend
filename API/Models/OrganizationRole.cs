@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-public class Organization {
+public class OrganizationRole {
     [Key]
     public long Id { get; set; }
 
@@ -11,10 +11,13 @@ public class Organization {
     public required string Description { get; set; }
 
     [Required]
-    public virtual ICollection<Account> Members { get; set; } = new List<Account>();
+    public required Organization Organization { get; set; }
 
     [Required]
-    public virtual ICollection<OrganizationRole> Roles { get; set; } = new List<OrganizationRole>();
+    public required long OrganizationId { get; set; }
+
+    [Required]
+    public required ICollection<Account> Members { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

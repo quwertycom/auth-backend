@@ -16,7 +16,14 @@ public class Account {
     [Required]
     public required AccountType Type { get; set; }
 
-    public Organization? Organization { get; set; } = null;
+    [Required]
+    public bool IsPersonal { get; set; }
+
+    public Organization? Organization { get; set; }
+
+    public long? OrganizationId { get; set; }
+
+    public virtual ICollection<OrganizationRole>? Roles { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
