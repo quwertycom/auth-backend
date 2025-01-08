@@ -30,7 +30,7 @@ public class Application
     public required ApplicationStatus Status { get; set; } = ApplicationStatus.Development;
 
     [Required]
-    public virtual Developer Developer { get; set; }
+    public required virtual Developer Developer { get; set; }
 
     [Required]
     public required long DeveloperId { get; set; }
