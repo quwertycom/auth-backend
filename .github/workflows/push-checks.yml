@@ -73,6 +73,10 @@ jobs:
         with:
           path: .
           key: ${{ github.sha }}-project-restored
+      - name: Install EF Core tools
+        run: |
+          dotnet new tool-manifest
+          dotnet tool install dotnet-ef
       - name: Verify Database Context
         run: |
           echo "Verifying database context and models..."
