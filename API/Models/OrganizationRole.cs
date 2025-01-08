@@ -7,13 +7,15 @@ public class OrganizationRole {
     public long Id { get; set; }
 
     [Required]
+    [StringLength(100)]
     public required string Name { get; set; }
 
     [Required]
+    [StringLength(500)]
     public required string Description { get; set; }
 
     [Required]
-    public required Organization Organization { get; set; }
+    public required virtual Organization Organization { get; set; }
 
     [Required]
     public required long OrganizationId { get; set; }

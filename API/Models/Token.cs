@@ -18,14 +18,14 @@ public class Token {
     [Required]
     public required long UserId { get; set; }
 
+    public UserSession? UserSession { get; set; }
+    public long? UserSessionId { get; set; }
+
+    public AccountSession? AccountSession { get; set; }
+    public long? AccountSessionId { get; set; }
+
     [Required]
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? ExpiresAt { get; set; } = null;
-
-    [Required]
-    public required UserSession UserSession { get; set; }
-
-    [Required]
-    public required long UserSessionId { get; set; }
 }

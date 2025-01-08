@@ -1,19 +1,22 @@
 using System.ComponentModel.DataAnnotations;
 using API.Common.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Models;
 
+[Index(nameof(UserId), nameof(IsPersonal), IsUnique = true, Name = "IX_OnePersonalAccountPerUser")]
 public class Account {
     [Key]
     public long Id { get; set; }
 
     [Required]
-    public required User User { get; set; }
+    public required virtual User User { get; set; }
 
     [Required]
     public long UserId { get; set; }
 
     [Required]
+    [StringLength(100)]
     public required string AccountName { get; set; }
 
     [Required]
@@ -22,13 +25,14 @@ public class Account {
     [Required]
     public bool IsPersonal { get; set; }
 
-    public Organization? Organization { get; set; }
+    public virtual Organization? Organization { get; set; }
 
     public long? OrganizationId { get; set; }
 
-    public virtual ICollection<OrganizationRole>? Roles { get; set; }
+    public virtual ICollection<OrganizationRole> Roles { get; set; } = new List<OrganizationRole>();
 
-    public virtual ICollection<Developer> Developers { get; set; } = new List<Developer>();
+    [Required]
+    public virtual ICollection<Developer> AuthorizedDevelopers { get; set; } = new List<Developer>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
