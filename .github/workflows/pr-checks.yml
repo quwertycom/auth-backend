@@ -448,7 +448,12 @@ jobs:
         run: |
           echo "Checking naming conventions..."
           # Verify table names are in snake_case
-          dotnet ef dbcontext info --project API/API.csproj | grep -i "table" | grep -v "_" && echo "Warning: Found tables not using snake_case"
+          if dotnet ef dbcontext info --project API/API.csproj | grep -i "table" | grep -v "_"; then
+            echo "Warning: Found tables not using snake_case"
+            exit 1
+          else
+            echo "✓ All tables follow snake_case naming convention"
+          fi
           
       - name: Verify Indexes and Constraints
         run: |
