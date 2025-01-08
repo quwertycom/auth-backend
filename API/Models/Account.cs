@@ -34,5 +34,8 @@ public class Account {
     [Required]
     public virtual ICollection<Developer> AuthorizedDevelopers { get; set; } = new List<Developer>();
 
+    [Required]
+    public virtual ICollection<ApplicationAccount> AuthorizedApplications { get; set; } = new List<ApplicationAccount>();
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -13,6 +13,27 @@ public class Token {
     public required TokenType Type { get; set; }
 
     [Required]
+    public required TokenTarget Target { get; set; }
+
+    [Required]
+    public required ApplicationAccount ApplicationAccount { get; set; }
+
+    [Required]
+    public required long ApplicationAccountId { get; set; }
+
+    [Required]
+    public required Account Account { get; set; }
+
+    [Required]
+    public required long AccountId { get; set; }
+
+    [Required]
+    public required Application Application { get; set; }
+
+    [Required]
+    public required long ApplicationId { get; set; }
+
+    [Required]
     public required User User { get; set; }
 
     [Required]
