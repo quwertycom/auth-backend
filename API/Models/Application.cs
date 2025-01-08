@@ -9,20 +9,20 @@ public class Application
     public long Id { get; set; }
 
     [Required]
-    [StringLength(100)]
+    [MaxLength(100)]
     public required string Name { get; set; }
 
     [Required]
-    [StringLength(500)]
+    [MaxLength(500)]
     public required string Description { get; set; }
 
     [Required]
-    [StringLength(2048)]
+    [MaxLength(2048)]
     [Url]
     public required string IconUrl { get; set; }
 
     [Required]
-    [StringLength(2048)]
+    [MaxLength(2048)]
     [Url]
     public required string RedirectUri { get; set; }
 
@@ -37,6 +37,12 @@ public class Application
 
     [Required]
     public virtual ICollection<ApplicationAccount> Accounts { get; set; } = new List<ApplicationAccount>();
+
+    [Required]
+    public virtual ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
+
+    [Required]
+    public virtual ICollection<ApplicationSession> Sessions { get; set; } = new List<ApplicationSession>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -9,15 +9,15 @@ public class User
     public long Id { get; set; }
 
     [Required]
-    [StringLength(50)]
+    [MaxLength(50)]
     public required string Username { get; set; }
 
     [Required]
-    [StringLength(100)]
+    [MaxLength(100)]
     public required string FirstName { get; set; }
 
     [Required]
-    [StringLength(100)]
+    [MaxLength(100)]
     public required string LastName { get; set; }
 
     [Required]
@@ -26,16 +26,25 @@ public class User
     [Required]
     public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
 
+    [Required]
+    public virtual ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
+
+    [Required]
+    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+
+    [Required]
+    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+
     [Phone]
-    [StringLength(20)]
+    [MaxLength(20)]
     public string? PhoneNumber { get; set; } = null;
 
     [Required]
-    [StringLength(256)]
+    [MaxLength(256)]
     public required string PasswordHash { get; set; }
 
     [Required]
-    [StringLength(128)]
+    [MaxLength(128)]
     public required string PasswordSalt { get; set; }
 
     [Required]
