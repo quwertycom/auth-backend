@@ -43,19 +43,19 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users");
-            
+
             // Indexes for performance
             entity.HasIndex(u => u.Username).IsUnique();
             entity.HasIndex(u => u.PhoneNumber)
                 .IsUnique()
                 .HasFilter("\"PhoneNumber\" IS NOT NULL");
-            
+
             // Cascade delete for user-owned entities
             entity.HasMany(u => u.Emails)
                 .WithOne(e => e.User)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-                
+
             entity.HasMany(u => u.Accounts)
                 .WithOne(a => a.User)
                 .HasForeignKey(a => a.UserId)
@@ -72,14 +72,14 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Account>(entity =>
         {
             entity.ToTable("accounts");
-            
+
             // Indexes
             entity.HasIndex(a => new { a.UserId, a.IsPersonal })
                 .IsUnique()
                 .HasFilter("is_personal = true")
                 .HasDatabaseName("IX_OnePersonalAccountPerUser");
             entity.HasIndex(a => a.AccountName);
-            
+
             // Many-to-many relationships
             entity.HasMany(a => a.AuthorizedDevelopers)
                 .WithMany(d => d.AuthorizedAccounts)
@@ -99,7 +99,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Organization>(entity =>
         {
             entity.ToTable("organizations");
-            
+
             // Indexes
             entity.HasIndex(o => o.Name);
 
@@ -117,7 +117,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Developer>(entity =>
         {
             entity.ToTable("developers");
-            
+
             // Indexes
             entity.HasIndex(d => d.Name);
             entity.HasIndex(d => new { d.Type, d.OrganizationId });
@@ -139,7 +139,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Application>(entity =>
         {
             entity.ToTable("applications");
-            
+
             // Indexes
             entity.HasIndex(a => a.Name);
             entity.HasIndex(a => new { a.DeveloperId, a.Status });
@@ -159,17 +159,17 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<ApiKey>(entity =>
         {
             entity.ToTable("api_keys");
-            
+
             entity.HasIndex(k => k.ApplicationId);
             entity.HasIndex(k => k.Status);
             entity.HasIndex(k => k.ExpiresAt);
-            
+
             // Application relationship
             entity.HasOne(k => k.Application)
                 .WithMany(a => a.ApiKeys)
                 .HasForeignKey(k => k.ApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
             entity.Property(k => k.Status).HasConversion<string>().HasMaxLength(20);
             entity.Property(k => k.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(k => k.LastUsedAt).HasColumnType("timestamp");
@@ -180,7 +180,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Token>(entity =>
         {
             entity.ToTable("tokens");
-            
+
             // Indexes
             entity.HasIndex(t => t.TokenString).IsUnique();
             entity.HasIndex(t => t.ExpiresAt);
@@ -210,7 +210,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<UserSession>(entity =>
         {
             entity.ToTable("user_sessions");
-            
+
             entity.HasIndex(s => s.UserId);
             entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(s => s.LastUsedAt).HasColumnType("timestamp");
@@ -219,7 +219,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<AccountSession>(entity =>
         {
             entity.ToTable("account_sessions");
-            
+
             entity.HasIndex(s => new { s.UserId, s.AccountId });
             entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(s => s.LastUsedAt).HasColumnType("timestamp");
@@ -228,7 +228,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<ApplicationSession>(entity =>
         {
             entity.ToTable("application_sessions");
-            
+
             entity.HasIndex(s => new { s.UserId, s.AccountId, s.ApplicationId });
             entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
@@ -237,7 +237,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<AuditLog>(entity =>
         {
             entity.ToTable("audit_logs");
-            
+
             entity.HasIndex(a => new { a.EntityName, a.EntityId });
             entity.HasIndex(a => a.UserId);
             entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -247,11 +247,11 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.ToTable("notifications");
-            
+
             entity.HasIndex(n => n.UserId);
             entity.HasIndex(n => new { n.UserId, n.IsRead });
             entity.HasIndex(n => new { n.AccountId, n.ApplicationId });
-            
+
             entity.Property(n => n.Type).HasConversion<string>().HasMaxLength(20);
             entity.Property(n => n.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(n => n.ReadAt).HasColumnType("timestamp");
@@ -261,7 +261,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<ApplicationAccount>(entity =>
         {
             entity.ToTable("application_accounts");
-            
+
             entity.HasIndex(aa => aa.AccountId);
             entity.HasIndex(aa => aa.ApplicationId);
         });
@@ -270,7 +270,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<OrganizationRole>(entity =>
         {
             entity.ToTable("organization_roles");
-            
+
             entity.HasIndex(r => r.OrganizationId);
         });
 
@@ -278,7 +278,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<UserEmail>(entity =>
         {
             entity.ToTable("user_emails");
-            
+
             entity.HasIndex(ue => ue.UserId);
         });
     }

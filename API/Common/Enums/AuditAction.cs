@@ -12,4 +12,4 @@ public enum AuditAction
     EmailVerified,
     TokenIssued,
     TokenRevoked
-} 
+}

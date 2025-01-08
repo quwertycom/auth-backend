@@ -31,4 +31,4 @@ public class AuditLog
     public required string Changes { get; set; }  // JSON of changes
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-} 
+}

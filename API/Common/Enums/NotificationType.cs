@@ -10,4 +10,4 @@ public enum NotificationType
     ApplicationUpdate,
     DeveloperUpdate,
     OrganizationUpdate
-} 
+}

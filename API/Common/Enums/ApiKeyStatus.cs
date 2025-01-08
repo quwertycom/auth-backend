@@ -6,4 +6,4 @@ public enum ApiKeyStatus
     Expired,
     Revoked,
     Development
-} 
+}
