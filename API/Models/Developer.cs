@@ -28,5 +28,8 @@ public class Developer
     [Required]
     public virtual ICollection<Account> AuthorizedAccounts { get; set; } = new List<Account>();
 
+    [Required]
+    public virtual ICollection<Application> Applications { get; set; } = new List<Application>();
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -9,28 +9,34 @@ public class Application
     public long Id { get; set; }
 
     [Required]
+    [StringLength(100)]
     public required string Name { get; set; }
 
     [Required]
+    [StringLength(500)]
     public required string Description { get; set; }
 
     [Required]
+    [StringLength(2048)]
+    [Url]
     public required string IconUrl { get; set; }
 
     [Required]
+    [StringLength(2048)]
+    [Url]
     public required string RedirectUri { get; set; }
 
     [Required]
     public required ApplicationStatus Status { get; set; } = ApplicationStatus.Development;
 
     [Required]
-    public required virtual Developer Developer { get; set; }
+    public virtual Developer Developer { get; set; }
 
     [Required]
     public required long DeveloperId { get; set; }
 
     [Required]
-    public required virtual ICollection<ApplicationAccount> Accounts { get; set; } = new List<ApplicationAccount>();
+    public virtual ICollection<ApplicationAccount> Accounts { get; set; } = new List<ApplicationAccount>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
