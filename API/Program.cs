@@ -21,7 +21,11 @@ public class Program
             {
                 listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1;
             });
+            serverOptions.ListenAnyIP(8000); // Listen on port 8000
         });
+
+        // Set URLs
+        builder.WebHost.UseUrls("http://0.0.0.0:8000");
 
         // Load .env file before configuration setup
         if (File.Exists("../.env"))
@@ -104,34 +108,35 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "qAuth API V1");
-                c.RoutePrefix = "api/docs";
-            });
         }
-        else
+
+        // Always enable Swagger in development and Docker
+        app.UseSwagger(c =>
         {
-            // Add error handling for production
-            app.UseExceptionHandler();
-            app.UseHsts();
-            // Enable HTTPS Redirection only in production
-            app.UseHttpsRedirection();
-        }
+            c.RouteTemplate = "api/docs/{documentName}/swagger.json";
+        });
+        
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/api/docs/v1/swagger.json", "qAuth API V1");
+            c.RoutePrefix = "api/docs";
+        });
 
         // Use CORS before routing
         app.UseCors();
 
-        // Remove the HTTPS redirection from here since we only want it in production
-        // app.UseHttpsRedirection();
-
-        // Add status code pages
-        app.UseStatusCodePages();
-
-        // Use routing and authorization middleware
+        // Add routing and other middleware
         app.UseRouting();
+
+        // Add authentication middleware before authorization
+        app.UseAuthentication();
         app.UseAuthorization();
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHsts();
+            app.UseHttpsRedirection();
+        }
 
         // Map controllers and health checks
         app.MapControllers();
