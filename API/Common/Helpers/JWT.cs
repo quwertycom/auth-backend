@@ -42,7 +42,7 @@ public static class JWT
         _isInitialized = true;
     }
 
-    public static (string status, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
+    public static (string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
     {
         if (!_isInitialized)
         {
@@ -53,6 +53,11 @@ public static class JWT
         {
             if (target == TokenTarget.User)
             {
+                if (string.IsNullOrEmpty(ids.userId.ToString()))
+                {
+                    return ("ERROR", "Missing user id", null);
+                }
+
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(_secretKey);
 
@@ -83,25 +88,97 @@ public static class JWT
                 };
 
                 var token = tokenHandler.CreateToken(tokenDescriptor);
-                return ("SUCCESS", tokenHandler.WriteToken(token));
+                return ("SUCCESS", "Token generated successfully", tokenHandler.WriteToken(token));
             }
             else if (target == TokenTarget.Account)
             {
-                return ("SUCCESS", "token");
+                if (!ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()) || string.IsNullOrEmpty(ids.accountId.ToString()))
+                {
+                    return ("ERROR", "Missing account id", null);
+                }
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_secretKey);
+
+                // Generate a random value for jti (JWT ID)
+                var randomBytes = new byte[32];
+                using var rng = RandomNumberGenerator.Create();
+                rng.GetBytes(randomBytes);
+                var jti = Convert.ToBase64String(randomBytes);
+
+                var claims = new List<Claim>
+                {
+                    new(JwtRegisteredClaimNames.Sub, ids.accountId.Value.ToString()),
+                    new(JwtRegisteredClaimNames.Jti, jti),
+                    new("user_id", ids.userId.ToString()),
+                    new("token_type", "refresh"),
+                    new("token_target", TokenTarget.Account.ToString())
+                };
+
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.UtcNow.AddDays(30),
+                    Issuer = _issuer,
+                    Audience = _audience,
+                    SigningCredentials = new SigningCredentials(
+                        new SymmetricSecurityKey(key),
+                        SecurityAlgorithms.HmacSha256Signature
+                    )
+                };
+
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return ("SUCCESS", "Token generated successfully", tokenHandler.WriteToken(token));
             }
             else if (target == TokenTarget.Application)
             {
-                return ("SUCCESS", "token");
+                if (!ids.applicationId.HasValue || !ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()) || string.IsNullOrEmpty(ids.accountId.ToString()) || string.IsNullOrEmpty(ids.applicationId.ToString()))
+                {
+                    return ("ERROR", "Missing application id or account id", null);
+                }
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_secretKey);
+
+                // Generate a random value for jti (JWT ID)
+                var randomBytes = new byte[32];
+                using var rng = RandomNumberGenerator.Create();
+                rng.GetBytes(randomBytes);
+                var jti = Convert.ToBase64String(randomBytes);
+
+                var claims = new List<Claim>
+                {
+                    new(JwtRegisteredClaimNames.Sub, ids.applicationId.Value.ToString()),
+                    new(JwtRegisteredClaimNames.Jti, jti),
+                    new("user_id", ids.userId.ToString()),
+                    new("account_id", ids.accountId.Value.ToString()),
+                    new("token_type", "refresh"),
+                    new("token_target", TokenTarget.Application.ToString())
+                };
+
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.UtcNow.AddDays(30),
+                    Issuer = _issuer,
+                    Audience = _audience,
+                    SigningCredentials = new SigningCredentials(
+                        new SymmetricSecurityKey(key),
+                        SecurityAlgorithms.HmacSha256Signature
+                    )
+                };
+
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return ("SUCCESS", "Token generated successfully", tokenHandler.WriteToken(token));
             }
             else
             {
-                return ("ERROR", null);
+                return ("ERROR", "Something went wrong", null);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            // Log the exception details here
-            return ("ERROR", null);
+            return ("ERROR", "Internal Error", null);
         }
     }
 
