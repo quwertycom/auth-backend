@@ -147,7 +147,7 @@ public static class JWT
             }
 
             // Get token target
-            if (!claims.TryGetValue("token_target", out var targetStr) || 
+            if (!claims.TryGetValue("token_target", out var targetStr) ||
                 !Enum.TryParse<TokenTarget>(targetStr, out var target))
             {
                 return ("ERROR", "Invalid token target", null);
