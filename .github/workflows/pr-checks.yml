@@ -92,59 +92,58 @@ jobs:
         
       - name: Check for Duplicate Packages
         id: duplicate-check
-        continue-on-error: true
         run: |
           echo "Checking for duplicate packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package > package-list.txt
+          PACKAGE_LIST=$(dotnet list ${{ env.SOLUTION_FILE }} package)
+          echo "$PACKAGE_LIST" > package-list.txt
+          
           DUPLICATES=$(cat package-list.txt | grep -E "^   >" | sort | uniq -d)
           if [ ! -z "$DUPLICATES" ]; then
-            echo "Found duplicate packages:"
+            echo "::error::Found duplicate packages:"
             echo "$DUPLICATES"
-            echo "duplicate_found=true" >> $GITHUB_OUTPUT
-          else
-            echo "No duplicate packages found"
-            echo "duplicate_found=false" >> $GITHUB_OUTPUT
+            exit 1
           fi
+          echo "✅ No duplicate packages found"
           
       - name: Check for Vulnerable Packages
         id: vulnerability-check
         run: |
           echo "Checking for vulnerable packages..."
-          if dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive | grep -q "has the following vulnerable packages"; then
-            echo "Vulnerable packages found!"
+          VULNERABILITIES=$(dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive)
+          if echo "$VULNERABILITIES" | grep -q "has the following vulnerable packages"; then
+            echo "::error::Found vulnerable packages:"
+            echo "$VULNERABILITIES" | grep -A 100 "has the following vulnerable packages"
             exit 1
           fi
+          echo "✅ No vulnerable packages found"
           
       - name: Check for Deprecated Packages
         id: deprecated-check
-        continue-on-error: true
         run: |
           echo "Checking for deprecated packages..."
           DEPRECATED=$(dotnet list ${{ env.SOLUTION_FILE }} package --deprecated)
           if echo "$DEPRECATED" | grep -q "has the following deprecated packages"; then
-            echo "::warning ::Deprecated packages found. Consider updating them."
-            echo "deprecated_found=true" >> $GITHUB_OUTPUT
-          else
-            echo "No deprecated packages found"
-            echo "deprecated_found=false" >> $GITHUB_OUTPUT
+            echo "::error::Found deprecated packages:"
+            echo "$DEPRECATED" | grep -A 100 "has the following deprecated packages"
+            exit 1
           fi
+          echo "✅ No deprecated packages found"
           
       - name: Package Analysis Summary
         if: always()
         run: |
           echo "### Package Analysis Results 📦" >> $GITHUB_STEP_SUMMARY
-          echo "#### Duplicate Packages" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.duplicate-check.outputs.duplicate_found }}" == "true" ]; then
-            echo "⚠️ Duplicate packages found" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ No duplicate packages" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "#### Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "* Duplicate Packages: ${{ steps.duplicate-check.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Vulnerable Packages: ${{ steps.vulnerability-check.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Deprecated Packages: ${{ steps.deprecated-check.outcome }}" >> $GITHUB_STEP_SUMMARY
           
-          echo "#### Deprecated Packages" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.deprecated-check.outputs.deprecated_found }}" == "true" ]; then
-            echo "⚠️ Deprecated packages found" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.duplicate-check.outcome }}" != "success" ] || \
+             [ "${{ steps.vulnerability-check.outcome }}" != "success" ] || \
+             [ "${{ steps.deprecated-check.outcome }}" != "success" ]; then
+            echo "### ❌ Package checks failed. See job logs for details." >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ No deprecated packages" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ All package checks passed!" >> $GITHUB_STEP_SUMMARY
           fi
 
   format-check:
