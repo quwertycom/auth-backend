@@ -91,8 +91,7 @@ jobs:
       - name: Check Package Dependencies
         run: |
           echo "Checking for duplicate packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package > packages.txt
-          cat packages.txt | grep '>' | sort | uniq -d || true
+          dotnet list ${{ env.SOLUTION_FILE }} package | grep -E "^   >" | sort | uniq -d || true
           
           echo "Checking package version consistency..."
           dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive
