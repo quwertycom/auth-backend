@@ -86,6 +86,7 @@ public static class JWT
             {
                 case TokenTarget.User:
                     claims.Add(new(JwtRegisteredClaimNames.Sub, ids.userId.ToString()));
+                    claims.Add(new("user_id", ids.userId.ToString()));
                     break;
 
                 case TokenTarget.Account:
@@ -174,25 +175,19 @@ public static class JWT
             switch (target)
             {
                 case TokenTarget.User:
-                    // No additional claims needed for user tokens
+                    accessClaims.Add(new(JwtRegisteredClaimNames.Sub, claims[JwtRegisteredClaimNames.Sub]));
+                    accessClaims.Add(new("user_id", claims[JwtRegisteredClaimNames.Sub]));
                     break;
 
                 case TokenTarget.Account:
-                    if (claims.TryGetValue("user_id", out var userId))
-                    {
-                        accessClaims.Add(new Claim("user_id", userId));
-                    }
+                    accessClaims.Add(new(JwtRegisteredClaimNames.Sub, claims[JwtRegisteredClaimNames.Sub]));
+                    accessClaims.Add(new("user_id", claims["user_id"]));
                     break;
 
                 case TokenTarget.Application:
-                    if (claims.TryGetValue("user_id", out userId))
-                    {
-                        accessClaims.Add(new Claim("user_id", userId));
-                    }
-                    if (claims.TryGetValue("account_id", out var accountId))
-                    {
-                        accessClaims.Add(new Claim("account_id", accountId));
-                    }
+                    accessClaims.Add(new(JwtRegisteredClaimNames.Sub, claims[JwtRegisteredClaimNames.Sub]));
+                    accessClaims.Add(new("user_id", claims["user_id"]));
+                    accessClaims.Add(new("account_id", claims["account_id"]));
                     break;
             }
 
