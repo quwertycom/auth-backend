@@ -97,7 +97,7 @@ jobs:
           # Create a temporary file for the full package list
           TEMP_FILE=$(mktemp)
           # Use tee to both display and save output
-          if ! dotnet list ${{ env.SOLUTION_FILE }} package | tee "$TEMP_FILE"; then
+          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package | tee "$TEMP_FILE"; then
             echo "::error::Failed to list packages"
             rm "$TEMP_FILE"
             exit 1
@@ -134,7 +134,7 @@ jobs:
           TEMP_FILE=$(mktemp)
           
           # Use tee to both display and save output
-          if ! dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive | tee "$TEMP_FILE"; then
+          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package --vulnerable --include-transitive | tee "$TEMP_FILE"; then
             echo "::error::Failed to check for vulnerabilities"
             rm "$TEMP_FILE"
             exit 1
@@ -160,7 +160,7 @@ jobs:
           TEMP_FILE=$(mktemp)
           
           # Use tee to both display and save output
-          if ! dotnet list ${{ env.SOLUTION_FILE }} package --deprecated | tee "$TEMP_FILE"; then
+          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package --deprecated | tee "$TEMP_FILE"; then
             echo "::error::Failed to check for deprecated packages"
             rm "$TEMP_FILE"
             exit 1
