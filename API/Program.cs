@@ -47,6 +47,9 @@ public class Program
         // Initialize Snowflake helper
         Snowflake.Initialize(builder.Configuration, builder.Environment);
 
+        // Initialize PasswordHasher helper
+        PasswordHasher.Initialize(builder.Configuration, builder.Environment);
+
         // Configure database connection
         builder.Services.AddDbContext<AuthDbContext>(options =>
         {
