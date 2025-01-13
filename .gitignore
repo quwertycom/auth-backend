@@ -46,3 +46,4 @@ node_modules/
 **/TestResults/
 *.trx
 migration.sql
+packages.txt
