@@ -182,6 +182,99 @@ public static class JWT
         }
     }
 
+    public static (string status, string message, string? token) GenerateAccessToken(string refreshToken)
+    {
+        if (!_isInitialized)
+        {
+            throw new InvalidOperationException("JWT helper is not initialized. Call Initialize() first.");
+        }
+
+        try
+        {
+            var claims = GetTokenClaims(refreshToken);
+            if (claims == null)
+            {
+                return ("ERROR", "Invalid refresh token", null);
+            }
+
+            // Verify it's a refresh token
+            if (!claims.TryGetValue("token_type", out var tokenType) || tokenType != "refresh")
+            {
+                return ("ERROR", "Invalid token type", null);
+            }
+
+            // Get token target
+            if (!claims.TryGetValue("token_target", out var targetStr) || 
+                !Enum.TryParse<TokenTarget>(targetStr, out var target))
+            {
+                return ("ERROR", "Invalid token target", null);
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_secretKey);
+
+            // Generate a random value for jti (JWT ID)
+            var randomBytes = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            var jti = Convert.ToBase64String(randomBytes);
+
+            // Base claims that exist in all token types
+            var accessClaims = new List<Claim>
+            {
+                new(JwtRegisteredClaimNames.Sub, claims[JwtRegisteredClaimNames.Sub]),
+                new(JwtRegisteredClaimNames.Jti, jti),
+                new("token_type", "access"),
+                new("token_target", targetStr)
+            };
+
+            // Add specific claims based on token target
+            switch (target)
+            {
+                case TokenTarget.User:
+                    // No additional claims needed for user tokens
+                    break;
+
+                case TokenTarget.Account:
+                    if (claims.TryGetValue("user_id", out var userId))
+                    {
+                        accessClaims.Add(new Claim("user_id", userId));
+                    }
+                    break;
+
+                case TokenTarget.Application:
+                    if (claims.TryGetValue("user_id", out userId))
+                    {
+                        accessClaims.Add(new Claim("user_id", userId));
+                    }
+                    if (claims.TryGetValue("account_id", out var accountId))
+                    {
+                        accessClaims.Add(new Claim("account_id", accountId));
+                    }
+                    break;
+            }
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(accessClaims),
+                Expires = DateTime.UtcNow.AddMinutes(15), // Access tokens have shorter lifetime
+                Issuer = _issuer,
+                Audience = _audience,
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature
+                )
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return ("SUCCESS", "Access token generated successfully", tokenHandler.WriteToken(token));
+        }
+        catch (Exception ex)
+        {
+            return ("ERROR", $"Failed to generate access token: {ex.Message}", null);
+        }
+    }
+
     public static bool ValidateToken(string token, out ClaimsPrincipal? claimsPrincipal)
     {
         if (!_isInitialized)
@@ -213,6 +306,26 @@ public static class JWT
         {
             claimsPrincipal = null;
             return false;
+        }
+    }
+
+    private static IDictionary<string, string>? GetTokenClaims(string token)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            if (!tokenHandler.CanReadToken(token))
+            {
+                return null;
+            }
+
+            var jwtToken = tokenHandler.ReadJwtToken(token);
+            var claims = jwtToken.Claims.ToDictionary(c => c.Type, c => c.Value);
+            return claims;
+        }
+        catch
+        {
+            return null;
         }
     }
 }
