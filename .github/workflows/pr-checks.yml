@@ -86,18 +86,66 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          
       - name: Restore Dependencies
         run: dotnet restore ${{ env.SOLUTION_FILE }}
-      - name: Check Package Dependencies
+        
+      - name: Check for Duplicate Packages
+        id: duplicate-check
+        continue-on-error: true
         run: |
           echo "Checking for duplicate packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package | grep -E "^   >" | sort | uniq -d || true
+          dotnet list ${{ env.SOLUTION_FILE }} package > package-list.txt
+          DUPLICATES=$(cat package-list.txt | grep -E "^   >" | sort | uniq -d)
+          if [ ! -z "$DUPLICATES" ]; then
+            echo "Found duplicate packages:"
+            echo "$DUPLICATES"
+            echo "duplicate_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "No duplicate packages found"
+            echo "duplicate_found=false" >> $GITHUB_OUTPUT
+          fi
           
-          echo "Checking package version consistency..."
-          dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive
+      - name: Check for Vulnerable Packages
+        id: vulnerability-check
+        run: |
+          echo "Checking for vulnerable packages..."
+          if dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive | grep -q "has the following vulnerable packages"; then
+            echo "Vulnerable packages found!"
+            exit 1
+          fi
           
+      - name: Check for Deprecated Packages
+        id: deprecated-check
+        continue-on-error: true
+        run: |
           echo "Checking for deprecated packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package --deprecated
+          DEPRECATED=$(dotnet list ${{ env.SOLUTION_FILE }} package --deprecated)
+          if echo "$DEPRECATED" | grep -q "has the following deprecated packages"; then
+            echo "::warning ::Deprecated packages found. Consider updating them."
+            echo "deprecated_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "No deprecated packages found"
+            echo "deprecated_found=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Package Analysis Summary
+        if: always()
+        run: |
+          echo "### Package Analysis Results 📦" >> $GITHUB_STEP_SUMMARY
+          echo "#### Duplicate Packages" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.duplicate-check.outputs.duplicate_found }}" == "true" ]; then
+            echo "⚠️ Duplicate packages found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No duplicate packages" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "#### Deprecated Packages" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.deprecated-check.outputs.deprecated_found }}" == "true" ]; then
+            echo "⚠️ Deprecated packages found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No deprecated packages" >> $GITHUB_STEP_SUMMARY
+          fi
 
   format-check:
     name: Check Code Format
