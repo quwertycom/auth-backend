@@ -115,7 +115,7 @@ public class Program
         {
             c.RouteTemplate = "api/docs/{documentName}/swagger.json";
         });
-        
+
         app.UseSwaggerUI(c =>
         {
             c.SwaggerEndpoint("/api/docs/v1/swagger.json", "qAuth API V1");
