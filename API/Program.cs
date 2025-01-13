@@ -44,6 +44,9 @@ public class Program
         // Initialize JWT helper
         JWT.Initialize(builder.Configuration, builder.Environment);
 
+        // Initialize Snowflake helper
+        Snowflake.Initialize(builder.Configuration, builder.Environment);
+
         // Configure database connection
         builder.Services.AddDbContext<AuthDbContext>(options =>
         {
