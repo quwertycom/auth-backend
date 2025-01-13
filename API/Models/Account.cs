@@ -38,5 +38,7 @@ public class Account
     [Required]
     public virtual ICollection<ApplicationAccount> AuthorizedApplications { get; set; } = new List<ApplicationAccount>();
 
+    [Required]
+    public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

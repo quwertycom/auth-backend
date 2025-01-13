@@ -20,7 +20,7 @@ public class ApplicationAccount
     public required long AccountId { get; set; }
 
     [Required]
-    public required virtual ICollection<ApplicationSession> Sessions { get; set; } = new List<ApplicationSession>();
+    public required virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
