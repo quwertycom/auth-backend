@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using DotNetEnv;
 using API.Data;
+using API.Common.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -36,7 +37,12 @@ public class Program
         // Add configuration sources
         builder.Configuration
             .SetBasePath(builder.Environment.ContentRootPath)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
+
+        // Initialize JWT helper
+        JWT.Initialize(builder.Configuration, builder.Environment);
 
         // Configure database connection
         builder.Services.AddDbContext<AuthDbContext>(options =>
