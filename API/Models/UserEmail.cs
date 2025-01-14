@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using API.Common.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
+using API.Common.Helpers;
 
 namespace API.Models;
 
@@ -8,7 +9,7 @@ public class UserEmail
 {
     [Key]
     [Column("user_email_id")]
-    public long UserEmailId { get; set; }
+    public long UserEmailId { get; set; } = Snowflake.Generate();
 
     [Required]
     [EmailAddress]

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.Common.Enums;
 using Microsoft.EntityFrameworkCore;
+using API.Common.Helpers;
 
 namespace API.Models;
 
@@ -10,7 +11,7 @@ public class Account
 {
     [Key]
     [Column("id")]
-    public long Id { get; set; }
+    public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
     public required virtual User User { get; set; }

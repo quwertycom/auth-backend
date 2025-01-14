@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using API.Common.Helpers;
 
 namespace API.Models;
 
@@ -7,7 +8,7 @@ public class VerificationSession
 {
     [Key]
     [Column("id")]
-    public required long Id { get; set; }
+    public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
     [Column("email")]

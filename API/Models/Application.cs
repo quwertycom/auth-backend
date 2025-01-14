@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.Common.Enums;
+using API.Common.Helpers;
 
 namespace API.Models;
 
@@ -8,7 +9,7 @@ public class Application
 {
     [Key]
     [Column("id")]
-    public long Id { get; set; }
+    public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
     [MaxLength(100)]
