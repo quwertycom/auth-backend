@@ -13,17 +13,23 @@ public static class Services
         InitializeHelpers(builder);
     }
 
-    private static void AddControllerServices(WebApplicationBuilder builder) {
-        try {
+    private static void AddControllerServices(WebApplicationBuilder builder)
+    {
+        try
+        {
             builder.Services.AddScoped<IAuthService, AuthService>();
             // add other services in the future
-        } catch {
+        }
+        catch
+        {
             throw new Exception("Failed to add controller services");
         }
     }
 
-    private static void AddDbContext(WebApplicationBuilder builder) {
-        try {
+    private static void AddDbContext(WebApplicationBuilder builder)
+    {
+        try
+        {
             builder.Services.AddDbContext<AuthDbContext>(options =>
             {
                 var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
@@ -45,13 +51,17 @@ public static class Services
                     npgsqlOptions.EnableRetryOnFailure(3);
                 });
             });
-        } catch {
+        }
+        catch
+        {
             throw new Exception("Failed to add db context");
         }
     }
 
-    private static void InitializeHelpers(WebApplicationBuilder builder) {
-        try {
+    private static void InitializeHelpers(WebApplicationBuilder builder)
+    {
+        try
+        {
             // Initialize JWT helper
             JWT.Initialize(builder.Configuration, builder.Environment);
 
@@ -60,7 +70,9 @@ public static class Services
 
             // Initialize PasswordHasher helper
             PasswordHasher.Initialize(builder.Configuration, builder.Environment);
-        } catch {
+        }
+        catch
+        {
             throw new Exception("Failed to initialize helpers");
         }
     }
