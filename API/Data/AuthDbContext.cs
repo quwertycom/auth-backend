@@ -61,7 +61,7 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Custom column types and names
-            entity.Property(u => u.Username).HasColumnType("varchar(50)").HasColumnName("login_name");
+            entity.Property(u => u.Username).HasColumnType("varchar(50)").HasColumnName("username");
             entity.Property(u => u.State).HasConversion<string>().HasMaxLength(20).HasColumnName("state");
             entity.Property(u => u.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(u => u.LastLoginAt).HasColumnType("timestamp").HasColumnName("last_login_at");
@@ -82,11 +82,21 @@ public class AuthDbContext : DbContext
             // Many-to-many relationships
             entity.HasMany(a => a.AuthorizedDevelopers)
                 .WithMany(d => d.AuthorizedAccounts)
-                .UsingEntity(j => j.ToTable("account_developer_authorizations"));
+                .UsingEntity(j =>
+                {
+                    j.ToTable("account_developer_authorizations");
+                    j.Property("AuthorizedAccountsId").HasColumnName("authorized_account_id");
+                    j.Property("AuthorizedDevelopersId").HasColumnName("authorized_developer_id");
+                });
 
             entity.HasMany(a => a.Roles)
                 .WithMany(r => r.Members)
-                .UsingEntity(j => j.ToTable("account_organization_roles"));
+                .UsingEntity(j =>
+                {
+                    j.ToTable("account_organization_roles");
+                    j.Property("MembersId").HasColumnName("member_id");
+                    j.Property("RolesId").HasColumnName("role_id");
+                });
 
             // Custom columns
             entity.Property(a => a.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
