@@ -11,6 +11,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        // Enable legacy timestamp behavior for Npgsql
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         var builder = WebApplication.CreateBuilder(args);
 
         // Configure Kestrel
