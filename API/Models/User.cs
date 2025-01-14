@@ -45,6 +45,11 @@ public class User
     public required string PasswordSalt { get; set; }
 
     [Required]
+    public required DateTime BirthDate { get; set; }
+
+    [Required]
+    public UserGender Gender { get; set; }
+    [Required]
     public UserState State { get; set; } = UserState.Active;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
