@@ -19,6 +19,7 @@ public class AuthService : IAuthService
 
     public async Task<(string status, string message, string accessToken, string refreshToken)> RegisterUserAsync(string email, string password)
     {
+        await Task.Delay(1000);
         return ("", "", "", "");
     }
 }
