@@ -41,37 +41,8 @@ public class Program
             .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
 
-        // Initialize JWT helper
-        JWT.Initialize(builder.Configuration, builder.Environment);
-
-        // Initialize Snowflake helper
-        Snowflake.Initialize(builder.Configuration, builder.Environment);
-
-        // Initialize PasswordHasher helper
-        PasswordHasher.Initialize(builder.Configuration, builder.Environment);
-
-        // Configure database connection
-        builder.Services.AddDbContext<AuthDbContext>(options =>
-        {
-            var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
-            var host = isRunningInDocker ? "db" : "localhost";
-
-            var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
-            {
-                Host = host,
-                Database = builder.Configuration["POSTGRES_DB"],
-                Username = builder.Configuration["POSTGRES_USER"],
-                Password = builder.Configuration["POSTGRES_PASSWORD"],
-                Pooling = true,
-                MinPoolSize = 5,
-                MaxPoolSize = 100
-            };
-
-            options.UseNpgsql(connectionStringBuilder.ConnectionString, npgsqlOptions =>
-            {
-                npgsqlOptions.EnableRetryOnFailure(3);
-            });
-        });
+        // Initialize services via Services helper
+        Services.Initialize(builder);
 
         // Add services to the container
         builder.Services.AddControllers()
