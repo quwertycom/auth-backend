@@ -21,5 +21,8 @@ public class UserEmail
     public required User User { get; set; }
 
     [Required]
+    public required bool IsPrimary { get; set; } = false;
+
+    [Required]
     public long UserId { get; set; }
 }
