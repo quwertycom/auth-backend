@@ -3,6 +3,7 @@ using System;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API.Data.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250114120112_UpdateModelColumnNamesToUnderscoreType")]
+    partial class UpdateModelColumnNamesToUnderscoreType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -368,8 +371,7 @@ namespace API.Data.Migrations
                         .HasColumnName("account_id");
 
                     b.Property<long?>("ApplicationAccountId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("application_account_id");
+                        .HasColumnType("bigint");
 
                     b.Property<long?>("ApplicationId")
                         .HasColumnType("bigint")
@@ -499,8 +501,7 @@ namespace API.Data.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
 
                     b.Property<DateTime>("BirthDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("birth_date");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -515,8 +516,7 @@ namespace API.Data.Migrations
                         .HasColumnName("first_name");
 
                     b.Property<int>("Gender")
-                        .HasColumnType("integer")
-                        .HasColumnName("gender");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("LastLoginAt")
                         .HasColumnType("timestamp")
@@ -531,19 +531,16 @@ namespace API.Data.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("password_hash");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("PasswordSalt")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("password_salt");
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("phone_number");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -602,8 +599,7 @@ namespace API.Data.Migrations
                         .HasColumnName("state");
 
                     b.Property<long>("UserId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("user_id");
+                        .HasColumnType("bigint");
 
                     b.HasKey("UserEmailId");
 
@@ -666,12 +662,10 @@ namespace API.Data.Migrations
             modelBuilder.Entity("AccountDeveloper", b =>
                 {
                     b.Property<long>("AuthorizedAccountsId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("authorized_account_id");
+                        .HasColumnType("bigint");
 
                     b.Property<long>("AuthorizedDevelopersId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("authorized_developer_id");
+                        .HasColumnType("bigint");
 
                     b.HasKey("AuthorizedAccountsId", "AuthorizedDevelopersId");
 
@@ -683,12 +677,10 @@ namespace API.Data.Migrations
             modelBuilder.Entity("AccountOrganizationRole", b =>
                 {
                     b.Property<long>("MembersId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("member_id");
+                        .HasColumnType("bigint");
 
                     b.Property<long>("RolesId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("role_id");
+                        .HasColumnType("bigint");
 
                     b.HasKey("MembersId", "RolesId");
 
