@@ -5,7 +5,7 @@ namespace API.Service;
 
 public interface IAuthService
 {
-    Task<(string status, string message, string accessToken, string refreshToken)> RegisterUserAsync(string email, string password);
+    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(string email, string password);
 }
 
 public class AuthService : IAuthService
@@ -17,9 +17,9 @@ public class AuthService : IAuthService
         _dbContext = dbContext;
     }
 
-    public async Task<(string status, string message, string accessToken, string refreshToken)> RegisterUserAsync(string email, string password)
+    public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(string email, string password)
     {
         await Task.Delay(1000);
-        return ("", "", "", "");
+        return (true, "success", "User registered successfully", 1);
     }
 }

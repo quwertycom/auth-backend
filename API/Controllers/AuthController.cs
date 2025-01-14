@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using API.Service;
+using API.Contracts.Responses.Auth;
+using API.Contracts.Responses.Common;
+using API.Contracts.Requests.Auth;
 
 namespace API.Controllers;
 
@@ -16,9 +19,19 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> RegisterUserAsync(string email, string password)
+    [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RegisterUserAsync(RegisterRequest request)
     {
-        return Ok(await _authService.RegisterUserAsync(email, password));
+        var response = await _authService.RegisterUserAsync(request.Email, request.Password);
+
+        if (response.isSuccess)
+        {
+            if (response.status == "SUCCESS" && response.verificationSessionID != null) {
+                return Ok(new RegisterResponse { Status = response.status, Message = response.message, VerificationSessionID = response.verificationSessionID ?? 0 });
+            }
+        }
+        return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
     }
 }
