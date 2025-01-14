@@ -27,13 +27,10 @@ public class User
     public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
 
     [Required]
-    public virtual ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
+    public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 
     [Required]
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-
-    [Required]
-    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 
     [Phone]
     [MaxLength(20)]

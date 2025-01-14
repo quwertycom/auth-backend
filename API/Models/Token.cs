@@ -18,26 +18,28 @@ public class Token
     public required TokenTarget Target { get; set; }
 
     [Required]
+    public required Session Session { get; set; }
+
+    [Required]
+    public required long SessionId { get; set; }
+
+    [Required]
     public required User User { get; set; }
 
     [Required]
     public required long UserId { get; set; }
 
-    // Optional relationships based on TokenTarget
-    public ApplicationAccount? ApplicationAccount { get; set; }
-    public long? ApplicationAccountId { get; set; }
-
     public Account? Account { get; set; }
+
     public long? AccountId { get; set; }
 
-    public UserSession? UserSession { get; set; }
-    public long? UserSessionId { get; set; }
+    public ApplicationAccount? ApplicationAccount { get; set; }
 
-    public AccountSession? AccountSession { get; set; }
-    public long? AccountSessionId { get; set; }
+    public long? ApplicationAccountId { get; set; }
 
-    public ApplicationSession? ApplicationSession { get; set; }
-    public long? ApplicationSessionId { get; set; }
+    public Application? Application { get; set; }
+
+    public long? ApplicationId { get; set; }
 
     [Required]
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;

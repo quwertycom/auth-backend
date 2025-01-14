@@ -11,11 +11,10 @@ public class AuthDbContext : DbContext
     // User related
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<UserEmail> UserEmails { get; set; } = null!;
-    public DbSet<UserSession> UserSessions { get; set; } = null!;
+    public DbSet<Session> Sessions { get; set; } = null!;
 
     // Account related
     public DbSet<Account> Accounts { get; set; } = null!;
-    public DbSet<AccountSession> AccountSessions { get; set; } = null!;
 
     // Organization related
     public DbSet<Organization> Organizations { get; set; } = null!;
@@ -25,14 +24,11 @@ public class AuthDbContext : DbContext
     public DbSet<Developer> Developers { get; set; } = null!;
     public DbSet<Application> Applications { get; set; } = null!;
     public DbSet<ApplicationAccount> ApplicationAccounts { get; set; } = null!;
-    public DbSet<ApplicationSession> ApplicationSessions { get; set; } = null!;
 
     // Token
     public DbSet<Token> Tokens { get; set; } = null!;
 
-    // Audit and Monitoring
-    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
-    public DbSet<ApiKey> ApiKeys { get; set; } = null!;
+    // Notifications
     public DbSet<Notification> Notifications { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -155,27 +151,6 @@ public class AuthDbContext : DbContext
             entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
-        // ApiKey configurations
-        modelBuilder.Entity<ApiKey>(entity =>
-        {
-            entity.ToTable("api_keys");
-
-            entity.HasIndex(k => k.ApplicationId);
-            entity.HasIndex(k => k.Status);
-            entity.HasIndex(k => k.ExpiresAt);
-
-            // Application relationship
-            entity.HasOne(k => k.Application)
-                .WithMany(a => a.ApiKeys)
-                .HasForeignKey(k => k.ApplicationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.Property(k => k.Status).HasConversion<string>().HasMaxLength(20);
-            entity.Property(k => k.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(k => k.LastUsedAt).HasColumnType("timestamp");
-            entity.Property(k => k.ExpiresAt).HasColumnType("timestamp");
-        });
-
         // Token configurations
         modelBuilder.Entity<Token>(entity =>
         {
@@ -207,40 +182,25 @@ public class AuthDbContext : DbContext
         });
 
         // Session configurations
-        modelBuilder.Entity<UserSession>(entity =>
+        modelBuilder.Entity<Session>(entity =>
         {
-            entity.ToTable("user_sessions");
+            entity.ToTable("sessions");
 
+            // Indexes
             entity.HasIndex(s => s.UserId);
+            entity.HasIndex(s => new { s.Target, s.UserId });
+            entity.HasIndex(s => new { s.AccountId, s.ApplicationId });
+
+            // Custom columns
+            entity.Property(s => s.Target).HasConversion<string>().HasMaxLength(20);
             entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(s => s.LastUsedAt).HasColumnType("timestamp");
-        });
 
-        modelBuilder.Entity<AccountSession>(entity =>
-        {
-            entity.ToTable("account_sessions");
-
-            entity.HasIndex(s => new { s.UserId, s.AccountId });
-            entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(s => s.LastUsedAt).HasColumnType("timestamp");
-        });
-
-        modelBuilder.Entity<ApplicationSession>(entity =>
-        {
-            entity.ToTable("application_sessions");
-
-            entity.HasIndex(s => new { s.UserId, s.AccountId, s.ApplicationId });
-            entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
-        });
-
-        // AuditLog configurations
-        modelBuilder.Entity<AuditLog>(entity =>
-        {
-            entity.ToTable("audit_logs");
-
-            entity.HasIndex(a => new { a.EntityName, a.EntityId });
-            entity.HasIndex(a => a.UserId);
-            entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            // Configure navigation properties
+            entity.Navigation(s => s.User).AutoInclude();
+            entity.Navigation(s => s.Account).AutoInclude();
+            entity.Navigation(s => s.Application).AutoInclude();
+            entity.Navigation(s => s.Tokens).AutoInclude();
         });
 
         // Notification configurations
@@ -280,6 +240,7 @@ public class AuthDbContext : DbContext
             entity.ToTable("user_emails");
 
             entity.HasIndex(ue => ue.UserId);
+            entity.HasIndex(ue => ue.Email).IsUnique();
         });
     }
 }

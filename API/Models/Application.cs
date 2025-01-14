@@ -39,10 +39,7 @@ public class Application
     public virtual ICollection<ApplicationAccount> Accounts { get; set; } = new List<ApplicationAccount>();
 
     [Required]
-    public virtual ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
-
-    [Required]
-    public virtual ICollection<ApplicationSession> Sessions { get; set; } = new List<ApplicationSession>();
+    public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

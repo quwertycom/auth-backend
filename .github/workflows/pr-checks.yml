@@ -86,19 +86,127 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
+          
       - name: Restore Dependencies
         run: dotnet restore ${{ env.SOLUTION_FILE }}
-      - name: Check Package Dependencies
+        
+      - name: Check for Duplicate Packages
+        id: duplicate-check
         run: |
           echo "Checking for duplicate packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package > packages.txt
-          cat packages.txt | grep '>' | sort | uniq -d || true
+          # Create a temporary file for the full package list
+          TEMP_FILE=$(mktemp)
           
-          echo "Checking package version consistency..."
-          dotnet list ${{ env.SOLUTION_FILE }} package --vulnerable --include-transitive
+          # Use tee to both display and save output
+          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package | tee "$TEMP_FILE"; then
+            echo "::error::Failed to list packages"
+            rm "$TEMP_FILE"
+            exit 1
+          fi
           
+          # Find duplicates but exclude common test packages
+          echo "Analyzing package references..."
+          DUPLICATES=$(grep -E "^   >" "$TEMP_FILE" | \
+            grep -v -E "FluentAssertions|Microsoft.AspNetCore.Mvc.Testing|Microsoft.NET.Test.Sdk|coverlet.collector|xunit|NSubstitute|Moq|System.Net.Http.Json|System.Text.Json" | \
+            sort | uniq -d)
+          
+          if [ ! -z "$DUPLICATES" ]; then
+            {
+              echo "::error::Found problematic duplicate packages:"
+              echo "The following packages are duplicated with different versions or in non-test projects:"
+              echo "$DUPLICATES"
+              echo -e "\nPackages found in these projects:"
+              
+              while IFS= read -r dup; do
+                echo -e "\nPackage: $dup"
+                # Find project sections containing this package
+                sed -n '/Project/,/^$/p' "$TEMP_FILE" | grep -B1 -A1 "$(echo "$dup" | sed 's/[]\[\^\$\.\*\/]/\\&/g')" || true
+              done <<< "$DUPLICATES"
+            } 2>&1
+            rm "$TEMP_FILE"
+            exit 1
+          fi
+          
+          echo "ℹ️ Note: Common test packages are allowed to be duplicated across test projects:"
+          echo "- FluentAssertions"
+          echo "- Microsoft.AspNetCore.Mvc.Testing"
+          echo "- Microsoft.NET.Test.Sdk"
+          echo "- coverlet.collector"
+          echo "- xunit packages"
+          echo "- Test framework packages (NSubstitute, Moq)"
+          echo "- System.Net.Http.Json"
+          echo "- System.Text.Json"
+          echo "✅ No problematic duplicate packages found"
+          rm "$TEMP_FILE"
+          
+      - name: Check for Vulnerable Packages
+        id: vulnerability-check
+        run: |
+          echo "Checking for vulnerable packages..."
+          # Create a temporary file for vulnerability check
+          TEMP_FILE=$(mktemp)
+          
+          # Use tee to both display and save output
+          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package --vulnerable --include-transitive | tee "$TEMP_FILE"; then
+            echo "::error::Failed to check for vulnerabilities"
+            rm "$TEMP_FILE"
+            exit 1
+          fi
+          
+          if grep -q "has the following vulnerable packages" "$TEMP_FILE"; then
+            {
+              echo "::error::Vulnerable packages found:"
+              echo "Details of vulnerable packages:"
+              sed -n '/has the following vulnerable packages/,/^[[:space:]]*$/p' "$TEMP_FILE"
+            } 2>&1
+            rm "$TEMP_FILE"
+            exit 1
+          fi
+          rm "$TEMP_FILE"
+          echo "✅ No vulnerable packages found"
+          
+      - name: Check for Deprecated Packages
+        id: deprecated-check
+        run: |
           echo "Checking for deprecated packages..."
-          dotnet list ${{ env.SOLUTION_FILE }} package --deprecated
+          # Create a temporary file for deprecated check
+          TEMP_FILE=$(mktemp)
+          
+          # Use tee to both display and save output
+          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package --deprecated | tee "$TEMP_FILE"; then
+            echo "::error::Failed to check for deprecated packages"
+            rm "$TEMP_FILE"
+            exit 1
+          fi
+          
+          if grep -q "has the following deprecated packages" "$TEMP_FILE"; then
+            {
+              echo "::error::Deprecated packages found:"
+              echo "Details of deprecated packages:"
+              sed -n '/has the following deprecated packages/,/^[[:space:]]*$/p' "$TEMP_FILE"
+            } 2>&1
+            rm "$TEMP_FILE"
+            exit 1
+          fi
+          rm "$TEMP_FILE"
+          echo "✅ No deprecated packages found"
+          
+      - name: Package Analysis Summary
+        if: always()
+        run: |
+          echo "### Package Analysis Results 📦" >> $GITHUB_STEP_SUMMARY
+          echo "#### Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "* Duplicate Packages: ${{ steps.duplicate-check.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Vulnerable Packages: ${{ steps.vulnerability-check.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Deprecated Packages: ${{ steps.deprecated-check.outcome }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.duplicate-check.outcome }}" != "success" ] || \
+             [ "${{ steps.vulnerability-check.outcome }}" != "success" ] || \
+             [ "${{ steps.deprecated-check.outcome }}" != "success" ]; then
+            echo "### ❌ Package checks failed. See job logs for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ All package checks passed!" >> $GITHUB_STEP_SUMMARY
+          fi
 
   format-check:
     name: Check Code Format

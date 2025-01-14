@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using DotNetEnv;
 using API.Data;
+using API.Common.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -21,7 +22,11 @@ public class Program
             {
                 listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1;
             });
+            serverOptions.ListenAnyIP(8000); // Listen on port 8000
         });
+
+        // Set URLs
+        builder.WebHost.UseUrls("http://0.0.0.0:8000");
 
         // Load .env file before configuration setup
         if (File.Exists("../.env"))
@@ -32,7 +37,18 @@ public class Program
         // Add configuration sources
         builder.Configuration
             .SetBasePath(builder.Environment.ContentRootPath)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
+
+        // Initialize JWT helper
+        JWT.Initialize(builder.Configuration, builder.Environment);
+
+        // Initialize Snowflake helper
+        Snowflake.Initialize(builder.Configuration, builder.Environment);
+
+        // Initialize PasswordHasher helper
+        PasswordHasher.Initialize(builder.Configuration, builder.Environment);
 
         // Configure database connection
         builder.Services.AddDbContext<AuthDbContext>(options =>
@@ -104,34 +120,35 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "qAuth API V1");
-                c.RoutePrefix = "api/docs";
-            });
         }
-        else
+
+        // Always enable Swagger in development and Docker
+        app.UseSwagger(c =>
         {
-            // Add error handling for production
-            app.UseExceptionHandler();
-            app.UseHsts();
-            // Enable HTTPS Redirection only in production
-            app.UseHttpsRedirection();
-        }
+            c.RouteTemplate = "api/docs/{documentName}/swagger.json";
+        });
+
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/api/docs/v1/swagger.json", "qAuth API V1");
+            c.RoutePrefix = "api/docs";
+        });
 
         // Use CORS before routing
         app.UseCors();
 
-        // Remove the HTTPS redirection from here since we only want it in production
-        // app.UseHttpsRedirection();
-
-        // Add status code pages
-        app.UseStatusCodePages();
-
-        // Use routing and authorization middleware
+        // Add routing and other middleware
         app.UseRouting();
+
+        // Add authentication middleware before authorization
+        app.UseAuthentication();
         app.UseAuthorization();
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHsts();
+            app.UseHttpsRedirection();
+        }
 
         // Map controllers and health checks
         app.MapControllers();
