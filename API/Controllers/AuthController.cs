@@ -30,6 +30,8 @@ public class AuthController : ControllerBase
         {
             if (response.status == "SUCCESS" && response.verificationSessionID != null) {
                 return Ok(new RegisterResponse { Status = response.status, Message = response.message, VerificationSessionID = response.verificationSessionID ?? 0 });
+            } else {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
             }
         }
         return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
