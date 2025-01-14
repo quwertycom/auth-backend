@@ -24,7 +24,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterUserAsync(RegisterRequest request)
     {
-        var response = await _authService.RegisterUserAsync(request.Email, request.Password);
+        var response = await _authService.RegisterUserAsync(request);
 
         if (response.isSuccess)
         {
