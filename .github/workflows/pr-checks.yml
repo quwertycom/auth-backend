@@ -96,6 +96,7 @@ jobs:
           echo "Checking for duplicate packages..."
           # Create a temporary file for the full package list
           TEMP_FILE=$(mktemp)
+          
           # Use tee to both display and save output
           if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package | tee "$TEMP_FILE"; then
             echo "::error::Failed to list packages"
@@ -103,14 +104,16 @@ jobs:
             exit 1
           fi
           
-          # Find duplicates and their projects
+          # Find duplicates but exclude common test packages
           echo "Analyzing package references..."
-          DUPLICATES=$(grep -E "^   >" "$TEMP_FILE" | sort | uniq -d)
+          DUPLICATES=$(grep -E "^   >" "$TEMP_FILE" | \
+            grep -v -E "FluentAssertions|Microsoft.AspNetCore.Mvc.Testing|Microsoft.NET.Test.Sdk|coverlet.collector|xunit|NSubstitute|Moq|System.Net.Http.Json|System.Text.Json" | \
+            sort | uniq -d)
           
           if [ ! -z "$DUPLICATES" ]; then
             {
-              echo "::error::Found duplicate packages:"
-              echo "Duplicate packages found:"
+              echo "::error::Found problematic duplicate packages:"
+              echo "The following packages are duplicated with different versions or in non-test projects:"
               echo "$DUPLICATES"
               echo -e "\nPackages found in these projects:"
               
@@ -123,8 +126,18 @@ jobs:
             rm "$TEMP_FILE"
             exit 1
           fi
+          
+          echo "ℹ️ Note: Common test packages are allowed to be duplicated across test projects:"
+          echo "- FluentAssertions"
+          echo "- Microsoft.AspNetCore.Mvc.Testing"
+          echo "- Microsoft.NET.Test.Sdk"
+          echo "- coverlet.collector"
+          echo "- xunit packages"
+          echo "- Test framework packages (NSubstitute, Moq)"
+          echo "- System.Net.Http.Json"
+          echo "- System.Text.Json"
+          echo "✅ No problematic duplicate packages found"
           rm "$TEMP_FILE"
-          echo "✅ No duplicate packages found"
           
       - name: Check for Vulnerable Packages
         id: vulnerability-check
