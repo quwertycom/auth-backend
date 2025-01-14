@@ -31,6 +31,9 @@ public class AuthDbContext : DbContext
     // Notifications
     public DbSet<Notification> Notifications { get; set; } = null!;
 
+    // Verification related
+    public DbSet<VerificationSession> VerificationSessions { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -241,6 +244,19 @@ public class AuthDbContext : DbContext
 
             entity.HasIndex(ue => ue.UserId);
             entity.HasIndex(ue => ue.Email).IsUnique();
+        });
+
+        // VerificationSession configurations
+        modelBuilder.Entity<VerificationSession>(entity =>
+        {
+            entity.ToTable("verification_sessions");
+
+            entity.HasIndex(vs => vs.EmailId);
+            entity.HasIndex(vs => vs.Code).IsUnique();
+
+            // Custom columns
+            entity.Property(vs => vs.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(vs => vs.IsUsed).HasDefaultValue(false);
         });
     }
 }
