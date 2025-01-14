@@ -55,6 +55,7 @@ public static class PasswordHasher
 
         // Generate a random salt
         byte[] salt = RandomNumberGenerator.GetBytes(_saltSize);
+        string saltBase64 = Convert.ToBase64String(salt);
 
         // Hash the password with the salt
         byte[] hash = Rfc2898DeriveBytes.Pbkdf2(
@@ -65,7 +66,7 @@ public static class PasswordHasher
             _keySize
         );
 
-        return (Convert.ToBase64String(hash), Convert.ToBase64String(salt));
+        return (Convert.ToBase64String(hash), saltBase64);
     }
 
     public static bool Compare(string password, string storedHash, string storedSalt)
