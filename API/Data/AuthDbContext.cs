@@ -1,6 +1,7 @@
 using API.Models;
 using Microsoft.EntityFrameworkCore;
 using API.Common.Enums;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace API.Data;
 
@@ -37,6 +38,22 @@ public class AuthDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
+            v => v.ToUniversalTime(), // Convert to UTC before saving
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // Ensure UTC when retrieving
+
+        // Apply the converter to all DateTime properties
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(dateTimeConverter);
+                }
+            }
+        }
 
         // User configurations
         modelBuilder.Entity<User>(entity =>
