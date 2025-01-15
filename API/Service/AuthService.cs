@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using API.Common.Enums;
 using API.Common.Helpers;
 using API.Contracts.Requests.Auth;
@@ -24,6 +25,22 @@ public class AuthService : IAuthService
     public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
     {
         try {
+            var emailRegex = new Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+            var usernameRegex = new Regex(@"^[a-zA-Z0-9_-]{3,50}$");
+            var phoneRegex = new Regex(@"^\+?\d{1,4}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,4}$");
+
+            if (!emailRegex.IsMatch(request.Email)) {
+                return (false, "INVALID_EMAIL", "Invalid email format.", null);
+            }
+
+            if (!usernameRegex.IsMatch(request.Username)) {
+                return (false, "INVALID_USERNAME", "Invalid username format.", null);
+            }
+
+            if (request.PhoneNumber != null && !phoneRegex.IsMatch(request.PhoneNumber)) {
+                return (false, "INVALID_PHONE_NUMBER", "Invalid phone number format.", null);
+            }
+
             var usernameExists = await _dbContext.Users.AnyAsync(u => u.Username == request.Username);
             if (usernameExists) {
                 return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
