@@ -48,3 +48,4 @@ node_modules/
 migration.sql
 packages.txt
 package-list.txt
+API/appsettings.Development.json
