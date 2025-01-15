@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
+
 namespace API.Common.Helpers;
 
 public static class Snowflake
@@ -25,22 +31,14 @@ public static class Snowflake
     private const long MaxDatacenterId = -1L ^ (-1L << DatacenterIdBits);
     private const long SequenceMask = -1L ^ (-1L << SequenceBits);
 
-    public static void Initialize(IConfiguration configuration, IWebHostEnvironment environment)
+    public static void Initialize(IConfiguration configuration)
     {
         if (_isInitialized) return;
 
-        if (environment.IsDevelopment())
-        {
-            _datacenterId = long.Parse(configuration["Snowflake:DatacenterId"] ?? "1");
-            _workerId = long.Parse(configuration["Snowflake:WorkerId"] ?? "1");
-            _epoch = DateTimeOffset.Parse(configuration["Snowflake:Epoch"] ?? "2024-01-01T00:00:00Z");
-        }
-        else
-        {
-            _datacenterId = long.Parse(Environment.GetEnvironmentVariable("SNOWFLAKE_DATACENTER_ID") ?? "1");
-            _workerId = long.Parse(Environment.GetEnvironmentVariable("SNOWFLAKE_WORKER_ID") ?? "1");
-            _epoch = DateTimeOffset.Parse(Environment.GetEnvironmentVariable("SNOWFLAKE_EPOCH") ?? "2024-01-01T00:00:00Z");
-        }
+        // Load configuration values directly
+        _datacenterId = long.Parse(configuration["Snowflake:DatacenterId"] ?? "1");
+        _workerId = long.Parse(configuration["Snowflake:WorkerId"] ?? "1");
+        _epoch = DateTimeOffset.Parse(configuration["Snowflake:Epoch"] ?? "2024-01-01T00:00:00Z");
 
         // Validate parameters
         if (_datacenterId > MaxDatacenterId || _datacenterId < 0)

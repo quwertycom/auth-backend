@@ -10,22 +10,14 @@ public static class PasswordHasher
     private static int _saltSize;
     private static int _keySize;
 
-    public static void Initialize(IConfiguration configuration, IWebHostEnvironment environment)
+    public static void Initialize(IConfiguration configuration)
     {
         if (_isInitialized) return;
 
-        if (environment.IsDevelopment())
-        {
-            _iterations = int.Parse(configuration["PasswordHasher:Iterations"] ?? "10000");
-            _saltSize = int.Parse(configuration["PasswordHasher:SaltSize"] ?? "16");
-            _keySize = int.Parse(configuration["PasswordHasher:KeySize"] ?? "32");
-        }
-        else
-        {
-            _iterations = int.Parse(Environment.GetEnvironmentVariable("PASSWORD_HASHER_ITERATIONS") ?? "10000");
-            _saltSize = int.Parse(Environment.GetEnvironmentVariable("PASSWORD_HASHER_SALT_SIZE") ?? "16");
-            _keySize = int.Parse(Environment.GetEnvironmentVariable("PASSWORD_HASHER_KEY_SIZE") ?? "32");
-        }
+        // Load configuration values directly
+        _iterations = int.Parse(configuration["PasswordHasher:Iterations"] ?? "10000");
+        _saltSize = int.Parse(configuration["PasswordHasher:SaltSize"] ?? "16");
+        _keySize = int.Parse(configuration["PasswordHasher:KeySize"] ?? "32");
 
         // Validate parameters
         if (_iterations < 10000)

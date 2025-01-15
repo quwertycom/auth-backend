@@ -1,6 +1,7 @@
 using API.Data;
 using API.Service;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace API.Common.Helpers;
 
@@ -10,7 +11,7 @@ public static class Services
     {
         AddDbContext(builder);
         AddControllerServices(builder);
-        InitializeHelpers(builder);
+        InitializeHelpers(builder.Configuration);
     }
 
     private static void AddControllerServices(WebApplicationBuilder builder)
@@ -58,18 +59,20 @@ public static class Services
         }
     }
 
-    private static void InitializeHelpers(WebApplicationBuilder builder)
+    private static void InitializeHelpers(IConfiguration configuration)
     {
         try
         {
             // Initialize JWT helper
-            JWT.Initialize(builder.Configuration, builder.Environment);
-
-            // Initialize Snowflake helper
-            Snowflake.Initialize(builder.Configuration, builder.Environment);
+            JWT.Initialize(configuration);
 
             // Initialize PasswordHasher helper
-            PasswordHasher.Initialize(builder.Configuration, builder.Environment);
+            PasswordHasher.Initialize(configuration);
+
+            // Initialize Snowflake helper
+            Snowflake.Initialize(configuration);
+
+            // Other helper initializations can go here
         }
         catch
         {
