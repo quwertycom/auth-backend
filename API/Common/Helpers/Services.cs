@@ -72,6 +72,9 @@ public static class Services
             // Initialize Snowflake helper
             Snowflake.Initialize(configuration);
 
+            // Initialize EmailSender helper
+            EmailSender.Initialize(configuration);
+
             // Other helper initializations can go here
         }
         catch

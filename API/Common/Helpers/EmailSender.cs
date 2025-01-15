@@ -10,38 +10,22 @@ public static class EmailSender
     private static string? _fromEmail;
     private static bool _isInitialized = false;
 
-    public static void Initialize(IConfiguration configuration, IWebHostEnvironment environment)
+    public static void Initialize(IConfiguration configuration)
     {
         if (_isInitialized) return;
 
-        if (environment.IsDevelopment())
+        // Load configuration values directly
+        _smtpClient = new SmtpClient
         {
-            _smtpClient = new SmtpClient
-            {
-                Host = configuration["Email:Host"] ?? throw new InvalidOperationException("Email:Host is not configured"),
-                Port = int.TryParse(configuration["Email:Port"], out var port) ? port : throw new InvalidOperationException("Email:Port is not a valid integer"),
-                EnableSsl = bool.TryParse(configuration["Email:EnableSsl"], out var enableSsl) ? enableSsl : throw new InvalidOperationException("Email:EnableSsl is not a valid boolean"),
-                Credentials = new NetworkCredential(
-                    configuration["Email:Username"],
-                    configuration["Email:Password"]
-                )
-            };
-            _fromEmail = configuration["Email:FromEmail"];
-        }
-        else
-        {
-            _smtpClient = new SmtpClient
-            {
-                Host = Environment.GetEnvironmentVariable("EMAIL_HOST") ?? throw new InvalidOperationException("EMAIL_HOST environment variable is not set"),
-                Port = int.TryParse(Environment.GetEnvironmentVariable("EMAIL_PORT"), out var port) ? port : throw new InvalidOperationException("EMAIL_PORT environment variable is not a valid integer"),
-                EnableSsl = bool.TryParse(Environment.GetEnvironmentVariable("EMAIL_ENABLE_SSL"), out var enableSsl) ? enableSsl : throw new InvalidOperationException("EMAIL_ENABLE_SSL environment variable is not a valid boolean"),
-                Credentials = new NetworkCredential(
-                    Environment.GetEnvironmentVariable("EMAIL_USERNAME"),
-                    Environment.GetEnvironmentVariable("EMAIL_PASSWORD")
-                )
-            };
-            _fromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM");
-        }
+            Host = configuration["Email:Host"] ?? throw new InvalidOperationException("Email:Host is not configured"),
+            Port = int.TryParse(configuration["Email:Port"], out var port) ? port : throw new InvalidOperationException("Email:Port is not a valid integer"),
+            EnableSsl = bool.TryParse(configuration["Email:EnableSsl"], out var enableSsl) ? enableSsl : throw new InvalidOperationException("Email:EnableSsl is not a valid boolean"),
+            Credentials = new NetworkCredential(
+                configuration["Email:Username"],
+                configuration["Email:Password"]
+            )
+        };
+        _fromEmail = configuration["Email:FromEmail"] ?? throw new InvalidOperationException("Email:FromEmail is not configured");
 
         _isInitialized = true;
     }
