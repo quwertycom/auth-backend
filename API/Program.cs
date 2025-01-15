@@ -14,7 +14,28 @@ public class Program
         // Enable legacy timestamp behavior for Npgsql
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+        // Load .env file before configuration setup
+        if (File.Exists("../.env"))
+        {
+            Env.Load("../.env");
+        }
+
+        IConfiguration configuration;
+
+        // Load configuration based on the environment
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+        {
+            configuration = ConfigManager.LoadProductionConfig();
+        }
+        else
+        {
+            configuration = ConfigManager.LoadDevelopmentConfig();
+        }
+
         var builder = WebApplication.CreateBuilder(args);
+
+        // Add the loaded configuration to the builder
+        builder.Configuration.AddConfiguration(configuration); // Use the configuration loaded from ConfigManager
 
         // Configure Kestrel
         builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -30,19 +51,6 @@ public class Program
 
         // Set URLs
         builder.WebHost.UseUrls("http://0.0.0.0:8000");
-
-        // Load .env file before configuration setup
-        if (File.Exists("../.env"))
-        {
-            Env.Load("../.env");
-        }
-
-        // Add configuration sources
-        builder.Configuration
-            .SetBasePath(builder.Environment.ContentRootPath)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables();
 
         // Initialize services via Services helper
         Services.Initialize(builder);
