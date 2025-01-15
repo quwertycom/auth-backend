@@ -232,6 +232,41 @@ jobs:
     name: API Health Check
     needs: build
     runs-on: ubuntu-latest
+    env:
+      # Database Configuration
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # JWT Configuration
+      JWT_SECRET: "your_test_jwt_secret_key_123"
+      JWT_ISSUER: "auth-backend-test"
+      JWT_AUDIENCE: "auth-backend-test"
+      # Password Hasher Configuration
+      PASSWORD_PEPPER: "your_test_pepper_key_123"
+      # Snowflake Configuration
+      SNOWFLAKE_INSTANCE_ID: "1"
+      SNOWFLAKE_EPOCH: "1704067200000"
+      # Email Configuration
+      SMTP_HOST: "smtp.test.com"
+      SMTP_PORT: "587"
+      SMTP_USERNAME: "test@test.com"
+      SMTP_PASSWORD: "test_password"
+      SMTP_FROM: "test@test.com"
+      SMTP_FROM_NAME: "Auth Backend Test"
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: auth_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
