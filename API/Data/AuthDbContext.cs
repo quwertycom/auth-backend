@@ -293,6 +293,12 @@ public class AuthDbContext : DbContext
             // Custom columns
             entity.Property(vs => vs.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(vs => vs.IsUsed).HasDefaultValue(false).HasColumnName("is_used");
+            entity.Property(vs => vs.UserId).HasColumnName("user_id").IsRequired(false);
+            entity.HasOne(vs => vs.User)
+                .WithMany()
+                .HasForeignKey(vs => vs.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
