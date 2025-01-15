@@ -62,6 +62,22 @@ jobs:
     name: Database Model Check
     needs: restore
     runs-on: ubuntu-latest
+    env:
+      ConnectionStrings__DefaultConnection: "Server=localhost;Database=auth_db;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True"
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          SA_PASSWORD: YourStrong@Passw0rd
+          ACCEPT_EULA: Y
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -Q 'SELECT 1' -b -1"
+          --health-interval 10s
+          --health-timeout 3s
+          --health-retries 10
+          --health-start-period 10s
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -77,6 +93,25 @@ jobs:
         run: |
           dotnet new tool-manifest
           dotnet tool install dotnet-ef
+      - name: Create Design-Time DbContext Factory
+        run: |
+          mkdir -p API/Data
+          cat << EOF > API/Data/DesignTimeDbContextFactory.cs
+          using Microsoft.EntityFrameworkCore;
+          using Microsoft.EntityFrameworkCore.Design;
+
+          namespace API.Data;
+
+          public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AuthDbContext>
+          {
+              public AuthDbContext CreateDbContext(string[] args)
+              {
+                  var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();
+                  optionsBuilder.UseSqlServer("Server=localhost;Database=auth_db;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True");
+                  return new AuthDbContext(optionsBuilder.Options);
+              }
+          }
+          EOF
       - name: Verify Database Context
         run: |
           echo "Verifying database context and models..."
