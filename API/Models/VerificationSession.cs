@@ -19,6 +19,14 @@ public class VerificationSession
     public long EmailId { get; set; }
 
     [Required]
+    [Column("user")]
+    public required User User { get; set; }
+
+    [Required]
+    [Column("user_id")]
+    public long? UserId { get; set; }
+
+    [Required]
     [Column("code")]
     public required string Code { get; set; }
 
