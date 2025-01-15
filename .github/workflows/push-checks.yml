@@ -238,21 +238,22 @@ jobs:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       # JWT Configuration
-      JWT_SECRET: "your_test_jwt_secret_key_123"
-      JWT_ISSUER: "auth-backend-test"
-      JWT_AUDIENCE: "auth-backend-test"
+      JWT__SecretKey: "your_test_jwt_secret_key_123_your_test_jwt_secret_key_123"
+      JWT__Issuer: "auth-backend-test"
+      JWT__Audience: "auth-backend-test"
       # Password Hasher Configuration
-      PASSWORD_PEPPER: "your_test_pepper_key_123"
+      PasswordHasher__Pepper: "your_test_pepper_key_123_your_test_pepper_key_123"
       # Snowflake Configuration
-      SNOWFLAKE_INSTANCE_ID: "1"
-      SNOWFLAKE_EPOCH: "1704067200000"
+      Snowflake__InstanceId: "1"
+      Snowflake__Epoch: "1704067200000"
       # Email Configuration
-      SMTP_HOST: "smtp.test.com"
-      SMTP_PORT: "587"
-      SMTP_USERNAME: "test@test.com"
-      SMTP_PASSWORD: "test_password"
-      SMTP_FROM: "test@test.com"
-      SMTP_FROM_NAME: "Auth Backend Test"
+      Email__Host: "smtp.test.com"
+      Email__Port: "587"
+      Email__Username: "test@test.com"
+      Email__Password: "test_password"
+      Email__FromAddress: "test@test.com"
+      Email__FromName: "Auth Backend Test"
+      Email__UseSsl: "true"
     services:
       postgres:
         image: postgres:16
