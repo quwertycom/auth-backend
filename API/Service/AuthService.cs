@@ -110,7 +110,11 @@ public class AuthService : IAuthService
     public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request)
     {
         try {
-            var verificationSession = await _dbContext.VerificationSessions.FirstOrDefaultAsync(vs => vs.Id == request.VerificationSessionID);
+            var verificationSession = await _dbContext.VerificationSessions
+                .Include(vs => vs.User)
+                .Include(vs => vs.Email)
+                .FirstOrDefaultAsync(vs => vs.Id == request.VerificationSessionID);
+
             if (verificationSession == null) {
                 return (false, "NOT_FOUND", "Verification session not found.", null);
             }
@@ -123,22 +127,26 @@ public class AuthService : IAuthService
                 return (false, "ALREADY_USED", "OTP already used.", null);
             }
 
-            if (verificationSession.CreatedAt.AddMinutes(30) < DateTime.UtcNow) {
+            if (verificationSession.CreatedAt.AddMinutes(verificationSession.ExpiryMinutes) < DateTime.UtcNow) {
                 return (false, "EXPIRED", "OTP expired.", null);
             }
 
-            var email = await _dbContext.UserEmails.FirstOrDefaultAsync(ue => ue.Email == request.Email);
-            
+            var email = await _dbContext.UserEmails
+                .Include(ue => ue.User)
+                .FirstOrDefaultAsync(ue => ue.Email == request.Email);
+
             if (email == null) {
                 return (false, "NOT_FOUND", "Email not found.", null);
             }
 
+            if (verificationSession.EmailId != email.UserEmailId) {
+                return (false, "INVALID_SESSION", "Invalid verification session for this email.", null);
+            }
+
             verificationSession.IsUsed = true;
-            await _dbContext.SaveChangesAsync();
-
-
             email.State = EmailState.Verified;
             email.IsPrimary = true;
+            
             await _dbContext.SaveChangesAsync();
 
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
