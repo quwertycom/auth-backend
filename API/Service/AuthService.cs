@@ -11,6 +11,7 @@ namespace API.Service;
 public interface IAuthService
 {
     Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
+    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
 }
 
 public class AuthService : IAuthService
@@ -88,6 +89,7 @@ public class AuthService : IAuthService
 
             var otpSession = new VerificationSession {
                 Email = email,
+                User = user,
                 Code = otp,
                 IsUsed = false,
             };
@@ -99,9 +101,48 @@ public class AuthService : IAuthService
 
             await EmailSender.SendOtpEmailAsync(email.Email, otp);
 
-            return (true, "SUCCESS", "User registered successfully", otpSession.Id);
-        } catch (Exception ex) {
-            Console.WriteLine(ex.Message);
+            return (true, "OTP_SENT", "8 Digits code has been sent to your email. Please verify your email and login.", otpSession.Id);
+        } catch {
+            return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
+        }
+    }
+
+    public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request)
+    {
+        try {
+            var verificationSession = await _dbContext.VerificationSessions.FirstOrDefaultAsync(vs => vs.Id == request.VerificationSessionID);
+            if (verificationSession == null) {
+                return (false, "NOT_FOUND", "Verification session not found.", null);
+            }
+
+            if (verificationSession.Code != request.OTP) {
+                return (false, "INVALID_OTP", "Invalid OTP.", null);
+            }
+
+            if (verificationSession.IsUsed) {
+                return (false, "ALREADY_USED", "OTP already used.", null);
+            }
+
+            if (verificationSession.CreatedAt.AddMinutes(30) < DateTime.UtcNow) {
+                return (false, "EXPIRED", "OTP expired.", null);
+            }
+
+            var email = await _dbContext.UserEmails.FirstOrDefaultAsync(ue => ue.Email == request.Email);
+            
+            if (email == null) {
+                return (false, "NOT_FOUND", "Email not found.", null);
+            }
+
+            verificationSession.IsUsed = true;
+            await _dbContext.SaveChangesAsync();
+
+
+            email.State = EmailState.Verified;
+            email.IsPrimary = true;
+            await _dbContext.SaveChangesAsync();
+
+            return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
+        } catch {
             return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
         }
     }
