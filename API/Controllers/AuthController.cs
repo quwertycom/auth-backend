@@ -28,9 +28,12 @@ public class AuthController : ControllerBase
 
         if (response.isSuccess)
         {
-            if (response.status == "OTP_SENT" && response.verificationSessionID != null) {
+            if (response.status == "OTP_SENT" && response.verificationSessionID != null)
+            {
                 return Ok(new RegisterResponse { Status = "SUCCESS", Message = "OTP has been sent to your email. Please verify your email and login.", VerificationSessionID = response.verificationSessionID.Value });
-            } else {
+            }
+            else
+            {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
             }
         }
@@ -45,14 +48,20 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> VerifyEmailAsync(VerifyEmailRequest request)
     {
         var response = await _authService.VerifyEmailAsync(request);
-        
-        if (response.isSuccess) {
-            if (response.status == "SUCCESS") {
+
+        if (response.isSuccess)
+        {
+            if (response.status == "SUCCESS")
+            {
                 return Ok(new VerifyEmailResponse { Status = response.status, Message = response.message, Email = request.Email });
-            } else {
+            }
+            else
+            {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
             }
-        } else {
+        }
+        else
+        {
             return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
         }
     }

@@ -33,12 +33,12 @@ public class Notification
     public required long UserId { get; set; }
 
     public Account? Account { get; set; }
-    
+
     [Column("account_id")]
     public long? AccountId { get; set; }
 
     public Application? Application { get; set; }
-    
+
     [Column("application_id")]
     public long? ApplicationId { get; set; }
 
