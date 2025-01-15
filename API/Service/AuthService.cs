@@ -24,9 +24,19 @@ public class AuthService : IAuthService
     public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
     {
         try {
-            var userExists = await _dbContext.Users.AnyAsync(u => u.Emails.Any(ue => ue.Email == request.Email && ue.State == EmailState.Verified) || u.Username == request.Username || u.PhoneNumber == request.PhoneNumber);
-            if (userExists) {
+            var usernameExists = await _dbContext.Users.AnyAsync(u => u.Username == request.Username);
+            if (usernameExists) {
+                return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
+            }
+
+            var emailExists = await _dbContext.UserEmails.AnyAsync(ue => ue.Email == request.Email && ue.State == EmailState.Verified);
+            if (emailExists) {
                 return (false, "EMAIL_TAKEN", "Email already exists, please try a different email.", null);
+            }
+            
+            var phoneNumberExists = request.PhoneNumber != null && await _dbContext.Users.AnyAsync(u => u.PhoneNumber == request.PhoneNumber);
+            if (phoneNumberExists) {
+                return (false, "PHONE_NUMBER_TAKEN", "Phone number already exists, please try a different phone number.", null);
             }
 
             if (request.Password.Length < 8) {
@@ -70,8 +80,11 @@ public class AuthService : IAuthService
             _dbContext.VerificationSessions.Add(otpSession);
             await _dbContext.SaveChangesAsync();
 
+            await EmailSender.SendOtpEmailAsync(email.Email, otp);
+
             return (true, "SUCCESS", "User registered successfully", otpSession.Id);
-        } catch {
+        } catch (Exception ex) {
+            Console.WriteLine(ex.Message);
             return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
         }
     }
