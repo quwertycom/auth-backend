@@ -63,23 +63,21 @@ jobs:
     needs: restore
     runs-on: ubuntu-latest
     env:
-      ConnectionStrings__DefaultConnection: "Server=localhost;Database=auth_db;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Host=localhost;Database=auth_db;Username=postgres;Password=postgres"
     services:
-      sql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
+      postgres:
+        image: postgres:16
         env:
-          ACCEPT_EULA: Y
-          SA_PASSWORD: YourStrong@Passw0rd
-          MSSQL_PID: Developer
+          POSTGRES_DB: auth_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports:
-          - 1433:1433
+          - 5432:5432
         options: >-
-          --health-cmd="/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q 'SELECT 1' -b -1"
+          --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          --health-start-period 20s
-          --memory 2048M
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -109,7 +107,7 @@ jobs:
               public AuthDbContext CreateDbContext(string[] args)
               {
                   var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();
-                  optionsBuilder.UseSqlServer("Server=localhost;Database=auth_db;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True");
+                  optionsBuilder.UseNpgsql("Host=localhost;Database=auth_db;Username=postgres;Password=postgres");
                   return new AuthDbContext(optionsBuilder.Options);
               }
           }
