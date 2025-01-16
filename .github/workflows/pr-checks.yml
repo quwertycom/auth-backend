@@ -621,15 +621,37 @@ jobs:
           dotnet new tool-manifest
           dotnet tool install dotnet-ef
           
+      - name: Create appsettings.json for EF Tools
+        run: |
+          cat > API/appsettings.json << EOF
+          {
+            "ConnectionStrings": {
+              "DefaultConnection": "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+            },
+            "JWT": {
+              "SecretKey": "${{ env.JWT_SECRET_KEY }}",
+              "Issuer": "${{ env.JWT_ISSUER }}",
+              "Audience": "${{ env.JWT_AUDIENCE }}"
+            },
+            "Email": {
+              "Host": "${{ env.EMAIL_HOST }}",
+              "Port": ${{ env.EMAIL_PORT }},
+              "EnableSsl": ${{ env.EMAIL_ENABLE_SSL }},
+              "Username": "${{ env.EMAIL_USERNAME }}",
+              "Password": "${{ env.EMAIL_PASSWORD }}",
+              "FromEmail": "${{ env.EMAIL_FROM }}"
+            }
+          }
+          EOF
+          
       - name: Verify Database Context
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ env.JWT_ISSUER }}
+          JWT__Audience: ${{ env.JWT_AUDIENCE }}
         run: |
           echo "Verifying database context and models..."
           dotnet ef dbcontext info --project API/API.csproj --verbose
@@ -639,11 +661,10 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ env.JWT_ISSUER }}
+          JWT__Audience: ${{ env.JWT_AUDIENCE }}
         run: |
           echo "Checking model relationships and configurations..."
           dotnet ef dbcontext info --project API/API.csproj --context AuthDbContext --verbose
@@ -652,11 +673,10 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ env.JWT_ISSUER }}
+          JWT__Audience: ${{ env.JWT_AUDIENCE }}
         run: |
           echo "Validating migration scripts..."
           dotnet ef migrations script --project API/API.csproj --idempotent --verbose
