@@ -203,16 +203,25 @@ jobs:
         run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
       - name: Build
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
-      - name: Copy Configuration Files
+      - name: Prepare Artifacts
         run: |
-          mkdir -p artifacts
-          cp -r API/bin/Release/net8.0/* artifacts/
-          cp API/appsettings.json artifacts/
-      - name: Upload Build Artifacts
+          mkdir -p artifacts/api
+          mkdir -p artifacts/tests
+          # Copy API files
+          cp -r API/bin/Release/net8.0/* artifacts/api/
+          cp API/appsettings.json artifacts/api/
+          # Copy test files
+          cp -r Tests/*/bin/Release/net8.0/* artifacts/tests/
+      - name: Upload API Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
-          path: artifacts/
+          name: api-artifacts
+          path: artifacts/api/
+      - name: Upload Test Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: artifacts/tests/
 
   unit-tests:
     name: Unit Tests
@@ -224,11 +233,16 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          dotnet-quality: 'preview'
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
+          path: API/bin/Release/net8.0
+      - name: Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts
+          path: Tests/API.UnitTests/bin/Release/net8.0
       - name: Run Unit Tests
         run: dotnet test Tests/API.UnitTests/API.UnitTests.csproj --no-build --verbosity normal --configuration Release
 
@@ -236,18 +250,55 @@ jobs:
     name: Integration Tests
     needs: build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          dotnet-quality: 'preview'
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
+          path: API/bin/Release/net8.0
+      - name: Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts
+          path: Tests/API.IntegrationTests/bin/Release/net8.0
       - name: Run Integration Tests
+        env:
+          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
+          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
+          # Database settings
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          # JWT settings
+          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ env.JWT_ISSUER }}
+          JWT__Audience: ${{ env.JWT_AUDIENCE }}
+          # Email settings
+          Email__Host: ${{ env.EMAIL_HOST }}
+          Email__Port: ${{ env.EMAIL_PORT }}
+          Email__EnableSsl: ${{ env.EMAIL_ENABLE_SSL }}
+          Email__Username: ${{ env.EMAIL_USERNAME }}
+          Email__Password: ${{ env.EMAIL_PASSWORD }}
+          Email__FromEmail: ${{ env.EMAIL_FROM }}
         run: dotnet test Tests/API.IntegrationTests/API.IntegrationTests.csproj --no-build --verbosity normal --configuration Release
 
   api-health:
@@ -274,10 +325,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
           path: ./app
       - name: Start API
         env:

@@ -334,16 +334,25 @@ jobs:
         run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
       - name: Build
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
-      - name: Copy Configuration Files
+      - name: Prepare Artifacts
         run: |
-          mkdir -p artifacts
-          cp -r API/bin/Release/net8.0/* artifacts/
-          cp API/appsettings.json artifacts/
-      - name: Upload Build Artifacts
+          mkdir -p artifacts/api
+          mkdir -p artifacts/tests
+          # Copy API files
+          cp -r API/bin/Release/net8.0/* artifacts/api/
+          cp API/appsettings.json artifacts/api/
+          # Copy test files
+          cp -r Tests/*/bin/Release/net8.0/* artifacts/tests/
+      - name: Upload API Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
-          path: artifacts/
+          name: api-artifacts
+          path: artifacts/api/
+      - name: Upload Test Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: artifacts/tests/
 
   unit-tests:
     name: Unit Tests
@@ -355,10 +364,16 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
+          path: API/bin/Release/net8.0
+      - name: Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts
+          path: Tests/API.UnitTests/bin/Release/net8.0
       - name: Run Unit Tests
         run: dotnet test Tests/API.UnitTests/API.UnitTests.csproj --no-build --verbosity normal --configuration Release
 
@@ -386,10 +401,16 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
+          path: API/bin/Release/net8.0
+      - name: Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts
+          path: Tests/API.IntegrationTests/bin/Release/net8.0
       - name: Run Integration Tests
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
@@ -486,10 +507,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
           path: ./app
       - name: Start API
         env:
