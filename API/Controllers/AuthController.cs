@@ -65,4 +65,13 @@ public class AuthController : ControllerBase
             return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
         }
     }
+
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> LoginAsync(LoginRequest request)
+    {
+        var response = await _authService.LoginAsync(request);
+    }
 }
