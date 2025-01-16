@@ -36,7 +36,7 @@
         {
             "label": "🚀 Run Production",
             "type": "shell",
-            "command": "docker compose up --build",
+            "command": "docker compose --env-file .env.production up --build",
             "problemMatcher": []
         },
         {
