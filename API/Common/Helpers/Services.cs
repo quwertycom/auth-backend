@@ -1,6 +1,7 @@
 using API.Data;
 using API.Service;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace API.Common.Helpers;
 
@@ -10,7 +11,7 @@ public static class Services
     {
         AddDbContext(builder);
         AddControllerServices(builder);
-        InitializeHelpers(builder);
+        InitializeHelpers(builder.Configuration);
     }
 
     private static void AddControllerServices(WebApplicationBuilder builder)
@@ -58,22 +59,53 @@ public static class Services
         }
     }
 
-    private static void InitializeHelpers(WebApplicationBuilder builder)
+    private static void InitializeHelpers(IConfiguration configuration)
     {
         try
         {
             // Initialize JWT helper
-            JWT.Initialize(builder.Configuration, builder.Environment);
-
-            // Initialize Snowflake helper
-            Snowflake.Initialize(builder.Configuration, builder.Environment);
+            try
+            {
+                JWT.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize JWT helper: {ex.Message}");
+            }
 
             // Initialize PasswordHasher helper
-            PasswordHasher.Initialize(builder.Configuration, builder.Environment);
+            try
+            {
+                PasswordHasher.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize PasswordHasher helper: {ex.Message}");
+            }
+
+            // Initialize Snowflake helper
+            try
+            {
+                Snowflake.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize Snowflake helper: {ex.Message}");
+            }
+
+            // Initialize EmailSender helper
+            try
+            {
+                EmailSender.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize EmailSender helper: {ex.Message}");
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            throw new Exception("Failed to initialize helpers");
+            throw new Exception($"Failed to initialize helpers: {ex.Message}");
         }
     }
 }

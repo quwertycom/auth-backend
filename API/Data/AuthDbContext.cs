@@ -1,6 +1,7 @@
 using API.Models;
 using Microsoft.EntityFrameworkCore;
 using API.Common.Enums;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace API.Data;
 
@@ -31,9 +32,28 @@ public class AuthDbContext : DbContext
     // Notifications
     public DbSet<Notification> Notifications { get; set; } = null!;
 
+    // Verification related
+    public DbSet<VerificationSession> VerificationSessions { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
+            v => v.ToUniversalTime(), // Convert to UTC before saving
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // Ensure UTC when retrieving
+
+        // Apply the converter to all DateTime properties
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(dateTimeConverter);
+                }
+            }
+        }
 
         // User configurations
         modelBuilder.Entity<User>(entity =>
@@ -58,10 +78,10 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Custom column types and names
-            entity.Property(u => u.Username).HasColumnType("varchar(50)").HasColumnName("login_name");
-            entity.Property(u => u.State).HasConversion<string>().HasMaxLength(20);
-            entity.Property(u => u.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(u => u.LastLoginAt).HasColumnType("timestamp");
+            entity.Property(u => u.Username).HasColumnType("varchar(50)").HasColumnName("username");
+            entity.Property(u => u.State).HasConversion<string>().HasMaxLength(20).HasColumnName("state");
+            entity.Property(u => u.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+            entity.Property(u => u.LastLoginAt).HasColumnType("timestamp").HasColumnName("last_login_at");
         });
 
         // Account configurations
@@ -79,16 +99,26 @@ public class AuthDbContext : DbContext
             // Many-to-many relationships
             entity.HasMany(a => a.AuthorizedDevelopers)
                 .WithMany(d => d.AuthorizedAccounts)
-                .UsingEntity(j => j.ToTable("account_developer_authorizations"));
+                .UsingEntity(j =>
+                {
+                    j.ToTable("account_developer_authorizations");
+                    j.Property("AuthorizedAccountsId").HasColumnName("authorized_account_id");
+                    j.Property("AuthorizedDevelopersId").HasColumnName("authorized_developer_id");
+                });
 
             entity.HasMany(a => a.Roles)
                 .WithMany(r => r.Members)
-                .UsingEntity(j => j.ToTable("account_organization_roles"));
+                .UsingEntity(j =>
+                {
+                    j.ToTable("account_organization_roles");
+                    j.Property("MembersId").HasColumnName("member_id");
+                    j.Property("RolesId").HasColumnName("role_id");
+                });
 
             // Custom columns
-            entity.Property(a => a.Type).HasConversion<string>().HasMaxLength(20);
+            entity.Property(a => a.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
             entity.Property(a => a.IsPersonal).HasColumnName("is_personal");
-            entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
         });
 
         // Organization configurations
@@ -106,7 +136,7 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Custom columns
-            entity.Property(o => o.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(o => o.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
         });
 
         // Developer configurations
@@ -126,9 +156,9 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Custom columns
-            entity.Property(d => d.Type).HasConversion<string>().HasMaxLength(20);
-            entity.Property(d => d.Status).HasConversion<string>().HasMaxLength(20);
-            entity.Property(d => d.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(d => d.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
+            entity.Property(d => d.Status).HasConversion<string>().HasMaxLength(20).HasColumnName("status");
+            entity.Property(d => d.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
         });
 
         // Application configurations
@@ -147,8 +177,8 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Custom columns
-            entity.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
-            entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(a => a.Status).HasConversion<string>().HasMaxLength(20).HasColumnName("status");
+            entity.Property(a => a.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
         });
 
         // Token configurations
@@ -175,10 +205,10 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Custom columns
-            entity.Property(t => t.Type).HasConversion<string>().HasMaxLength(20);
-            entity.Property(t => t.Target).HasConversion<string>().HasMaxLength(20);
-            entity.Property(t => t.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(t => t.ExpiresAt).HasColumnType("timestamp");
+            entity.Property(t => t.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
+            entity.Property(t => t.Target).HasConversion<string>().HasMaxLength(20).HasColumnName("target");
+            entity.Property(t => t.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+            entity.Property(t => t.ExpiresAt).HasColumnType("timestamp").HasColumnName("expires_at");
         });
 
         // Session configurations
@@ -192,9 +222,9 @@ public class AuthDbContext : DbContext
             entity.HasIndex(s => new { s.AccountId, s.ApplicationId });
 
             // Custom columns
-            entity.Property(s => s.Target).HasConversion<string>().HasMaxLength(20);
-            entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(s => s.LastUsedAt).HasColumnType("timestamp");
+            entity.Property(s => s.Target).HasConversion<string>().HasMaxLength(20).HasColumnName("target");
+            entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+            entity.Property(s => s.LastUsedAt).HasColumnType("timestamp").HasColumnName("last_used_at");
 
             // Configure navigation properties
             entity.Navigation(s => s.User).AutoInclude();
@@ -212,9 +242,9 @@ public class AuthDbContext : DbContext
             entity.HasIndex(n => new { n.UserId, n.IsRead });
             entity.HasIndex(n => new { n.AccountId, n.ApplicationId });
 
-            entity.Property(n => n.Type).HasConversion<string>().HasMaxLength(20);
-            entity.Property(n => n.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(n => n.ReadAt).HasColumnType("timestamp");
+            entity.Property(n => n.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
+            entity.Property(n => n.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+            entity.Property(n => n.ReadAt).HasColumnType("timestamp").HasColumnName("read_at");
         });
 
         // ApplicationAccount configurations
@@ -241,6 +271,34 @@ public class AuthDbContext : DbContext
 
             entity.HasIndex(ue => ue.UserId);
             entity.HasIndex(ue => ue.Email).IsUnique();
+            entity.HasIndex(ue => new { ue.UserId, ue.IsPrimary })
+                .IsUnique()
+                .HasFilter("is_primary = true");
+
+            // Custom columns
+            entity.Property(ue => ue.Email).HasColumnName("email");
+            entity.Property(ue => ue.State).HasConversion<string>().HasMaxLength(20).HasColumnName("state");
+            entity.Property(ue => ue.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+            entity.Property(ue => ue.IsPrimary).HasColumnName("is_primary").HasDefaultValue(false);
+        });
+
+        // VerificationSession configurations
+        modelBuilder.Entity<VerificationSession>(entity =>
+        {
+            entity.ToTable("verification_sessions");
+
+            entity.HasIndex(vs => vs.EmailId);
+            entity.HasIndex(vs => vs.Code).IsUnique();
+
+            // Custom columns
+            entity.Property(vs => vs.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+            entity.Property(vs => vs.IsUsed).HasDefaultValue(false).HasColumnName("is_used");
+            entity.Property(vs => vs.UserId).HasColumnName("user_id").IsRequired(false);
+            entity.HasOne(vs => vs.User)
+                .WithMany()
+                .HasForeignKey(vs => vs.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -16,22 +16,14 @@ public static class JWT
     private static string _audience = string.Empty;
     private static bool _isInitialized = false;
 
-    public static void Initialize(IConfiguration configuration, IWebHostEnvironment environment)
+    public static void Initialize(IConfiguration configuration)
     {
         if (_isInitialized) return;
 
-        if (environment.IsDevelopment())
-        {
-            _secretKey = configuration["JWT:SecretKey"] ?? throw new InvalidOperationException("JWT:SecretKey is not configured");
-            _issuer = configuration["JWT:Issuer"] ?? throw new InvalidOperationException("JWT:Issuer is not configured");
-            _audience = configuration["JWT:Audience"] ?? throw new InvalidOperationException("JWT:Audience is not configured");
-        }
-        else
-        {
-            _secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? throw new InvalidOperationException("JWT_SECRET_KEY environment variable is not set");
-            _issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? throw new InvalidOperationException("JWT_ISSUER environment variable is not set");
-            _audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? throw new InvalidOperationException("JWT_AUDIENCE environment variable is not set");
-        }
+        // Load configuration values directly
+        _secretKey = configuration["JWT:SecretKey"] ?? throw new InvalidOperationException("JWT:SecretKey is not configured");
+        _issuer = configuration["JWT:Issuer"] ?? throw new InvalidOperationException("JWT:Issuer is not configured");
+        _audience = configuration["JWT:Audience"] ?? throw new InvalidOperationException("JWT:Audience is not configured");
 
         // Validate secret key length for HMAC SHA256
         if (Encoding.UTF8.GetBytes(_secretKey).Length < 32)

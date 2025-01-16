@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using API.Common.Enums;
 using Microsoft.EntityFrameworkCore;
+using API.Common.Helpers;
 
 namespace API.Models;
 
@@ -8,26 +10,32 @@ namespace API.Models;
 public class Account
 {
     [Key]
-    public long Id { get; set; }
+    [Column("id")]
+    public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
     public required virtual User User { get; set; }
 
     [Required]
+    [Column("user_id")]
     public long UserId { get; set; }
 
     [Required]
     [StringLength(100)]
+    [Column("account_name")]
     public required string AccountName { get; set; }
 
     [Required]
+    [Column("type")]
     public required AccountType Type { get; set; }
 
     [Required]
+    [Column("is_personal")]
     public bool IsPersonal { get; set; }
 
     public virtual Organization? Organization { get; set; }
 
+    [Column("organization_id")]
     public long? OrganizationId { get; set; }
 
     public virtual ICollection<OrganizationRole> Roles { get; set; } = new List<OrganizationRole>();
@@ -40,5 +48,7 @@ public class Account
 
     [Required]
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
+
+    [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
