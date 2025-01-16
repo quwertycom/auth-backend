@@ -41,6 +41,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+.env.production
 
 # Test Results
 **/TestResults/
@@ -49,3 +50,6 @@ migration.sql
 packages.txt
 package-list.txt
 API/appsettings.Development.json
+
+# Production settings
+appsettings.Production.json
