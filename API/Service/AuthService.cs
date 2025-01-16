@@ -12,6 +12,7 @@ public interface IAuthService
 {
     Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
     Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
+    Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
 }
 
 public class AuthService : IAuthService
@@ -176,5 +177,10 @@ public class AuthService : IAuthService
         {
             return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
         }
+    }
+
+    public async Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request)
+    {
+        return (false, "NOT_IMPLEMENTED", "Not implemented.", null, null);
     }
 }
