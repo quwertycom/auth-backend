@@ -21,3 +21,9 @@
 
 # Client-side dependencies
 node_modules/
+
+# Environment variables
+.env
+
+# Production settings
+appsettings.Production.json
