@@ -205,18 +205,27 @@ jobs:
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
       - name: Prepare Artifacts
         run: |
+          # Create directories
           mkdir -p artifacts/api
-          mkdir -p artifacts/tests
+          mkdir -p artifacts/tests/unit
+          mkdir -p artifacts/tests/integration
+          mkdir -p artifacts/tests/performance
+
           # Copy API files
           cp -r API/bin/Release/net8.0/* artifacts/api/
           cp API/appsettings.json artifacts/api/
-          # Copy test files
-          cp -r Tests/*/bin/Release/net8.0/* artifacts/tests/
+
+          # Copy test files to their respective directories
+          cp -r Tests/API.UnitTests/bin/Release/net8.0/* artifacts/tests/unit/
+          cp -r Tests/API.IntegrationTests/bin/Release/net8.0/* artifacts/tests/integration/
+          cp -r Tests/API.PerformanceTests/bin/Release/net8.0/* artifacts/tests/performance/
+
       - name: Upload API Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: api-artifacts
           path: artifacts/api/
+
       - name: Upload Test Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -242,7 +251,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: test-artifacts
-          path: Tests/API.UnitTests/bin/Release/net8.0
+          path: Tests
+        # Extract unit test artifacts to the correct location
+      - name: Setup Test Environment
+        run: |
+          mkdir -p Tests/API.UnitTests/bin/Release/net8.0
+          cp -r Tests/unit/* Tests/API.UnitTests/bin/Release/net8.0/
       - name: Run Unit Tests
         run: dotnet test Tests/API.UnitTests/API.UnitTests.csproj --no-build --verbosity normal --configuration Release
 
@@ -279,7 +293,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: test-artifacts
-          path: Tests/API.IntegrationTests/bin/Release/net8.0
+          path: Tests
+        # Extract integration test artifacts to the correct location
+      - name: Setup Test Environment
+        run: |
+          mkdir -p Tests/API.IntegrationTests/bin/Release/net8.0
+          cp -r Tests/integration/* Tests/API.IntegrationTests/bin/Release/net8.0/
       - name: Run Integration Tests
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
