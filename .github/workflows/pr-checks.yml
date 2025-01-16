@@ -461,11 +461,28 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
+          path: API/bin/Release/net8.0
+      - name: Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts
+          path: Tests
+      - name: Setup Test Environment
+        run: |
+          mkdir -p Tests/API.FunctionalTests/bin/Release/net8.0
+          cp -r Tests/performance/* Tests/API.FunctionalTests/bin/Release/net8.0/
       - name: Run Functional Tests
+        env:
+          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
+          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
+          # JWT settings
+          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ env.JWT_ISSUER }}
+          JWT__Audience: ${{ env.JWT_AUDIENCE }}
         run: dotnet test Tests/API.FunctionalTests/API.FunctionalTests.csproj --no-build --verbosity normal --configuration Release
 
   performance-tests:
@@ -478,11 +495,28 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download Build Artifacts
+      - name: Download API Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: api-artifacts
+          path: API/bin/Release/net8.0
+      - name: Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts
+          path: Tests
+      - name: Setup Test Environment
+        run: |
+          mkdir -p Tests/API.PerformanceTests/bin/Release/net8.0
+          cp -r Tests/performance/* Tests/API.PerformanceTests/bin/Release/net8.0/
       - name: Run Performance Tests
+        env:
+          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
+          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
+          # JWT settings
+          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ env.JWT_ISSUER }}
+          JWT__Audience: ${{ env.JWT_AUDIENCE }}
         run: dotnet test Tests/API.PerformanceTests/API.PerformanceTests.csproj --no-build --verbosity normal --configuration Release
 
   api-compatibility:
