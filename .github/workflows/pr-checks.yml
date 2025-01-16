@@ -487,6 +487,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
+          path: .
       - name: Start API
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
@@ -507,8 +508,20 @@ jobs:
           Email__Password: ${{ env.EMAIL_PASSWORD }}
           Email__FromEmail: ${{ env.EMAIL_FROM }}
         run: |
-          dotnet API/API.dll &
-          sleep 10
+          dotnet API/bin/Release/net8.0/API.dll &
+          echo "Waiting for API to start..."
+          for i in {1..30}; do
+            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
+              echo "API is up!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "API failed to start within 30 seconds"
+              exit 1
+            fi
+            echo "Attempt $i: API not ready yet..."
+            sleep 1
+          done
       - name: Check API Health
         run: |
           curl -f http://localhost:8000/health || exit 1
