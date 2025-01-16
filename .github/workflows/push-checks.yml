@@ -12,6 +12,25 @@ env:
   SOLUTION_FILE: 'Auth.sln'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # Production Environment Variables
+  ASPNETCORE_ENVIRONMENT: Production
+  # Database Configuration
+  POSTGRES_DB: auth_db
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  # JWT Configuration
+  JWT_SECRET_KEY: this-is-a-very-long-secret-key-that-is-at-least-32-bytes-long-for-ci
+  JWT_ISSUER: auth-backend-ci
+  JWT_AUDIENCE: auth-client-ci
+  # Email Configuration
+  EMAIL_HOST: smtp.gmail.com
+  EMAIL_PORT: 587
+  EMAIL_ENABLE_SSL: true
+  EMAIL_USERNAME: test@example.com
+  EMAIL_PASSWORD: dummy-password
+  EMAIL_FROM: test@example.com
+  # Docker Configuration
+  DOCKER_RUNNING: true
 
 jobs:
   setup:
@@ -232,39 +251,13 @@ jobs:
     name: API Health Check
     needs: build
     runs-on: ubuntu-latest
-    env:
-      # Environment type
-      ASPNETCORE_ENVIRONMENT: Production
-      # Database Configuration
-      POSTGRES_DB: auth_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      # JWT Configuration
-      JWT__SecretKey: your_test_jwt_secret_key_123_your_test_jwt_secret_key_123
-      JWT__Issuer: auth-backend-test
-      JWT__Audience: auth-backend-test
-      # Password Hasher Configuration
-      PasswordHasher__Pepper: your_test_pepper_key_123_your_test_pepper_key_123
-      # Snowflake Configuration
-      Snowflake__InstanceId: 1
-      Snowflake__Epoch: 1704067200000
-      # Email Configuration
-      Email__Host: smtp.test.com
-      Email__Port: 587
-      Email__Username: test@test.com
-      Email__Password: test_password
-      Email__FromAddress: test@test.com
-      Email__FromName: Auth Backend Test
-      Email__UseSsl: true
-      # Connection String (direct environment variable)
-      ConnectionStrings__DefaultConnection: Host=localhost;Database=auth_db;Username=postgres;Password=postgres
     services:
       postgres:
-        image: postgres:16
+        image: postgres:15-alpine
         env:
-          POSTGRES_DB: auth_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
         ports:
           - 5432:5432
         options: >-
@@ -278,46 +271,32 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
-      - name: Build API
-        run: dotnet build API/API.csproj --configuration Release
-      - name: Start API and Wait
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+      - name: Start API
+        env:
+          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
+          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
+          # Database settings
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          # JWT settings
+          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ env.JWT_ISSUER }}
+          JWT__Audience: ${{ env.JWT_AUDIENCE }}
+          # Email settings
+          Email__Host: ${{ env.EMAIL_HOST }}
+          Email__Port: ${{ env.EMAIL_PORT }}
+          Email__EnableSsl: ${{ env.EMAIL_ENABLE_SSL }}
+          Email__Username: ${{ env.EMAIL_USERNAME }}
+          Email__Password: ${{ env.EMAIL_PASSWORD }}
+          Email__FromEmail: ${{ env.EMAIL_FROM }}
         run: |
-          # Export all environment variables to be available to the API
-          export $(cat << EOF | xargs
-          ASPNETCORE_ENVIRONMENT=Production
-          JWT__SecretKey=your_test_jwt_secret_key_123_your_test_jwt_secret_key_123
-          JWT__Issuer=auth-backend-test
-          JWT__Audience=auth-backend-test
-          PasswordHasher__Pepper=your_test_pepper_key_123_your_test_pepper_key_123
-          Snowflake__InstanceId=1
-          Snowflake__Epoch=1704067200000
-          Email__Host=smtp.test.com
-          Email__Port=587
-          Email__Username=test@test.com
-          Email__Password=test_password
-          Email__FromAddress=test@test.com
-          Email__FromName=Auth Backend Test
-          Email__UseSsl=true
-          ConnectionStrings__DefaultConnection=Host=localhost;Database=auth_db;Username=postgres;Password=postgres
-          EOF
-          )
-          
-          dotnet run --project API/API.csproj --configuration Release --no-build &
-          echo "Waiting for API to start..."
-          for i in {1..30}; do
-            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
-              echo "API is up!"
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "API failed to start within 30 seconds"
-              exit 1
-            fi
-            echo "Attempt $i: API not ready yet..."
-            sleep 1
-          done
-      - name: Check API Endpoint
+          dotnet API/API.dll &
+          sleep 10
+      - name: Check API Health
         run: |
-          curl -v -H "Accept: application/json" http://localhost:8000/api || exit 1 
+          curl -f http://localhost:8000/health || exit 1 
