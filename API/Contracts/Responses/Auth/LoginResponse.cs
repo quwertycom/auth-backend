@@ -1,6 +1,6 @@
 using API.Contracts.Responses;
 
-namespace qAuth.API.Contracts.Responses.Auth;
+namespace API.Contracts.Responses.Auth;
 
 public class LoginResponse : ResponseBase
 {

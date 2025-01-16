@@ -1,5 +1,5 @@
 
-namespace qAuth.API.Contracts.Requests.Auth;
+namespace API.Contracts.Requests.Auth;
 
 public class LoginRequest
 {
