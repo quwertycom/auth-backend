@@ -1,5 +1,4 @@
 using Microsoft.OpenApi.Models;
-using DotNetEnv;
 using API.Data;
 using API.Common.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -14,28 +13,46 @@ public class Program
         // Enable legacy timestamp behavior for Npgsql
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-        // Load .env file before configuration setup
-        if (File.Exists("../.env"))
-        {
-            Env.Load("../.env");
-        }
+        var builder = WebApplication.CreateBuilder(args);
 
-        IConfiguration configuration;
+        // Log the environment
+        Console.WriteLine($"Current environment: {builder.Environment.EnvironmentName}");
 
         // Load configuration based on the environment
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+        IConfiguration configuration;
+        if (builder.Environment.IsProduction())
         {
+            Console.WriteLine("Loading production configuration...");
             configuration = ConfigManager.LoadProductionConfig();
         }
         else
         {
+            Console.WriteLine("Loading development configuration...");
             configuration = ConfigManager.LoadDevelopmentConfig();
         }
 
-        var builder = WebApplication.CreateBuilder(args);
+        // Log configuration values for debugging
+        Console.WriteLine("\nConfiguration values:");
+        Console.WriteLine($"JWT__SecretKey length: {(configuration["JWT__SecretKey"]?.Length ?? 0)} chars");
+        Console.WriteLine($"JWT__Issuer: {configuration["JWT__Issuer"]}");
+        Console.WriteLine($"JWT__Audience: {configuration["JWT__Audience"]}");
+        Console.WriteLine($"Email__Host: {configuration["Email__Host"]}");
+        Console.WriteLine($"POSTGRES_DB: {configuration["POSTGRES_DB"]}");
+        Console.WriteLine($"DOCKER_RUNNING: {configuration["DOCKER_RUNNING"]}\n");
+
+        // Log some configuration values to verify loading
+        try
+        {
+            Console.WriteLine($"JWT:Issuer = {configuration["JWT:Issuer"]}");
+            Console.WriteLine($"Email:Host = {configuration["Email:Host"]}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading configuration: {ex.Message}");
+        }
 
         // Add the loaded configuration to the builder
-        builder.Configuration.AddConfiguration(configuration); // Use the configuration loaded from ConfigManager
+        builder.Configuration.AddConfiguration(configuration);
 
         // Configure Kestrel
         builder.WebHost.ConfigureKestrel(serverOptions =>

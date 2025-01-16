@@ -64,22 +64,48 @@ public static class Services
         try
         {
             // Initialize JWT helper
-            JWT.Initialize(configuration);
+            try
+            {
+                JWT.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize JWT helper: {ex.Message}");
+            }
 
             // Initialize PasswordHasher helper
-            PasswordHasher.Initialize(configuration);
+            try
+            {
+                PasswordHasher.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize PasswordHasher helper: {ex.Message}");
+            }
 
             // Initialize Snowflake helper
-            Snowflake.Initialize(configuration);
+            try
+            {
+                Snowflake.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize Snowflake helper: {ex.Message}");
+            }
 
             // Initialize EmailSender helper
-            EmailSender.Initialize(configuration);
-
-            // Other helper initializations can go here
+            try
+            {
+                EmailSender.Initialize(configuration);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to initialize EmailSender helper: {ex.Message}");
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            throw new Exception("Failed to initialize helpers");
+            throw new Exception($"Failed to initialize helpers: {ex.Message}");
         }
     }
 }
