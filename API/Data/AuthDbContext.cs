@@ -40,8 +40,8 @@ public class AuthDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
-            v => v.ToUniversalTime(), // Convert to UTC before saving
-            v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // Ensure UTC when retrieving
+            v => v.ToUniversalTime(),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
         // Apply the converter to all DateTime properties
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
@@ -102,8 +102,8 @@ public class AuthDbContext : DbContext
                 .UsingEntity(j =>
                 {
                     j.ToTable("account_developer_authorizations");
-                    j.Property("AuthorizedAccountsId").HasColumnName("authorized_account_id");
-                    j.Property("AuthorizedDevelopersId").HasColumnName("authorized_developer_id");
+                    j.Property("AuthorizedAccountsId").HasColumnName("account_id");
+                    j.Property("AuthorizedDevelopersId").HasColumnName("developer_id");
                 });
 
             entity.HasMany(a => a.Roles)
@@ -111,7 +111,7 @@ public class AuthDbContext : DbContext
                 .UsingEntity(j =>
                 {
                     j.ToTable("account_organization_roles");
-                    j.Property("MembersId").HasColumnName("member_id");
+                    j.Property("MembersId").HasColumnName("account_id");
                     j.Property("RolesId").HasColumnName("role_id");
                 });
 
@@ -197,6 +197,11 @@ public class AuthDbContext : DbContext
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasOne(t => t.Session)
+                .WithMany(s => s.Tokens)
+                .HasForeignKey(t => t.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Optional relationships
             entity.HasOne(t => t.ApplicationAccount)
                 .WithMany()
@@ -221,16 +226,28 @@ public class AuthDbContext : DbContext
             entity.HasIndex(s => new { s.Target, s.UserId });
             entity.HasIndex(s => new { s.AccountId, s.ApplicationId });
 
+            // Relationships
+            entity.HasOne(s => s.User)
+                .WithMany(u => u.Sessions)
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(s => s.Account)
+                .WithMany(a => a.Sessions)
+                .HasForeignKey(s => s.AccountId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(s => s.Application)
+                .WithMany(a => a.Sessions)
+                .HasForeignKey(s => s.ApplicationId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // Custom columns
             entity.Property(s => s.Target).HasConversion<string>().HasMaxLength(20).HasColumnName("target");
             entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(s => s.LastUsedAt).HasColumnType("timestamp").HasColumnName("last_used_at");
-
-            // Configure navigation properties
-            entity.Navigation(s => s.User).AutoInclude();
-            entity.Navigation(s => s.Account).AutoInclude();
-            entity.Navigation(s => s.Application).AutoInclude();
-            entity.Navigation(s => s.Tokens).AutoInclude();
         });
 
         // Notification configurations
@@ -238,10 +255,30 @@ public class AuthDbContext : DbContext
         {
             entity.ToTable("notifications");
 
+            // Indexes
             entity.HasIndex(n => n.UserId);
             entity.HasIndex(n => new { n.UserId, n.IsRead });
             entity.HasIndex(n => new { n.AccountId, n.ApplicationId });
 
+            // Relationships
+            entity.HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(n => n.Account)
+                .WithMany()
+                .HasForeignKey(n => n.AccountId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(n => n.Application)
+                .WithMany()
+                .HasForeignKey(n => n.ApplicationId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Custom columns
             entity.Property(n => n.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
             entity.Property(n => n.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(n => n.ReadAt).HasColumnType("timestamp").HasColumnName("read_at");
@@ -252,8 +289,20 @@ public class AuthDbContext : DbContext
         {
             entity.ToTable("application_accounts");
 
+            // Indexes
             entity.HasIndex(aa => aa.AccountId);
             entity.HasIndex(aa => aa.ApplicationId);
+
+            // Relationships
+            entity.HasOne(aa => aa.Account)
+                .WithMany(a => a.AuthorizedApplications)
+                .HasForeignKey(aa => aa.AccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(aa => aa.Application)
+                .WithMany(a => a.Accounts)
+                .HasForeignKey(aa => aa.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // OrganizationRole configurations
@@ -261,7 +310,14 @@ public class AuthDbContext : DbContext
         {
             entity.ToTable("organization_roles");
 
+            // Indexes
             entity.HasIndex(r => r.OrganizationId);
+
+            // Relationships
+            entity.HasOne(r => r.Organization)
+                .WithMany(o => o.Roles)
+                .HasForeignKey(r => r.OrganizationId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // UserEmail configurations
@@ -269,11 +325,18 @@ public class AuthDbContext : DbContext
         {
             entity.ToTable("user_emails");
 
+            // Indexes
             entity.HasIndex(ue => ue.UserId);
             entity.HasIndex(ue => ue.Email).IsUnique();
             entity.HasIndex(ue => new { ue.UserId, ue.IsPrimary })
                 .IsUnique()
                 .HasFilter("is_primary = true");
+
+            // Relationships
+            entity.HasOne(ue => ue.User)
+                .WithMany(u => u.Emails)
+                .HasForeignKey(ue => ue.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Custom columns
             entity.Property(ue => ue.Email).HasColumnName("email");
@@ -287,18 +350,24 @@ public class AuthDbContext : DbContext
         {
             entity.ToTable("verification_sessions");
 
+            // Indexes
             entity.HasIndex(vs => vs.EmailId);
             entity.HasIndex(vs => vs.Code).IsUnique();
+
+            // Relationships
+            entity.HasOne(vs => vs.Email)
+                .WithMany()
+                .HasForeignKey(vs => vs.EmailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(vs => vs.User)
+                .WithMany()
+                .HasForeignKey(vs => vs.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Custom columns
             entity.Property(vs => vs.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(vs => vs.IsUsed).HasDefaultValue(false).HasColumnName("is_used");
-            entity.Property(vs => vs.UserId).HasColumnName("user_id").IsRequired(false);
-            entity.HasOne(vs => vs.User)
-                .WithMany()
-                .HasForeignKey(vs => vs.UserId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
