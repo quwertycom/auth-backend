@@ -32,6 +32,14 @@ services:
       - Jwt__SecretKey=${JWT_SECRET_KEY}
       - Jwt__Issuer=auth-backend-dev
       - Jwt__Audience=auth-client-dev
+      # Add Email settings
+      - Email__Host=${EMAIL_HOST}
+      - Email__Port=${EMAIL_PORT}
+      - Email__EnableSsl=${EMAIL_ENABLE_SSL}
+      - Email__Username=${EMAIL_USERNAME}
+      - Email__Password=${EMAIL_PASSWORD}
+      - Email__FromEmail=${EMAIL_FROM}
+      - DOCKER_RUNNING=true
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
       interval: 30s
