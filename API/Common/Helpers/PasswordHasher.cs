@@ -15,9 +15,9 @@ public static class PasswordHasher
         if (_isInitialized) return;
 
         // Load configuration values directly
-        _iterations = int.Parse(configuration["PasswordHasher:Iterations"] ?? "10000");
-        _saltSize = int.Parse(configuration["PasswordHasher:SaltSize"] ?? "16");
-        _keySize = int.Parse(configuration["PasswordHasher:KeySize"] ?? "32");
+        _iterations = int.Parse(configuration["ENV__PASSWORD_HASHER__ITERATIONS"] ?? "10000");
+        _saltSize = int.Parse(configuration["ENV__PASSWORD_HASHER__SALT_SIZE"] ?? "16");
+        _keySize = int.Parse(configuration["ENV__PASSWORD_HASHER__KEY_SIZE"] ?? "32");
 
         // Validate parameters
         if (_iterations < 10000)

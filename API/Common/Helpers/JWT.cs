@@ -21,9 +21,9 @@ public static class JWT
         if (_isInitialized) return;
 
         // Load configuration values directly
-        _secretKey = configuration["JWT:SecretKey"] ?? throw new InvalidOperationException("JWT:SecretKey is not configured");
-        _issuer = configuration["JWT:Issuer"] ?? throw new InvalidOperationException("JWT:Issuer is not configured");
-        _audience = configuration["JWT:Audience"] ?? throw new InvalidOperationException("JWT:Audience is not configured");
+        _secretKey = configuration["ENV__JWT__SECRET_KEY"] ?? throw new InvalidOperationException("JWT:SecretKey is not configured");
+        _issuer = configuration["ENV__JWT__ISSUER"] ?? throw new InvalidOperationException("JWT:Issuer is not configured");
+        _audience = configuration["ENV__JWT__AUDIENCE"] ?? throw new InvalidOperationException("JWT:Audience is not configured");
 
         // Validate secret key length for HMAC SHA256
         if (Encoding.UTF8.GetBytes(_secretKey).Length < 32)
@@ -34,7 +34,7 @@ public static class JWT
         _isInitialized = true;
     }
 
-    public static (string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
+    public static (bool isSuccess, string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
     {
         if (!_isInitialized)
         {
@@ -47,13 +47,13 @@ public static class JWT
             switch (target)
             {
                 case TokenTarget.User when string.IsNullOrEmpty(ids.userId.ToString()):
-                    return ("ERROR", "Missing user id", null);
+                    return (false, "ERROR", "Missing user id", null);
 
                 case TokenTarget.Account when !ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()):
-                    return ("ERROR", "Missing account id or user id", null);
+                    return (false, "ERROR", "Missing account id or user id", null);
 
                 case TokenTarget.Application when !ids.applicationId.HasValue || !ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()):
-                    return ("ERROR", "Missing application id, account id, or user id", null);
+                    return (false, "ERROR", "Missing application id, account id, or user id", null);
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -93,7 +93,7 @@ public static class JWT
                     break;
 
                 default:
-                    return ("ERROR", "Invalid token target", null);
+                    return (false, "ERROR", "Invalid token target", null);
             }
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -109,15 +109,15 @@ public static class JWT
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return ("SUCCESS", "Token generated successfully", tokenHandler.WriteToken(token));
+            return (true, "SUCCESS", "Token generated successfully", tokenHandler.WriteToken(token));
         }
         catch (Exception ex)
         {
-            return ("ERROR", $"Failed to generate refresh token: {ex.Message}", null);
+            return (false, "ERROR", $"Failed to generate refresh token: {ex.Message}", null);
         }
     }
 
-    public static (string status, string message, string? token) GenerateAccessToken(string refreshToken)
+    public static (bool isSuccess, string status, string message, string? token) GenerateAccessToken(string refreshToken)
     {
         if (!_isInitialized)
         {
@@ -129,20 +129,20 @@ public static class JWT
             var claims = GetTokenClaims(refreshToken);
             if (claims == null)
             {
-                return ("ERROR", "Invalid refresh token", null);
+                return (false, "ERROR", "Invalid refresh token", null);
             }
 
             // Verify it's a refresh token
             if (!claims.TryGetValue("token_type", out var tokenType) || tokenType != "refresh")
             {
-                return ("ERROR", "Invalid token type", null);
+                return (false, "ERROR", "Invalid token type", null);
             }
 
             // Get token target
             if (!claims.TryGetValue("token_target", out var targetStr) ||
                 !Enum.TryParse<TokenTarget>(targetStr, out var target))
             {
-                return ("ERROR", "Invalid token target", null);
+                return (false, "ERROR", "Invalid token target", null);
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -196,11 +196,11 @@ public static class JWT
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return ("SUCCESS", "Access token generated successfully", tokenHandler.WriteToken(token));
+            return (true, "SUCCESS", "Access token generated successfully", tokenHandler.WriteToken(token));
         }
         catch (Exception ex)
         {
-            return ("ERROR", $"Failed to generate access token: {ex.Message}", null);
+            return (false, "ERROR", $"Failed to generate access token: {ex.Message}", null);
         }
     }
 

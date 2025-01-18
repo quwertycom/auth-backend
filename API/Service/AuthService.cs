@@ -12,7 +12,7 @@ public interface IAuthService
 {
     Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
     Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
-    Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
+    // Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
 }
 
 public class AuthService : IAuthService
@@ -160,7 +160,7 @@ public class AuthService : IAuthService
                 return (false, "NOT_FOUND", "Email not found.", null);
             }
 
-            if (verificationSession.EmailId != email.UserEmailId)
+            if (verificationSession.EmailId != email.UserId)
             {
                 return (false, "INVALID_SESSION", "Invalid verification session for this email.", null);
             }
@@ -179,8 +179,73 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request)
-    {
-        return (false, "NOT_IMPLEMENTED", "Not implemented.", null, null);
-    }
+    // public async Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request)
+    // {
+    //     try
+    //     {
+    //         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+
+    //         if (user == null)
+    //         {
+    //             return (false, "NOT_FOUND", "User not found.", null, null);
+    //         }
+
+    //         if (!PasswordHasher.Compare(request.Password, user.PasswordSalt, user.PasswordHash))
+    //         {
+    //             return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
+    //         }
+
+    //         string accessTokenString;
+    //         string refreshTokenString;
+
+    //         var refreshTokenResponse = JWT.GenerateRefreshToken(TokenTarget.User, (user.UserId, null, null));
+
+    //         if (refreshTokenResponse.isSuccess && refreshTokenResponse.token != null)
+    //         {
+    //             refreshTokenString = refreshTokenResponse.token;
+
+    //             var accessTokenResponse = JWT.GenerateAccessToken(refreshTokenString);
+
+    //             if (accessTokenResponse.isSuccess && accessTokenResponse.token != null)
+    //             {
+    //                 accessTokenString = accessTokenResponse.token;
+    //             }
+    //             else
+    //             {
+    //                 return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+    //         }
+
+    //         var session = new Session
+    //         {
+    //             Target = SessionTarget.User,
+    //             User = user,
+    //             Tokens = new List<Token>
+    //         };
+
+    //         Token refreshToken = new Token
+    //         {
+    //             TokenString = refreshTokenString,
+    //             Type = TokenType.Refresh,
+    //             Target = TokenTarget.User,
+    //             Session = session,
+    //             User = user,
+    //             UserId = user.UserId,
+    //             CreatedAt = DateTime.UtcNow,
+    //         };
+
+    //         _dbContext.Sessions.Add(session);
+    //         await _dbContext.SaveChangesAsync();
+
+    //         return (true, "SUCCESS", "Login successful.", accessToken, refreshToken);
+    //     }
+    //     catch
+    //     {
+    //         return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+    //     }
+    // }
 }

@@ -39,9 +39,9 @@ public static class Services
                 var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
                 {
                     Host = host,
-                    Database = builder.Configuration["POSTGRES_DB"],
-                    Username = builder.Configuration["POSTGRES_USER"],
-                    Password = builder.Configuration["POSTGRES_PASSWORD"],
+                    Database = builder.Configuration["ENV__POSTGRES__DB"],
+                    Username = builder.Configuration["ENV__POSTGRES__USER"],
+                    Password = builder.Configuration["ENV__POSTGRES__PASSWORD"],
                     Pooling = true,
                     MinPoolSize = 5,
                     MaxPoolSize = 100

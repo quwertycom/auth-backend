@@ -17,15 +17,15 @@ public static class EmailSender
         // Load configuration values directly
         _smtpClient = new SmtpClient
         {
-            Host = configuration["Email:Host"] ?? throw new InvalidOperationException("Email:Host is not configured"),
-            Port = int.TryParse(configuration["Email:Port"], out var port) ? port : throw new InvalidOperationException("Email:Port is not a valid integer"),
-            EnableSsl = bool.TryParse(configuration["Email:EnableSsl"], out var enableSsl) ? enableSsl : throw new InvalidOperationException("Email:EnableSsl is not a valid boolean"),
+            Host = configuration["ENV__EMAIL__HOST"] ?? throw new InvalidOperationException("Email:Host is not configured"),
+            Port = int.TryParse(configuration["ENV__EMAIL__PORT"], out var port) ? port : throw new InvalidOperationException("Email:Port is not a valid integer"),
+            EnableSsl = bool.TryParse(configuration["ENV__EMAIL__ENABLE_SSL"], out var enableSsl) ? enableSsl : throw new InvalidOperationException("Email:EnableSsl is not a valid boolean"),
             Credentials = new NetworkCredential(
-                configuration["Email:Username"],
-                configuration["Email:Password"]
+                configuration["ENV__EMAIL__USERNAME"],
+                configuration["ENV__EMAIL__PASSWORD"]
             )
         };
-        _fromEmail = configuration["Email:FromEmail"] ?? throw new InvalidOperationException("Email:FromEmail is not configured");
+        _fromEmail = configuration["ENV__EMAIL__FROM_EMAIL"] ?? throw new InvalidOperationException("Email:FromEmail is not configured");
 
         _isInitialized = true;
     }

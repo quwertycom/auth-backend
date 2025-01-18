@@ -66,12 +66,12 @@ public class AuthController : ControllerBase
         }
     }
 
-    [HttpPost("login")]
-    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> LoginAsync(LoginRequest request)
-    {
-        var response = await _authService.LoginAsync(request);
-    }
+    // [HttpPost("login")]
+    // [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    // [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    // [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    // public async Task<IActionResult> LoginAsync(LoginRequest request)
+    // {
+    //     var response = await _authService.LoginAsync(request);
+    // }
 }
