@@ -8,8 +8,8 @@ namespace API.Models;
 public class User
 {
     [Key]
-    [Column("user_id")]
-    public long UserId { get; set; } = Snowflake.Generate();
+    [Column("id")]
+    public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
     [MaxLength(50)]

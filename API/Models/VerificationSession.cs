@@ -11,7 +11,6 @@ public class VerificationSession
     public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
-    [Column("email")]
     public required UserEmail Email { get; set; }
 
     [Required]
@@ -19,12 +18,11 @@ public class VerificationSession
     public long EmailId { get; set; }
 
     [Required]
-    [Column("user")]
     public required User User { get; set; }
 
     [Required]
     [Column("user_id")]
-    public long? UserId { get; set; }
+    public long UserId { get; set; }
 
     [Required]
     [Column("code")]

@@ -8,8 +8,8 @@ namespace API.Models;
 public class UserEmail
 {
     [Key]
-    [Column("user_email_id")]
-    public long UserEmailId { get; set; } = Snowflake.Generate();
+    [Column("id")]
+    public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
     [EmailAddress]
@@ -26,10 +26,10 @@ public class UserEmail
     [Required]
     public required User User { get; set; }
 
-    [Column("is_primary")]
-    public bool IsPrimary { get; set; } = false;
-
     [Required]
     [Column("user_id")]
     public long UserId { get; set; }
+
+    [Column("is_primary")]
+    public bool IsPrimary { get; set; } = false;
 }
