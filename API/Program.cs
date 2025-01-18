@@ -1,8 +1,7 @@
 using Microsoft.OpenApi.Models;
 using API.Data;
 using API.Common.Helpers;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using API.Configuration;
 
 namespace API;
 
@@ -15,72 +14,20 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
-        // Log the environment
-        Console.WriteLine($"Current environment: {builder.Environment.EnvironmentName}");
-
-        // Load configuration based on the environment
-        IConfiguration configuration;
-        if (builder.Environment.IsProduction())
-        {
-            Console.WriteLine("Loading production configuration...");
-            configuration = ConfigManager.LoadProductionConfig();
-        }
-        else
-        {
-            Console.WriteLine("Loading development configuration...");
-            configuration = ConfigManager.LoadDevelopmentConfig();
-        }
-
-        // Log configuration values for debugging
-        Console.WriteLine("\nConfiguration values:");
-        Console.WriteLine($"JWT__SecretKey length: {(configuration["JWT__SecretKey"]?.Length ?? 0)} chars");
-        Console.WriteLine($"JWT__Issuer: {configuration["JWT__Issuer"]}");
-        Console.WriteLine($"JWT__Audience: {configuration["JWT__Audience"]}");
-        Console.WriteLine($"Email__Host: {configuration["Email__Host"]}");
-        Console.WriteLine($"POSTGRES_DB: {configuration["POSTGRES_DB"]}");
-        Console.WriteLine($"DOCKER_RUNNING: {configuration["DOCKER_RUNNING"]}\n");
-
-        // Log some configuration values to verify loading
-        try
-        {
-            Console.WriteLine($"JWT:Issuer = {configuration["JWT:Issuer"]}");
-            Console.WriteLine($"Email:Host = {configuration["Email:Host"]}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reading configuration: {ex.Message}");
-        }
-
-        // Add the loaded configuration to the builder
-        builder.Configuration.AddConfiguration(configuration);
-
-        // Configure Kestrel
-        builder.WebHost.ConfigureKestrel(serverOptions =>
-        {
-            serverOptions.AddServerHeader = false;
-            serverOptions.AllowSynchronousIO = false;
-            serverOptions.ConfigureEndpointDefaults(listenOptions =>
-            {
-                listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1;
-            });
-            serverOptions.ListenAnyIP(8000); // Listen on port 8000
-        });
-
-        // Set URLs
-        builder.WebHost.UseUrls("http://0.0.0.0:8000");
+        // Configure strongly-typed settings
+        builder.Services.Configure<DatabaseSettings>(
+            builder.Configuration.GetSection("Database"));
+        builder.Services.Configure<JwtSettings>(
+            builder.Configuration.GetSection("Jwt"));
 
         // Initialize services via Services helper
         Services.Initialize(builder);
 
         // Add services to the container
-        builder.Services.AddControllers()
-            .ConfigureApiBehaviorOptions(options =>
-            {
-                options.SuppressMapClientErrors = false; // Enable ProblemDetails for client errors
-            });
+        builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddHealthChecks();
-        builder.Services.AddProblemDetails(); // Add ProblemDetails service
+        builder.Services.AddProblemDetails();
 
         // Configure CORS
         builder.Services.AddCors(options =>
@@ -104,15 +51,6 @@ public class Program
             });
         });
 
-        // Configure HTTPS
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Services.AddHttpsRedirection(options =>
-            {
-                options.HttpsPort = null;
-            });
-        }
-
         var app = builder.Build();
 
         // Configure the HTTP request pipeline
@@ -121,7 +59,7 @@ public class Program
             app.UseDeveloperExceptionPage();
         }
 
-        // Always enable Swagger in development and Docker
+        // Configure Swagger
         app.UseSwagger(c =>
         {
             c.RouteTemplate = "api/docs/{documentName}/swagger.json";
@@ -138,8 +76,6 @@ public class Program
 
         // Add routing and other middleware
         app.UseRouting();
-
-        // Add authentication middleware before authorization
         app.UseAuthentication();
         app.UseAuthorization();
 
@@ -149,7 +85,7 @@ public class Program
             app.UseHttpsRedirection();
         }
 
-        // Map controllers and health checks
+        // Map endpoints
         app.MapControllers();
         app.MapHealthChecks("/health");
 
