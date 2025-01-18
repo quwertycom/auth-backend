@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using API.Configuration;
 
 namespace API.Common.Helpers;
 
@@ -14,19 +15,20 @@ public static class EmailSender
     {
         if (_isInitialized) return;
 
-        // Load configuration values directly
+        var settings = configuration.GetSection("Email").Get<EmailSettings>() 
+            ?? throw new InvalidOperationException("Email settings are not configured");
+
         _smtpClient = new SmtpClient
         {
-            Host = configuration["ENV__EMAIL__HOST"] ?? throw new InvalidOperationException("Email:Host is not configured"),
-            Port = int.TryParse(configuration["ENV__EMAIL__PORT"], out var port) ? port : throw new InvalidOperationException("Email:Port is not a valid integer"),
-            EnableSsl = bool.TryParse(configuration["ENV__EMAIL__ENABLE_SSL"], out var enableSsl) ? enableSsl : throw new InvalidOperationException("Email:EnableSsl is not a valid boolean"),
-            Credentials = new NetworkCredential(
-                configuration["ENV__EMAIL__USERNAME"],
-                configuration["ENV__EMAIL__PASSWORD"]
-            )
+            Host = settings.Host,
+            Port = settings.Port,
+            EnableSsl = settings.EnableSsl,
+            Credentials = new NetworkCredential(settings.Username, settings.Password),
+            Timeout = settings.Timeout,
+            UseDefaultCredentials = settings.UseDefaultCredentials
         };
-        _fromEmail = configuration["ENV__EMAIL__FROM_EMAIL"] ?? throw new InvalidOperationException("Email:FromEmail is not configured");
-
+        
+        _fromEmail = settings.FromEmail;
         _isInitialized = true;
     }
 

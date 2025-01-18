@@ -6,6 +6,8 @@ using System.Text;
 using API.Common.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
+using API.Configuration;
 
 namespace API.Common.Helpers;
 
@@ -20,12 +22,13 @@ public static class JWT
     {
         if (_isInitialized) return;
 
-        // Load configuration values directly
-        _secretKey = configuration["ENV__JWT__SECRET_KEY"] ?? throw new InvalidOperationException("JWT:SecretKey is not configured");
-        _issuer = configuration["ENV__JWT__ISSUER"] ?? throw new InvalidOperationException("JWT:Issuer is not configured");
-        _audience = configuration["ENV__JWT__AUDIENCE"] ?? throw new InvalidOperationException("JWT:Audience is not configured");
+        var settings = configuration.GetSection("Jwt").Get<JwtSettings>() 
+            ?? throw new InvalidOperationException("JWT settings are not configured");
 
-        // Validate secret key length for HMAC SHA256
+        _secretKey = settings.SecretKey;
+        _issuer = settings.Issuer;
+        _audience = settings.Audience;
+
         if (Encoding.UTF8.GetBytes(_secretKey).Length < 32)
         {
             throw new InvalidOperationException("JWT secret key must be at least 32 bytes (256 bits) long");

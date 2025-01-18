@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
+using API.Configuration;
 
 namespace API.Common.Helpers;
 
@@ -35,21 +37,18 @@ public static class Snowflake
     {
         if (_isInitialized) return;
 
-        // Load configuration values directly
-        _datacenterId = long.Parse(configuration["ENV__SNOWFLAKE__DATACENTER_ID"] ?? "1");
-        _workerId = long.Parse(configuration["ENV__SNOWFLAKE__WORKER_ID"] ?? "1");
-        _epoch = DateTimeOffset.Parse(configuration["ENV__SNOWFLAKE__EPOCH"] ?? "2024-01-01T00:00:00Z");
+        var settings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>() 
+            ?? throw new InvalidOperationException("Snowflake settings are not configured");
 
-        // Validate parameters
+        _datacenterId = settings.DatacenterId;
+        _workerId = settings.WorkerId;
+        _epoch = DateTimeOffset.Parse(settings.Epoch);
+
         if (_datacenterId > MaxDatacenterId || _datacenterId < 0)
-        {
             throw new ArgumentException($"Datacenter ID must be between 0 and {MaxDatacenterId}");
-        }
 
         if (_workerId > MaxWorkerId || _workerId < 0)
-        {
             throw new ArgumentException($"Worker ID must be between 0 and {MaxWorkerId}");
-        }
 
         _isInitialized = true;
     }

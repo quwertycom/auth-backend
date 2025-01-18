@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using API.Configuration;
 
 namespace API.Common.Helpers;
 
@@ -14,26 +16,21 @@ public static class PasswordHasher
     {
         if (_isInitialized) return;
 
-        // Load configuration values directly
-        _iterations = int.Parse(configuration["ENV__PASSWORD_HASHER__ITERATIONS"] ?? "10000");
-        _saltSize = int.Parse(configuration["ENV__PASSWORD_HASHER__SALT_SIZE"] ?? "16");
-        _keySize = int.Parse(configuration["ENV__PASSWORD_HASHER__KEY_SIZE"] ?? "32");
+        var settings = configuration.GetSection("PasswordHasher").Get<PasswordHasherSettings>() 
+            ?? throw new InvalidOperationException("PasswordHasher settings are not configured");
 
-        // Validate parameters
+        _iterations = settings.Iterations;
+        _saltSize = settings.SaltSize;
+        _keySize = settings.KeySize;
+
         if (_iterations < 10000)
-        {
             throw new ArgumentException("Iterations must be at least 10000 for security");
-        }
 
         if (_saltSize < 16)
-        {
             throw new ArgumentException("Salt size must be at least 16 bytes");
-        }
 
         if (_keySize < 32)
-        {
             throw new ArgumentException("Key size must be at least 32 bytes");
-        }
 
         _isInitialized = true;
     }

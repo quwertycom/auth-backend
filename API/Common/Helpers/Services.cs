@@ -1,7 +1,9 @@
 using API.Data;
 using API.Service;
+using API.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace API.Common.Helpers;
 
@@ -9,6 +11,10 @@ public static class Services
 {
     public static void Initialize(WebApplicationBuilder builder)
     {
+        // Add configuration first
+        ConfigManager.AddConfiguration(builder.Services, builder.Configuration);
+
+        // Add other services
         AddDbContext(builder);
         AddControllerServices(builder);
         InitializeHelpers(builder.Configuration);
@@ -21,9 +27,9 @@ public static class Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             // add other services in the future
         }
-        catch
+        catch (Exception ex)
         {
-            throw new Exception("Failed to add controller services");
+            throw new Exception($"Failed to add controller services: {ex.Message}");
         }
     }
 
@@ -31,17 +37,17 @@ public static class Services
     {
         try
         {
-            builder.Services.AddDbContext<AuthDbContext>(options =>
+            builder.Services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
             {
+                var dbSettings = serviceProvider.GetRequiredService<IOptions<DatabaseSettings>>().Value;
                 var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
-                var host = isRunningInDocker ? "db" : "localhost";
-
+                
                 var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
                 {
-                    Host = host,
-                    Database = builder.Configuration["ENV__POSTGRES__DB"],
-                    Username = builder.Configuration["ENV__POSTGRES__USER"],
-                    Password = builder.Configuration["ENV__POSTGRES__PASSWORD"],
+                    Host = isRunningInDocker ? "db" : dbSettings.Host,
+                    Database = dbSettings.Database,
+                    Username = dbSettings.Username,
+                    Password = dbSettings.Password,
                     Pooling = true,
                     MinPoolSize = 5,
                     MaxPoolSize = 100
@@ -53,9 +59,9 @@ public static class Services
                 });
             });
         }
-        catch
+        catch (Exception ex)
         {
-            throw new Exception("Failed to add db context");
+            throw new Exception($"Failed to add db context: {ex.Message}");
         }
     }
 
@@ -63,44 +69,24 @@ public static class Services
     {
         try
         {
-            // Initialize JWT helper
-            try
+            var initializationTasks = new Dictionary<string, Action>
             {
-                JWT.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize JWT helper: {ex.Message}");
-            }
+                { "JWT", () => JWT.Initialize(configuration) },
+                { "PasswordHasher", () => PasswordHasher.Initialize(configuration) },
+                { "Snowflake", () => Snowflake.Initialize(configuration) },
+                { "EmailSender", () => EmailSender.Initialize(configuration) }
+            };
 
-            // Initialize PasswordHasher helper
-            try
+            foreach (var task in initializationTasks)
             {
-                PasswordHasher.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize PasswordHasher helper: {ex.Message}");
-            }
-
-            // Initialize Snowflake helper
-            try
-            {
-                Snowflake.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize Snowflake helper: {ex.Message}");
-            }
-
-            // Initialize EmailSender helper
-            try
-            {
-                EmailSender.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize EmailSender helper: {ex.Message}");
+                try
+                {
+                    task.Value();
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to initialize {task.Key} helper: {ex.Message}");
+                }
             }
         }
         catch (Exception ex)
