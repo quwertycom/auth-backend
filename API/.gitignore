@@ -1,29 +1,41 @@
-# Build results
-[Dd]ebug/
-[Rr]elease/
+# IDE - Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build outputs
 [Bb]in/
 [Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+[Oo]ut/
 
-# Visual Studio cache/options directory
-.vs/
-
-# NuGet Packages
+# NuGet
 *.nupkg
 **/packages/*
 !**/packages/build/
 
-# Logs
-*.log
+# Environment and configuration
+.env
+.env.*
+!.env.example
+appsettings.*.json
+!appsettings.json
 
-# Temporary files
+# Logs and temporary files
+*.log
 *.tmp
 *.temp
+logs/
 
-# Client-side dependencies
+# Dependencies
 node_modules/
 
-# Environment variables
-.env
-
-# Production settings
-appsettings.Production.json
+# Publishing
+*.pubxml
+*.publishproj
