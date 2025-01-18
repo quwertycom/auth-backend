@@ -1,3 +1,5 @@
+namespace API.Configuration;
+
 public class DatabaseSettings
 {
     public string Host { get; set; } = null!;
