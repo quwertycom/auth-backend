@@ -12,4 +12,4 @@ public class EmailSettings
     // Optional settings with default values
     public int Timeout { get; set; } = 30000; // 30 seconds
     public bool UseDefaultCredentials { get; set; } = false;
-} 
+}

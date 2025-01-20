@@ -30,33 +30,33 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AuthDbCont
         }
 
         // Get database configuration with fallbacks
-        var host = Environment.GetEnvironmentVariable("DATABASE_HOST") ?? 
-                   Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? 
-                   configuration.GetValue<string>("Database:Host") ?? 
+        var host = Environment.GetEnvironmentVariable("DATABASE_HOST") ??
+                   Environment.GetEnvironmentVariable("POSTGRES_HOST") ??
+                   configuration.GetValue<string>("Database:Host") ??
                    "localhost";
 
-        var port = Environment.GetEnvironmentVariable("DATABASE_PORT") ?? 
-                   Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? 
-                   configuration.GetValue<string>("Database:Port") ?? 
+        var port = Environment.GetEnvironmentVariable("DATABASE_PORT") ??
+                   Environment.GetEnvironmentVariable("POSTGRES_PORT") ??
+                   configuration.GetValue<string>("Database:Port") ??
                    "5432";
 
-        var database = Environment.GetEnvironmentVariable("DATABASE_NAME") ?? 
-                      Environment.GetEnvironmentVariable("POSTGRES_DB") ?? 
+        var database = Environment.GetEnvironmentVariable("DATABASE_NAME") ??
+                      Environment.GetEnvironmentVariable("POSTGRES_DB") ??
                       throw new InvalidOperationException("Database name not configured. Set DATABASE_NAME or POSTGRES_DB environment variable.");
 
-        var username = Environment.GetEnvironmentVariable("DATABASE_USER") ?? 
-                      Environment.GetEnvironmentVariable("POSTGRES_USER") ?? 
+        var username = Environment.GetEnvironmentVariable("DATABASE_USER") ??
+                      Environment.GetEnvironmentVariable("POSTGRES_USER") ??
                       throw new InvalidOperationException("Database username not configured. Set DATABASE_USER or POSTGRES_USER environment variable.");
 
-        var password = Environment.GetEnvironmentVariable("DATABASE_PASSWORD") ?? 
-                      Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? 
+        var password = Environment.GetEnvironmentVariable("DATABASE_PASSWORD") ??
+                      Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ??
                       throw new InvalidOperationException("Database password not configured. Set DATABASE_PASSWORD or POSTGRES_PASSWORD environment variable.");
 
         var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();
         var connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
-        
+
         optionsBuilder.UseNpgsql(connectionString);
 
         return new AuthDbContext(optionsBuilder.Options);
     }
-} 
+}

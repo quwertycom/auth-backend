@@ -16,7 +16,7 @@ public static class PasswordHasher
     {
         if (_isInitialized) return;
 
-        var settings = configuration.GetSection("PasswordHasher").Get<PasswordHasherSettings>() 
+        var settings = configuration.GetSection("PasswordHasher").Get<PasswordHasherSettings>()
             ?? throw new InvalidOperationException("PasswordHasher settings are not configured");
 
         _iterations = settings.Iterations;

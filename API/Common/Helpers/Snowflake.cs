@@ -37,7 +37,7 @@ public static class Snowflake
     {
         if (_isInitialized) return;
 
-        var settings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>() 
+        var settings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>()
             ?? throw new InvalidOperationException("Snowflake settings are not configured");
 
         _datacenterId = settings.DatacenterId;
