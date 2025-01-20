@@ -9,25 +9,25 @@ env:
   SOLUTION_FILE: 'Auth.sln'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  # Production Environment Variables
+  
+  # Sample values (safe to commit)
   ASPNETCORE_ENVIRONMENT: Production
-  # Database Configuration
-  POSTGRES_DB: auth_db
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
-  # JWT Configuration
-  JWT_SECRET_KEY: this-is-a-very-long-secret-key-that-is-at-least-32-bytes-long-for-ci
+  POSTGRES_DB: qauth_db
+  POSTGRES_USER: qauth_user
+  # Email settings for MailHog
+  EMAIL_HOST: localhost
+  EMAIL_PORT: 1025
+  EMAIL_ENABLE_SSL: false
+  EMAIL_FROM: noreply@example.com
+  EMAIL_USERNAME: test
+  EMAIL_PASSWORD: test
+  DOCKER_RUNNING: true
   JWT_ISSUER: auth-backend-ci
   JWT_AUDIENCE: auth-client-ci
-  # Email Configuration
-  EMAIL_HOST: smtp.gmail.com
-  EMAIL_PORT: 587
-  EMAIL_ENABLE_SSL: true
-  EMAIL_USERNAME: test@example.com
-  EMAIL_PASSWORD: dummy-password
-  EMAIL_FROM: test@example.com
-  # Docker Configuration
-  DOCKER_RUNNING: true
+
+  # Secret references (do not modify these)
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
 
 jobs:
   setup:
@@ -570,9 +570,7 @@ jobs:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
           # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
           # JWT settings
           JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
           JWT__Issuer: ${{ env.JWT_ISSUER }}
