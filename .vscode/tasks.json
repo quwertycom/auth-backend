@@ -15,7 +15,8 @@
             "label": "🚀 Run Development (Local)",
             "dependsOrder": "sequence",
             "dependsOn": [
-                "🛢️ Start Database"
+                "🛢️ Start Database",
+                "📧 Start MailHog"
             ],
             "command": "dotnet",
             "type": "process",
@@ -54,6 +55,29 @@
                     "activeOnStart": true,
                     "beginsPattern": ".*Starting.*",
                     "endsPattern": ".*database system is ready to accept connections.*"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "📧 Start MailHog",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml up mailhog -d",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Starting.*",
+                    "endsPattern": ".*Started.*"
                 }
             },
             "isBackground": true,
