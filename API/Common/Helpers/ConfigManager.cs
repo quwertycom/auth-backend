@@ -7,7 +7,7 @@ namespace API.Common.Helpers;
 public static class ConfigManager
 {
     private static IConfiguration? _configuration;
-    
+
     public static IConfiguration GetConfiguration(bool isDevelopment)
     {
         if (_configuration != null)
@@ -29,16 +29,16 @@ public static class ConfigManager
         // Register configuration sections as strongly-typed options
         services.Configure<DatabaseSettings>(
             configuration.GetSection("Database"));
-            
+
         services.Configure<JwtSettings>(
             configuration.GetSection("Jwt"));
-            
+
         services.Configure<EmailSettings>(
             configuration.GetSection("Email"));
-            
+
         services.Configure<PasswordHasherSettings>(
             configuration.GetSection("PasswordHasher"));
-            
+
         services.Configure<SnowflakeSettings>(
             configuration.GetSection("Snowflake"));
 

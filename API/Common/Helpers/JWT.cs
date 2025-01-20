@@ -22,7 +22,7 @@ public static class JWT
     {
         if (_isInitialized) return;
 
-        var settings = configuration.GetSection("Jwt").Get<JwtSettings>() 
+        var settings = configuration.GetSection("Jwt").Get<JwtSettings>()
             ?? throw new InvalidOperationException("JWT settings are not configured");
 
         _secretKey = settings.SecretKey;

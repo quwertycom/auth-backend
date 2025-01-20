@@ -15,7 +15,7 @@ public static class EmailSender
     {
         if (_isInitialized) return;
 
-        var settings = configuration.GetSection("Email").Get<EmailSettings>() 
+        var settings = configuration.GetSection("Email").Get<EmailSettings>()
             ?? throw new InvalidOperationException("Email settings are not configured");
 
         _smtpClient = new SmtpClient
@@ -27,7 +27,7 @@ public static class EmailSender
             Timeout = settings.Timeout,
             UseDefaultCredentials = settings.UseDefaultCredentials
         };
-        
+
         _fromEmail = settings.FromEmail;
         _isInitialized = true;
     }

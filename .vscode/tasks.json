@@ -4,7 +4,7 @@
         {
             "label": "🚀 Run Development (Docker)",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml up --build",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up --build; else docker compose -f docker-compose.dev.yml up --build; fi",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -15,7 +15,8 @@
             "label": "🚀 Run Development (Local)",
             "dependsOrder": "sequence",
             "dependsOn": [
-                "🛢️ Start Database"
+                "🛢️ Start Database",
+                "📧 Start MailHog"
             ],
             "command": "dotnet",
             "type": "process",
@@ -36,13 +37,13 @@
         {
             "label": "🚀 Run Production",
             "type": "shell",
-            "command": "docker compose --env-file .env.production up --build",
+            "command": "if [ -f .env ]; then docker compose --env-file .env up --build; else echo 'Error: .env file not found' && exit 1; fi",
             "problemMatcher": []
         },
         {
             "label": "🛢️ Start Database",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml up db",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up db; else docker compose -f docker-compose.dev.yml up db; fi",
             "problemMatcher": {
                 "pattern": {
                     "regexp": "^.*$",
@@ -63,15 +64,38 @@
             }
         },
         {
+            "label": "📧 Start MailHog",
+            "type": "shell",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up mailhog -d; else docker compose -f docker-compose.dev.yml up mailhog -d; fi",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Starting.*",
+                    "endsPattern": ".*Started.*"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
             "label": "⏹️ Stop All Services",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml down && docker compose down",
+            "command": "if [ -f .env ]; then (docker compose -f docker-compose.dev.yml --env-file .env down && docker compose --env-file .env down); else (docker compose -f docker-compose.dev.yml down && docker compose down); fi",
             "problemMatcher": []
         },
         {
             "label": "⏹️ Stop Database",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml stop db",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env stop db; else docker compose -f docker-compose.dev.yml stop db; fi",
             "problemMatcher": []
         },
         {
@@ -210,7 +234,7 @@
         {
             "label": "Start API for Functional Tests",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml up --build -d api",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up --build -d api; else docker compose -f docker-compose.dev.yml up --build -d api; fi",
             "problemMatcher": {
                 "pattern": {
                     "regexp": "^.*$",
@@ -255,7 +279,7 @@
         {
             "label": "Start API for Performance Tests",
             "type": "shell",
-            "command": "docker compose -f docker-compose.dev.yml up --build -d api",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up --build -d api; else docker compose -f docker-compose.dev.yml up --build -d api; fi",
             "problemMatcher": {
                 "pattern": {
                     "regexp": "^.*$",
@@ -312,6 +336,58 @@
                 "clear": true
             },
             "group": "none"
+        },
+        {
+            "label": "🔄 Update Database (Local)",
+            "type": "shell",
+            "command": "if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs) && export DATABASE_HOST=localhost && cd API && dotnet ef database update; else echo 'Error: .env file not found' && exit 1; fi",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "🔄 Update Database (Docker)",
+            "type": "shell",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env exec api sh -c 'cd /app/API && export DATABASE_HOST=db && dotnet ef database update'; else echo 'Error: .env file not found' && exit 1; fi",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "🔄 Add Migration",
+            "type": "shell",
+            "command": "if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs) && cd API && dotnet ef migrations add ${input:migrationName}; else echo 'Error: .env file not found' && exit 1; fi",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "🔄 Remove Last Migration",
+            "type": "shell",
+            "command": "if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs) && cd API && dotnet ef migrations remove; else echo 'Error: .env file not found' && exit 1; fi",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "migrationName",
+            "type": "promptString",
+            "description": "Name of the migration",
+            "default": "NewMigration"
         }
     ]
 } 

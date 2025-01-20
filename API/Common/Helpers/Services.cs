@@ -41,7 +41,7 @@ public static class Services
             {
                 var dbSettings = serviceProvider.GetRequiredService<IOptions<DatabaseSettings>>().Value;
                 var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
-                
+
                 var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
                 {
                     Host = isRunningInDocker ? "db" : dbSettings.Host,
