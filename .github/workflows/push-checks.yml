@@ -33,6 +33,11 @@ env:
   EMAIL_FROM: noreply@example.com
   EMAIL_ENABLE_SSL: false
 
+  # PasswordHasher Settings
+  PASSWORD_HASHER_ITERATIONS: 10000
+  PASSWORD_HASHER_SALT_SIZE: 16
+  PASSWORD_HASHER_KEY_SIZE: 32
+
   # Other settings
   ASPNETCORE_ENVIRONMENT: Production
   DOCKER_RUNNING: true
@@ -382,6 +387,11 @@ jobs:
               "Username": "${{ env.EMAIL_USERNAME }}",
               "Password": "${{ env.EMAIL_PASSWORD }}",
               "FromEmail": "${{ env.EMAIL_FROM }}"
+            },
+            "PasswordHasher": {
+              "Iterations": ${{ env.PASSWORD_HASHER_ITERATIONS }},
+              "SaltSize": ${{ env.PASSWORD_HASHER_SALT_SIZE }},
+              "KeySize": ${{ env.PASSWORD_HASHER_KEY_SIZE }}
             }
           }
           EOF
@@ -406,6 +416,10 @@ jobs:
           EMAIL_USERNAME: ${{ env.EMAIL_USERNAME }}
           EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
           EMAIL_FROM: ${{ env.EMAIL_FROM }}
+          # PasswordHasher settings
+          PASSWORD_HASHER__ITERATIONS: ${{ env.PASSWORD_HASHER_ITERATIONS }}
+          PASSWORD_HASHER__SALT_SIZE: ${{ env.PASSWORD_HASHER_SALT_SIZE }}
+          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER_KEY_SIZE }}
         run: |
           cd ./app
           echo "Current directory: $(pwd)"
