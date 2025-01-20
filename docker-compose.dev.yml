@@ -34,7 +34,7 @@ services:
       - Jwt__Audience=auth-client-dev
       # Email settings (configured for MailHog)
       - Email__Host=mailhog
-      - Email__Port=1025
+      - Email__Port=9100
       - Email__EnableSsl=false
       - Email__Username=test
       - Email__Password=test
@@ -75,8 +75,8 @@ services:
     networks:
       - qauth-network
     ports:
-      - "1025:1025" # SMTP server
-      - "8025:8025" # Web UI
+      - "9100:1025" # SMTP server
+      - "9000:8025" # Web UI
     restart: unless-stopped
 
 volumes:
