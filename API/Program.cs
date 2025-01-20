@@ -29,14 +29,15 @@ public class Program
         builder.Services.AddHealthChecks();
         builder.Services.AddProblemDetails();
 
-        // Configure CORS
+        // Configure CORS - Update with specific origins in production
         builder.Services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.AllowAnyOrigin()
+                policy.SetIsOriginAllowed(_ => true) // Be careful with this in production
+                      .AllowAnyMethod()
                       .AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .AllowCredentials();
             });
         });
 
@@ -59,6 +60,10 @@ public class Program
             app.UseDeveloperExceptionPage();
         }
 
+        // Use CORS and other middleware in correct order
+        app.UseRouting();
+        app.UseCors();
+
         // Configure Swagger
         app.UseSwagger(c =>
         {
@@ -71,14 +76,11 @@ public class Program
             c.RoutePrefix = "api/docs";
         });
 
-        // Use CORS before routing
-        app.UseCors();
-
-        // Add routing and other middleware
-        app.UseRouting();
+        // Add authentication and authorization
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // Configure HTTPS redirection conditionally
         if (!app.Environment.IsDevelopment())
         {
             app.UseHsts();
@@ -88,6 +90,9 @@ public class Program
         // Map endpoints
         app.MapControllers();
         app.MapHealthChecks("/health");
+
+        // Explicitly bind to all interfaces
+        app.Urls.Add("http://0.0.0.0:8000");
 
         app.Run();
     }
