@@ -24,21 +24,36 @@ services:
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - ASPNETCORE_DETAILED_ERRORS=1
       
-      # Application settings
+      # Database settings
       - Database__Host=db
       - Database__Database=${POSTGRES_DB}
       - Database__Username=${POSTGRES_USER}
       - Database__Password=${POSTGRES_PASSWORD}
+      
+      # JWT settings
       - Jwt__SecretKey=${JWT_SECRET_KEY}
       - Jwt__Issuer=auth-backend-dev
       - Jwt__Audience=auth-client-dev
+      
       # Email settings (configured for MailHog)
       - Email__Host=mailhog
-      - Email__Port=9100
+      - Email__Port=1025
       - Email__EnableSsl=false
       - Email__Username=test
       - Email__Password=test
       - Email__FromEmail=${EMAIL_FROM}
+      - Email__Timeout=10000
+      - Email__UseDefaultCredentials=false
+      
+      # Snowflake settings
+      - Snowflake__DatacenterId=1
+      - Snowflake__WorkerId=1
+      
+      # PasswordHasher settings
+      - PasswordHasher__Iterations=10000
+      - PasswordHasher__SaltSize=16
+      - PasswordHasher__KeySize=32
+      
       - DOCKER_RUNNING=true
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
