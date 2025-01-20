@@ -15,10 +15,8 @@ env:
   
   # Sample values (safe to commit)
   ASPNETCORE_ENVIRONMENT: Production
-  POSTGRES_DB: auth_db
-  POSTGRES_USER: auth_user
-  JWT_ISSUER: auth-backend-ci
-  JWT_AUDIENCE: auth-client-ci
+  POSTGRES_DB: qauth_db
+  POSTGRES_USER: qauth_user
   # Email settings for MailHog
   EMAIL_HOST: localhost
   EMAIL_PORT: 1025
@@ -27,6 +25,8 @@ env:
   EMAIL_USERNAME: test
   EMAIL_PASSWORD: test
   DOCKER_RUNNING: true
+  JWT_ISSUER: auth-backend-ci
+  JWT_AUDIENCE: auth-client-ci
 
   # Secret references (do not modify these)
   POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -309,9 +309,7 @@ jobs:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
           # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
           # JWT settings
           JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
           JWT__Issuer: ${{ env.JWT_ISSUER }}
@@ -364,9 +362,7 @@ jobs:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
           # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
           # JWT settings
           JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
           JWT__Issuer: ${{ env.JWT_ISSUER }}
