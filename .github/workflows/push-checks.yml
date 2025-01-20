@@ -12,25 +12,25 @@ env:
   SOLUTION_FILE: 'Auth.sln'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  # Production Environment Variables
+  
+  # Sample values (safe to commit)
   ASPNETCORE_ENVIRONMENT: Production
-  # Database Configuration
   POSTGRES_DB: auth_db
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
-  # JWT Configuration
-  JWT_SECRET_KEY: this-is-a-very-long-secret-key-that-is-at-least-32-bytes-long-for-ci
+  POSTGRES_USER: auth_user
   JWT_ISSUER: auth-backend-ci
   JWT_AUDIENCE: auth-client-ci
-  # Email Configuration
-  EMAIL_HOST: smtp.gmail.com
-  EMAIL_PORT: 587
-  EMAIL_ENABLE_SSL: true
-  EMAIL_USERNAME: test@example.com
-  EMAIL_PASSWORD: dummy-password
-  EMAIL_FROM: test@example.com
-  # Docker Configuration
+  # Email settings for MailHog
+  EMAIL_HOST: localhost
+  EMAIL_PORT: 1025
+  EMAIL_ENABLE_SSL: false
+  EMAIL_FROM: noreply@example.com
+  EMAIL_USERNAME: test
+  EMAIL_PASSWORD: test
   DOCKER_RUNNING: true
+
+  # Secret references (do not modify these)
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
 
 jobs:
   setup:
@@ -278,6 +278,11 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+          - 1025:1025 # SMTP port
+          - 8025:8025 # Web UI port
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -338,6 +343,11 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+          - 1025:1025 # SMTP port
+          - 8025:8025 # Web UI port
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
