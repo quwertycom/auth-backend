@@ -273,8 +273,19 @@ public class AuthService : IAuthService
                 CreatedAt = DateTime.UtcNow,
             };
 
+            Token accessToken = new Token
+            {
+                TokenString = accessTokenString,
+                Type = TokenType.Access,
+                Target = TokenTarget.User,
+                ParentToken = refreshToken,
+                Session = session,
+                User = user,
+                CreatedAt = DateTime.UtcNow,
+            };
 
             _dbContext.Tokens.Add(refreshToken);
+            _dbContext.Tokens.Add(accessToken);
             _dbContext.Sessions.Add(session);
             await _dbContext.SaveChangesAsync();
 
