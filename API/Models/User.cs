@@ -36,10 +36,10 @@ public class User
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     [Required]
-    public virtual ICollection<PhoneNumber> PhoneNumbers {get; set;} = new List<PhoneNumber>();
+    public virtual ICollection<PhoneNumber> PhoneNumbers { get; set; } = new List<PhoneNumber>();
 
     [Required]
-    public virtual ICollection<EmailAddress> EmailAddresses {get; set;} = new List<EmailAddress>();
+    public virtual ICollection<EmailAddress> EmailAddresses { get; set; } = new List<EmailAddress>();
 
     [Required]
     [MaxLength(256)]

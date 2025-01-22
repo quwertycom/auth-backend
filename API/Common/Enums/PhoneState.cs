@@ -2,7 +2,8 @@
 
 namespace API.Common.Enums;
 
-public enum PhoneState {
+public enum PhoneState
+{
     Created,
     Verified,
     Blacklisted,

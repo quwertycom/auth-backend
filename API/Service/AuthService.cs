@@ -54,7 +54,7 @@ public class AuthService : IAuthService
             }
 
             var emailExists = await _dbContext.UserEmails.AnyAsync(
-                ue => ue.Email == request.Email && 
+                ue => ue.Email == request.Email &&
                 ue.State != EmailState.Created &&
                 ue.State != EmailState.Deleted
             );
@@ -163,7 +163,7 @@ public class AuthService : IAuthService
                 .Include(vs => vs.Email)
                 .FirstOrDefaultAsync();
 
-            Console.WriteLine(verificationSession?.EmailId.ToString()??"No sessions found");
+            Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
 
             if (verificationSession == null)
             {

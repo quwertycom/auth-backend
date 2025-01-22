@@ -12,24 +12,24 @@ public class EmailAddress
 
     [Required]
     [Column("email")]
-    public required string Email {get; set;}
+    public required string Email { get; set; }
 
     [Required]
     [Column("type")]
-    public required EmailType Type {get; set;}
+    public required EmailType Type { get; set; }
 
     [Required]
     [Column("state")]
-    public required EmailState State {get; set;} = EmailState.Created;
+    public required EmailState State { get; set; } = EmailState.Created;
 
     [Required]
-    public required User User {get; set;}
+    public required User User { get; set; }
 
     [Required]
     [Column("user_id")]
-    public long UserId {get; set;}
+    public long UserId { get; set; }
 
     [Required]
     [Column("created_at")]
-    public DateTime CreatedAt {get; set;} = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
