@@ -10,12 +10,15 @@ public class VerificationSession
     [Column("id")]
     public long Id { get; set; } = Snowflake.Generate();
 
-    [Required]
-    public required UserEmail Email { get; set; }
+    public EmailAddress? Email { get; set; }
 
-    [Required]
     [Column("email_id")]
-    public long EmailId { get; set; }
+    public long? EmailId { get; set; }
+
+    public PhoneNumber? Phone { get; set; }
+
+    [Column("phone_id")]
+    public long? PhoneId { get; set; }
 
     [Required]
     public required User User { get; set; }
