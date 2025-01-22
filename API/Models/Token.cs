@@ -24,11 +24,24 @@ public class Token
     public required TokenTarget Target { get; set; }
 
     [Required]
+    [Column("is_refreshed")]
+    public bool IsRefreshed { get; set; } = false;
+
+    [Required]
+    [Column("is_revoked")]
+    public bool IsRevoked { get; set; } = false;
+
+    [Required]
     public required Session Session { get; set; }
 
     [Required]
     [Column("session_id")]
     public long SessionId { get; set; }
+
+    public Token? ParentToken { get; set; }
+
+    [Column("parent_token_id")]
+    public long? ParentTokenId { get; set; }
 
     [Required]
     public required User User { get; set; }
@@ -57,5 +70,5 @@ public class Token
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("expires_at")]
-    public DateTime? ExpiresAt { get; set; } = null;
+    public DateTime? ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(30);
 }
