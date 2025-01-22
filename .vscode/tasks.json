@@ -338,47 +338,45 @@
             "group": "none"
         },
         {
-            "label": "🔄 Update Database (Local)",
+            "label": "🔄 Update Database",
             "type": "shell",
-            "command": "if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs) && export DATABASE_HOST=localhost && cd API && dotnet ef database update; else echo 'Error: .env file not found' && exit 1; fi",
+            "command": "if [ -f ${workspaceFolder}/.env ]; then export $(cat ${workspaceFolder}/.env | grep -v '^#' | xargs) && export DATABASE_HOST=localhost && cd ${workspaceFolder}/API && dotnet ef database update; else echo 'Error: .env file not found' && exit 1; fi",
             "problemMatcher": "$msCompile",
             "presentation": {
                 "reveal": "always",
                 "panel": "dedicated",
                 "clear": true
-            }
-        },
-        {
-            "label": "🔄 Update Database (Docker)",
-            "type": "shell",
-            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env exec api sh -c 'cd /app/API && export DATABASE_HOST=db && dotnet ef database update'; else echo 'Error: .env file not found' && exit 1; fi",
-            "problemMatcher": "$msCompile",
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
             }
         },
         {
             "label": "🔄 Add Migration",
             "type": "shell",
-            "command": "if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs) && cd API && dotnet ef migrations add ${input:migrationName}; else echo 'Error: .env file not found' && exit 1; fi",
+            "command": "if [ -f ${workspaceFolder}/.env ]; then export $(cat ${workspaceFolder}/.env | grep -v '^#' | xargs) && cd ${workspaceFolder}/API && dotnet ef migrations add ${input:migrationName}; else echo 'Error: .env file not found' && exit 1; fi",
             "problemMatcher": "$msCompile",
             "presentation": {
                 "reveal": "always",
                 "panel": "dedicated",
                 "clear": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
             }
         },
         {
             "label": "🔄 Remove Last Migration",
             "type": "shell",
-            "command": "if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs) && cd API && dotnet ef migrations remove; else echo 'Error: .env file not found' && exit 1; fi",
+            "command": "if [ -f ${workspaceFolder}/.env ]; then export $(cat ${workspaceFolder}/.env | grep -v '^#' | xargs) && export DATABASE_HOST=localhost && cd ${workspaceFolder}/API && dotnet ef migrations remove --force; else echo 'Error: .env file not found' && exit 1; fi",
             "problemMatcher": "$msCompile",
             "presentation": {
                 "reveal": "always",
                 "panel": "dedicated",
                 "clear": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
             }
         }
     ],
