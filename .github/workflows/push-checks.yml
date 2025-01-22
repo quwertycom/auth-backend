@@ -158,33 +158,6 @@ jobs:
           dotnet ef dbcontext info --project API/API.csproj
           dotnet ef dbcontext list --project API/API.csproj
 
-  code-quality:
-    name: Code Quality
-    needs: restore
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: csharp
-      - name: Restore and Build for CodeQL
-        run: |
-          dotnet restore ${{ env.SOLUTION_FILE }}
-          dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:csharp"
-
   format-check:
     name: Check Code Format
     needs: restore
