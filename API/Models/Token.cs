@@ -28,14 +28,14 @@ public class Token
 
     [Required]
     [Column("session_id")]
-    public required long SessionId { get; set; }
+    public long SessionId { get; set; }
 
     [Required]
     public required User User { get; set; }
 
     [Required]
     [Column("user_id")]
-    public required long UserId { get; set; }
+    public long UserId { get; set; }
 
     public Account? Account { get; set; }
 
