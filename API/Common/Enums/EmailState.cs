@@ -2,7 +2,9 @@ namespace API.Common.Enums;
 
 public enum EmailState
 {
-    Unverified,
+    Created,
     Verified,
-    Blacklisted
+    Blacklisted,
+    Disabled,
+    Deleted
 }
