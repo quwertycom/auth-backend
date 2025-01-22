@@ -12,7 +12,7 @@ public interface IAuthService
 {
     Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
     Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
-    // Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
+    Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
 }
 
 public class AuthService : IAuthService
@@ -53,13 +53,22 @@ public class AuthService : IAuthService
                 return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
             }
 
-            var emailExists = await _dbContext.UserEmails.AnyAsync(ue => ue.Email == request.Email && ue.State == EmailState.Verified);
+            var emailExists = await _dbContext.UserEmails.AnyAsync(
+                ue => ue.Email == request.Email && 
+                ue.State != EmailState.Created &&
+                ue.State != EmailState.Deleted
+            );
             if (emailExists)
             {
                 return (false, "EMAIL_TAKEN", "Email already exists, please try a different email.", null);
             }
 
-            var phoneNumberExists = request.PhoneNumber != null && await _dbContext.Users.AnyAsync(u => u.PhoneNumber == request.PhoneNumber);
+            var phoneNumberExists = request.PhoneNumber != null && await _dbContext.UserPhoneNumbers.AnyAsync(
+                upn => upn.Phone == request.PhoneNumber &&
+                upn.State != PhoneState.Created &&
+                upn.State != PhoneState.Deleted &&
+                upn.Type != PhoneType.Recovery
+            );
             if (phoneNumberExists)
             {
                 return (false, "PHONE_NUMBER_TAKEN", "Phone number already exists, please try a different phone number.", null);
@@ -78,24 +87,46 @@ public class AuthService : IAuthService
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 BirthDate = request.BirthDate,
-                PhoneNumber = request.PhoneNumber,
                 PasswordHash = hashedPassword.hash,
                 PasswordSalt = hashedPassword.salt,
             };
 
-            var existingEmail = await _dbContext.UserEmails.FirstOrDefaultAsync(ue => ue.Email == request.Email);
-            if (existingEmail != null)
+            if (emailExists)
             {
-                _dbContext.UserEmails.Remove(existingEmail);
+                var existingEmail = await _dbContext.UserEmails.FirstOrDefaultAsync(ue => ue.Email == request.Email);
+                if (existingEmail != null)
+                {
+                    if (existingEmail.CreatedAt <= DateTime.UtcNow.AddHours(-24))
+                    {
+                        _dbContext.UserEmails.Remove(existingEmail);
+                    }
+                }
             }
 
-            var email = new UserEmail
+            if (phoneNumberExists)
+            {
+                var existingPhoneNumber = await _dbContext.UserPhoneNumbers.FirstOrDefaultAsync(upn => upn.Phone == request.PhoneNumber);
+                if (existingPhoneNumber != null)
+                {
+                    _dbContext.UserPhoneNumbers.Remove(existingPhoneNumber);
+                }
+            }
+
+            var email = new EmailAddress
             {
                 Email = request.Email,
-                State = EmailState.Unverified,
-                IsPrimary = true,
+                Type = EmailType.Primary,
+                State = EmailState.Created,
                 User = user,
             };
+
+            var PhoneNumber = request.PhoneNumber != null ? new PhoneNumber
+            {
+                Phone = request.PhoneNumber,
+                Type = PhoneType.Primary,
+                State = PhoneState.Created,
+                User = user,
+            } : null;
 
             var otp = OTPGenerator.GenerateOTP();
 
@@ -127,9 +158,12 @@ public class AuthService : IAuthService
         try
         {
             var verificationSession = await _dbContext.VerificationSessions
+                .Where(vs => vs.Id == request.VerificationSessionID)
                 .Include(vs => vs.User)
                 .Include(vs => vs.Email)
-                .FirstOrDefaultAsync(vs => vs.Id == request.VerificationSessionID);
+                .FirstOrDefaultAsync();
+
+            Console.WriteLine(verificationSession?.EmailId.ToString()??"No sessions found");
 
             if (verificationSession == null)
             {
@@ -160,14 +194,16 @@ public class AuthService : IAuthService
                 return (false, "NOT_FOUND", "Email not found.", null);
             }
 
-            if (verificationSession.EmailId != email.UserId)
+            System.Console.WriteLine("verificationSession.UserId: " + verificationSession.UserId);
+            System.Console.WriteLine("email.UserId: " + email.UserId);
+
+            if (verificationSession.UserId != email.UserId)
             {
                 return (false, "INVALID_SESSION", "Invalid verification session for this email.", null);
             }
 
             verificationSession.IsUsed = true;
             email.State = EmailState.Verified;
-            email.IsPrimary = true;
 
             await _dbContext.SaveChangesAsync();
 
@@ -179,73 +215,74 @@ public class AuthService : IAuthService
         }
     }
 
-    // public async Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request)
-    // {
-    //     try
-    //     {
-    //         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+    public async Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request)
+    {
+        try
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
 
-    //         if (user == null)
-    //         {
-    //             return (false, "NOT_FOUND", "User not found.", null, null);
-    //         }
+            if (user == null)
+            {
+                return (false, "NOT_FOUND", "User not found.", null, null);
+            }
 
-    //         if (!PasswordHasher.Compare(request.Password, user.PasswordSalt, user.PasswordHash))
-    //         {
-    //             return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
-    //         }
+            if (!PasswordHasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
+            {
+                return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
+            }
 
-    //         string accessTokenString;
-    //         string refreshTokenString;
+            string accessTokenString;
+            string refreshTokenString;
 
-    //         var refreshTokenResponse = JWT.GenerateRefreshToken(TokenTarget.User, (user.UserId, null, null));
+            var refreshTokenResponse = JWT.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null));
 
-    //         if (refreshTokenResponse.isSuccess && refreshTokenResponse.token != null)
-    //         {
-    //             refreshTokenString = refreshTokenResponse.token;
+            if (refreshTokenResponse.isSuccess && refreshTokenResponse.token != null)
+            {
+                refreshTokenString = refreshTokenResponse.token;
 
-    //             var accessTokenResponse = JWT.GenerateAccessToken(refreshTokenString);
+                var accessTokenResponse = JWT.GenerateAccessToken(refreshTokenString);
 
-    //             if (accessTokenResponse.isSuccess && accessTokenResponse.token != null)
-    //             {
-    //                 accessTokenString = accessTokenResponse.token;
-    //             }
-    //             else
-    //             {
-    //                 return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
-    //             }
-    //         }
-    //         else
-    //         {
-    //             return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
-    //         }
+                if (accessTokenResponse.isSuccess && accessTokenResponse.token != null)
+                {
+                    accessTokenString = accessTokenResponse.token;
+                }
+                else
+                {
+                    return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+                }
+            }
+            else
+            {
+                return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+            }
 
-    //         var session = new Session
-    //         {
-    //             Target = SessionTarget.User,
-    //             User = user,
-    //             Tokens = new List<Token>
-    //         };
+            var session = new Session
+            {
+                Target = SessionTarget.User,
+                User = user
+            };
 
-    //         Token refreshToken = new Token
-    //         {
-    //             TokenString = refreshTokenString,
-    //             Type = TokenType.Refresh,
-    //             Target = TokenTarget.User,
-    //             Session = session,
-    //             User = user,
-    //             UserId = user.UserId,
-    //             CreatedAt = DateTime.UtcNow,
-    //         };
 
-    //         _dbContext.Sessions.Add(session);
-    //         await _dbContext.SaveChangesAsync();
+            Token refreshToken = new Token
+            {
+                TokenString = refreshTokenString,
+                Type = TokenType.Refresh,
+                Target = TokenTarget.User,
+                Session = session,
+                User = user,
+                CreatedAt = DateTime.UtcNow,
+            };
 
-    //         return (true, "SUCCESS", "Login successful.", accessToken, refreshToken);
-    //     }
-    //     catch
-    //     {
-    //         return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
-    //     }
-    // }
+
+            _dbContext.Tokens.Add(refreshToken);
+            _dbContext.Sessions.Add(session);
+            await _dbContext.SaveChangesAsync();
+
+            return (true, "SUCCESS", "Login successful.", accessTokenString, refreshTokenString);
+        }
+        catch
+        {
+            return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+        }
+    }
 }
