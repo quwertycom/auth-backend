@@ -11,7 +11,8 @@ public class AuthDbContext : DbContext
 
     // User related
     public DbSet<User> Users { get; set; } = null!;
-    public DbSet<UserEmail> UserEmails { get; set; } = null!;
+    public DbSet<EmailAddress> UserEmails { get; set; } = null!;
+    public DbSet<PhoneNumber> UserPhoneNumbers { get; set; } = null!;
     public DbSet<Session> Sessions { get; set; } = null!;
 
     // Account related
@@ -62,14 +63,16 @@ public class AuthDbContext : DbContext
 
             // Indexes for performance
             entity.HasIndex(u => u.Username).IsUnique();
-            entity.HasIndex(u => u.PhoneNumber)
-                .IsUnique()
-                .HasFilter("\"PhoneNumber\" IS NOT NULL");
 
             // Cascade delete for user-owned entities
-            entity.HasMany(u => u.Emails)
+            entity.HasMany(u => u.EmailAddresses)
                 .WithOne(e => e.User)
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(u => u.PhoneNumbers)
+                .WithOne(p => p.User)
+                .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasMany(u => u.Accounts)
@@ -191,7 +194,7 @@ public class AuthDbContext : DbContext
             entity.HasIndex(t => t.ExpiresAt);
             entity.HasIndex(t => new { t.Target, t.UserId });
 
-            // Relationships based on TokenTarget
+            // Relationships
             entity.HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
@@ -320,29 +323,54 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // UserEmail configurations
-        modelBuilder.Entity<UserEmail>(entity =>
+        // EmailAddress configurations
+        modelBuilder.Entity<EmailAddress>(entity =>
         {
             entity.ToTable("user_emails");
 
             // Indexes
-            entity.HasIndex(ue => ue.UserId);
-            entity.HasIndex(ue => ue.Email).IsUnique();
-            entity.HasIndex(ue => new { ue.UserId, ue.IsPrimary })
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.Type })
                 .IsUnique()
-                .HasFilter("is_primary = true");
+                .HasFilter("type = 'Primary'");
 
             // Relationships
-            entity.HasOne(ue => ue.User)
-                .WithMany(u => u.Emails)
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.EmailAddresses)
                 .HasForeignKey(ue => ue.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Custom columns
-            entity.Property(ue => ue.Email).HasColumnName("email");
-            entity.Property(ue => ue.State).HasConversion<string>().HasMaxLength(20).HasColumnName("state");
-            entity.Property(ue => ue.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
-            entity.Property(ue => ue.IsPrimary).HasColumnName("is_primary").HasDefaultValue(false);
+            entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
+            entity.Property(e => e.State).HasConversion<string>().HasMaxLength(20).HasColumnName("state");
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+        });
+
+        // PhoneNumber configurations
+        modelBuilder.Entity<PhoneNumber>(entity =>
+        {
+            entity.ToTable("user_phone_numbers");
+
+            // Indexes
+            entity.HasIndex(p => p.UserId);
+            entity.HasIndex(p => p.Phone).IsUnique();
+            entity.HasIndex(p => new { p.UserId, p.Type })
+                .IsUnique()
+                .HasFilter("type = 'Primary'");
+
+            // Relationships
+            entity.HasOne(p => p.User)
+                .WithMany(u => u.PhoneNumbers)
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Custom columns
+            entity.Property(p => p.Phone).HasColumnName("phone");
+            entity.Property(p => p.Type).HasConversion<string>().HasMaxLength(20).HasColumnName("type");
+            entity.Property(p => p.State).HasConversion<string>().HasMaxLength(20).HasColumnName("state");
+            entity.Property(p => p.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
         });
 
         // VerificationSession configurations
@@ -358,6 +386,13 @@ public class AuthDbContext : DbContext
             entity.HasOne(vs => vs.Email)
                 .WithMany()
                 .HasForeignKey(vs => vs.EmailId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(vs => vs.Phone)
+                .WithMany()
+                .HasForeignKey(vs => vs.PhoneId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(vs => vs.User)
