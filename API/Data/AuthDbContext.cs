@@ -193,6 +193,7 @@ public class AuthDbContext : DbContext
             entity.HasIndex(t => t.TokenString).IsUnique();
             entity.HasIndex(t => t.ExpiresAt);
             entity.HasIndex(t => new { t.Target, t.UserId });
+            entity.HasIndex(t => t.IsRevoked);
 
             // Relationships
             entity.HasOne(t => t.User)
@@ -206,9 +207,27 @@ public class AuthDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Optional relationships
+            entity.HasOne(t => t.Account)
+                .WithMany()
+                .HasForeignKey(t => t.AccountId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasOne(t => t.ApplicationAccount)
                 .WithMany()
                 .HasForeignKey(t => t.ApplicationAccountId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(t => t.Application)
+                .WithMany()
+                .HasForeignKey(t => t.ApplicationId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(t => t.ParentToken)
+                .WithMany()
+                .HasForeignKey(t => t.ParentTokenId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
