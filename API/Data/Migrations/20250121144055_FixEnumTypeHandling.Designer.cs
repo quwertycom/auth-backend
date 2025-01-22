@@ -3,6 +3,7 @@ using System;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API.Data.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250121144055_FixEnumTypeHandling")]
+    partial class FixEnumTypeHandling
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,10 +247,8 @@ namespace API.Data.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("state");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
                         .HasColumnName("type");
 
                     b.Property<long>("UserId")
@@ -263,7 +264,7 @@ namespace API.Data.Migrations
 
                     b.HasIndex("UserId", "Type")
                         .IsUnique()
-                        .HasFilter("type = 'Primary'");
+                        .HasFilter("type = 0");
 
                     b.ToTable("user_emails", (string)null);
                 });
@@ -430,10 +431,8 @@ namespace API.Data.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("state");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
                         .HasColumnName("type");
 
                     b.Property<long>("UserId")
@@ -449,7 +448,7 @@ namespace API.Data.Migrations
 
                     b.HasIndex("UserId", "Type")
                         .IsUnique()
-                        .HasFilter("type = 'Primary'");
+                        .HasFilter("type = 0");
 
                     b.ToTable("user_phone_numbers", (string)null);
                 });

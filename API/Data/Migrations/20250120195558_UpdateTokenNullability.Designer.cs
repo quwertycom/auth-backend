@@ -3,6 +3,7 @@ using System;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API.Data.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250120195558_UpdateTokenNullability")]
+    partial class UpdateTokenNullability
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,56 +221,6 @@ namespace API.Data.Migrations
                     b.ToTable("developers", (string)null);
                 });
 
-            modelBuilder.Entity("API.Models.EmailAddress", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("email");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("state");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("type");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "Type")
-                        .IsUnique()
-                        .HasFilter("type = 'Primary'");
-
-                    b.ToTable("user_emails", (string)null);
-                });
-
             modelBuilder.Entity("API.Models.Notification", b =>
                 {
                     b.Property<long>("Id")
@@ -402,56 +355,6 @@ namespace API.Data.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.ToTable("organization_roles", (string)null);
-                });
-
-            modelBuilder.Entity("API.Models.PhoneNumber", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("phone");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("state");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("type");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Phone")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "Type")
-                        .IsUnique()
-                        .HasFilter("type = 'Primary'");
-
-                    b.ToTable("user_phone_numbers", (string)null);
                 });
 
             modelBuilder.Entity("API.Models.Session", b =>
@@ -640,6 +543,11 @@ namespace API.Data.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("password_salt");
 
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone_number");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -654,10 +562,64 @@ namespace API.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique()
+                        .HasFilter("\"PhoneNumber\" IS NOT NULL");
+
                     b.HasIndex("Username")
                         .IsUnique();
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("API.Models.UserEmail", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("IsPrimary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_primary");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("state");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "IsPrimary")
+                        .IsUnique()
+                        .HasFilter("is_primary = true");
+
+                    b.ToTable("user_emails", (string)null);
                 });
 
             modelBuilder.Entity("API.Models.VerificationSession", b =>
@@ -680,7 +642,7 @@ namespace API.Data.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<long?>("EmailId")
+                    b.Property<long>("EmailId")
                         .HasColumnType("bigint")
                         .HasColumnName("email_id");
 
@@ -694,10 +656,6 @@ namespace API.Data.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_used");
 
-                    b.Property<long?>("PhoneId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("phone_id");
-
                     b.Property<long>("UserId")
                         .HasColumnType("bigint")
                         .HasColumnName("user_id");
@@ -708,8 +666,6 @@ namespace API.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("EmailId");
-
-                    b.HasIndex("PhoneId");
 
                     b.HasIndex("UserId");
 
@@ -807,17 +763,6 @@ namespace API.Data.Migrations
                     b.Navigation("Organization");
                 });
 
-            modelBuilder.Entity("API.Models.EmailAddress", b =>
-                {
-                    b.HasOne("API.Models.User", "User")
-                        .WithMany("EmailAddresses")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("API.Models.Notification", b =>
                 {
                     b.HasOne("API.Models.Account", "Account")
@@ -852,17 +797,6 @@ namespace API.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Organization");
-                });
-
-            modelBuilder.Entity("API.Models.PhoneNumber", b =>
-                {
-                    b.HasOne("API.Models.User", "User")
-                        .WithMany("PhoneNumbers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("API.Models.Session", b =>
@@ -932,17 +866,24 @@ namespace API.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("API.Models.UserEmail", b =>
+                {
+                    b.HasOne("API.Models.User", "User")
+                        .WithMany("Emails")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("API.Models.VerificationSession", b =>
                 {
-                    b.HasOne("API.Models.EmailAddress", "Email")
+                    b.HasOne("API.Models.UserEmail", "Email")
                         .WithMany()
                         .HasForeignKey("EmailId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("API.Models.PhoneNumber", "Phone")
-                        .WithMany()
-                        .HasForeignKey("PhoneId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("API.Models.User", "User")
                         .WithMany()
@@ -951,8 +892,6 @@ namespace API.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Email");
-
-                    b.Navigation("Phone");
 
                     b.Navigation("User");
                 });
@@ -1029,11 +968,9 @@ namespace API.Data.Migrations
                 {
                     b.Navigation("Accounts");
 
-                    b.Navigation("EmailAddresses");
+                    b.Navigation("Emails");
 
                     b.Navigation("Notifications");
-
-                    b.Navigation("PhoneNumbers");
 
                     b.Navigation("Sessions");
                 });
