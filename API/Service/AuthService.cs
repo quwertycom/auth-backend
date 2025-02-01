@@ -5,6 +5,7 @@ using API.Contracts.Requests.Auth;
 using API.Data;
 using API.Models;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 
 namespace API.Service;
 
@@ -17,13 +18,11 @@ public interface IAuthService
 
 public class AuthService : IAuthService
 {
-	private readonly AuthDbContext _dbContext;
 	private readonly IUserInfoRepository _userInfoRepository;
 	private readonly ITokenRepository _tokenRepository;
 	private readonly ISessionRepository _sessionRepository;
 	public AuthService(IUserInfoRepository userInfoRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
 	{
-		_dbContext = dbContext;
 		_userInfoRepository = userInfoRepository;
 		_tokenRepository = tokenRepository;
 		_sessionRepository = sessionRepository;
@@ -107,10 +106,9 @@ public class AuthService : IAuthService
 				IsUsed = false,
 			};
 
-			_dbContext.Users.Add(newUser);
-			_dbContext.UserEmails.Add(newEmail);
-			_dbContext.VerificationSessions.Add(otpSession);
-			await _dbContext.SaveChangesAsync();
+			await _userInfoRepository.AddUser(newUser);
+			await _userInfoRepository.AddEmail(newEmail);
+			await _sessionRepository.AddSession(otpSession);
 
 			await EmailSender.SendOtpEmailAsync(newEmail.Email, otp);
 
