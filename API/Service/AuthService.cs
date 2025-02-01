@@ -10,290 +10,241 @@ namespace API.Service;
 
 public interface IAuthService
 {
-    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
-    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
-    Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
+	Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
+	Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
+	Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
 }
 
 public class AuthService : IAuthService
 {
-    private readonly AuthDbContext _dbContext;
+	private readonly AuthDbContext _dbContext;
+	private readonly IUserInfoRepository _userInfoRepository;
+	private readonly ITokenRepository _tokenRepository;
+	private readonly ISessionRepository _sessionRepository;
+	public AuthService(IUserInfoRepository userInfoRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
+	{
+		_dbContext = dbContext;
+		_userInfoRepository = userInfoRepository;
+		_tokenRepository = tokenRepository;
+		_sessionRepository = sessionRepository;
+	}
 
-    public AuthService(AuthDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+	public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
+	{
+		try
+		{
+			var emailRegex = new Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+			var usernameRegex = new Regex(@"^[a-zA-Z0-9_-]{3,50}$");
+			var phoneRegex = new Regex(@"^\+?\d{1,4}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,4}$");
 
-    public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
-    {
-        try
-        {
-            var emailRegex = new Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-            var usernameRegex = new Regex(@"^[a-zA-Z0-9_-]{3,50}$");
-            var phoneRegex = new Regex(@"^\+?\d{1,4}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,4}$");
+			if (!emailRegex.IsMatch(request.Email))
+			{
+				return (false, "INVALID_EMAIL", "Invalid email format.", null);
+			}
 
-            if (!emailRegex.IsMatch(request.Email))
-            {
-                return (false, "INVALID_EMAIL", "Invalid email format.", null);
-            }
+			if (!usernameRegex.IsMatch(request.Username))
+			{
+				return (false, "INVALID_USERNAME", "Invalid username format.", null);
+			}
 
-            if (!usernameRegex.IsMatch(request.Username))
-            {
-                return (false, "INVALID_USERNAME", "Invalid username format.", null);
-            }
+			if (request.PhoneNumber != null && !phoneRegex.IsMatch(request.PhoneNumber))
+			{
+				return (false, "INVALID_PHONE_NUMBER", "Invalid phone number format.", null);
+			}
+			var user = _userInfoRepository.GetUserByUserName(request.Username);
+			var usernameExists = (user != null) ? true : false;
+			if (usernameExists)
+			{
+				return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
+			}
+			var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
+			var emailExists = (email != null && email.State != EmailState.Created && email.State != EmailState.Deleted) ? true : false;
 
-            if (request.PhoneNumber != null && !phoneRegex.IsMatch(request.PhoneNumber))
-            {
-                return (false, "INVALID_PHONE_NUMBER", "Invalid phone number format.", null);
-            }
+			if (emailExists)
+			{
+				return (false, "EMAIL_TAKEN", "Email already exists, please try a different email.", null);
+			}
+			var phoneNumber = await _userInfoRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
+			var phoneNumberExists = (phoneNumber != null && phoneNumber.State != PhoneState.Created && phoneNumber.State != PhoneState.Deleted && phoneNumber.Type != PhoneType.Recovery) ? true : false;
 
-            var usernameExists = await _dbContext.Users.AnyAsync(u => u.Username == request.Username);
-            if (usernameExists)
-            {
-                return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
-            }
+			if (phoneNumberExists)
+			{
+				return (false, "PHONE_NUMBER_TAKEN", "Phone number already exists, please try a different phone number.", null);
+			}
 
-            var emailExists = await _dbContext.UserEmails.AnyAsync(
-                ue => ue.Email == request.Email &&
-                ue.State != EmailState.Created &&
-                ue.State != EmailState.Deleted
-            );
-            if (emailExists)
-            {
-                return (false, "EMAIL_TAKEN", "Email already exists, please try a different email.", null);
-            }
+			if (request.Password.Length < 8)
+			{
+				return (false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters long.", null);
+			}
 
-            var phoneNumberExists = request.PhoneNumber != null && await _dbContext.UserPhoneNumbers.AnyAsync(
-                upn => upn.Phone == request.PhoneNumber &&
-                upn.State != PhoneState.Created &&
-                upn.State != PhoneState.Deleted &&
-                upn.Type != PhoneType.Recovery
-            );
-            if (phoneNumberExists)
-            {
-                return (false, "PHONE_NUMBER_TAKEN", "Phone number already exists, please try a different phone number.", null);
-            }
+			var hashedPassword = PasswordHasher.Hash(request.Password);
 
-            if (request.Password.Length < 8)
-            {
-                return (false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters long.", null);
-            }
+			var newUser = new User
+			{
+				Username = request.Username,
+				FirstName = request.FirstName,
+				LastName = request.LastName,
+				BirthDate = request.BirthDate,
+				PasswordHash = hashedPassword.hash,
+				PasswordSalt = hashedPassword.salt,
+			};
 
-            var hashedPassword = PasswordHasher.Hash(request.Password);
+			var newEmail = new EmailAddress
+			{
+				Email = request.Email,
+				Type = EmailType.Primary,
+				State = EmailState.Created,
+				User = newUser,
+			};
 
-            var user = new User
-            {
-                Username = request.Username,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                BirthDate = request.BirthDate,
-                PasswordHash = hashedPassword.hash,
-                PasswordSalt = hashedPassword.salt,
-            };
+			var otp = OTPGenerator.GenerateOTP();
 
-            if (emailExists)
-            {
-                var existingEmail = await _dbContext.UserEmails.FirstOrDefaultAsync(ue => ue.Email == request.Email);
-                if (existingEmail != null)
-                {
-                    if (existingEmail.CreatedAt <= DateTime.UtcNow.AddHours(-24))
-                    {
-                        _dbContext.UserEmails.Remove(existingEmail);
-                    }
-                }
-            }
+			var otpSession = new VerificationSession
+			{
+				Email = newEmail,
+				User = newUser,
+				Code = otp,
+				IsUsed = false,
+			};
 
-            if (phoneNumberExists)
-            {
-                var existingPhoneNumber = await _dbContext.UserPhoneNumbers.FirstOrDefaultAsync(upn => upn.Phone == request.PhoneNumber);
-                if (existingPhoneNumber != null)
-                {
-                    _dbContext.UserPhoneNumbers.Remove(existingPhoneNumber);
-                }
-            }
+			_dbContext.Users.Add(newUser);
+			_dbContext.UserEmails.Add(newEmail);
+			_dbContext.VerificationSessions.Add(otpSession);
+			await _dbContext.SaveChangesAsync();
 
-            var email = new EmailAddress
-            {
-                Email = request.Email,
-                Type = EmailType.Primary,
-                State = EmailState.Created,
-                User = user,
-            };
+			await EmailSender.SendOtpEmailAsync(newEmail.Email, otp);
 
-            var PhoneNumber = request.PhoneNumber != null ? new PhoneNumber
-            {
-                Phone = request.PhoneNumber,
-                Type = PhoneType.Primary,
-                State = PhoneState.Created,
-                User = user,
-            } : null;
+			return (true, "OTP_SENT", "8 Digits code has been sent to your email. Please verify your email and login.", otpSession.Id);
+		}
+		catch
+		{
+			return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
+		}
+	}
 
-            var otp = OTPGenerator.GenerateOTP();
+	public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request)
+	{
+		try
+		{
+			var verificationSession = await _sessionRepository.GetSeession(request.VerificationSessionID);
 
-            var otpSession = new VerificationSession
-            {
-                Email = email,
-                User = user,
-                Code = otp,
-                IsUsed = false,
-            };
+			Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
+			switch (verificationSession)
+			{
+				case null:
+					return (false, "NOT_FOUND", "Verification session not found.", null);
+				case var session when session.Code != request.OTP:
+					return (false, "INVALID_OTP", "Invalid OTP.", null);
+				case var session when session.IsUsed:
+					return (false, "ALREADY_USED", "OTP already used.", null);
+				case var session when session.CreatedAt.AddMinutes(session.ExpiryMinutes) < DateTime.UtcNow:
+					return (false, "EXPIRED", "OTP expired.", null);
+			}
 
-            _dbContext.Users.Add(user);
-            _dbContext.UserEmails.Add(email);
-            _dbContext.VerificationSessions.Add(otpSession);
-            await _dbContext.SaveChangesAsync();
+			var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
 
-            await EmailSender.SendOtpEmailAsync(email.Email, otp);
+			if (email == null)
+			{
+				return (false, "NOT_FOUND", "Email not found.", null);
+			}
 
-            return (true, "OTP_SENT", "8 Digits code has been sent to your email. Please verify your email and login.", otpSession.Id);
-        }
-        catch
-        {
-            return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
-        }
-    }
+			System.Console.WriteLine("verificationSession.UserId: " + verificationSession.UserId);
+			System.Console.WriteLine("email.UserId: " + email.UserId);
 
-    public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request)
-    {
-        try
-        {
-            var verificationSession = await _dbContext.VerificationSessions
-                .Where(vs => vs.Id == request.VerificationSessionID)
-                .Include(vs => vs.User)
-                .Include(vs => vs.Email)
-                .FirstOrDefaultAsync();
+			if (verificationSession.UserId != email.UserId)
+			{
+				return (false, "INVALID_SESSION", "Invalid verification session for this email.", null);
+			}
 
-            Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
+			verificationSession.IsUsed = true;
+			await _userInfoRepository.ChangeEmailState(email.Id, EmailState.Verified);
 
-            if (verificationSession == null)
-            {
-                return (false, "NOT_FOUND", "Verification session not found.", null);
-            }
+			return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
+		}
+		catch
+		{
+			return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
+		}
+	}
 
-            if (verificationSession.Code != request.OTP)
-            {
-                return (false, "INVALID_OTP", "Invalid OTP.", null);
-            }
+	public async Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request)
+	{
+		try
+		{
+			var user = await _userInfoRepository.GetUserByUsername(request.Username);
 
-            if (verificationSession.IsUsed)
-            {
-                return (false, "ALREADY_USED", "OTP already used.", null);
-            }
+			if (user == null)
+			{
+				return (false, "NOT_FOUND", "User not found.", null, null);
+			}
 
-            if (verificationSession.CreatedAt.AddMinutes(verificationSession.ExpiryMinutes) < DateTime.UtcNow)
-            {
-                return (false, "EXPIRED", "OTP expired.", null);
-            }
+			if (!PasswordHasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
+			{
+				return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
+			}
 
-            var email = await _dbContext.UserEmails
-                .Include(ue => ue.User)
-                .FirstOrDefaultAsync(ue => ue.Email == request.Email);
+			string accessTokenString;
+			string refreshTokenString;
 
-            if (email == null)
-            {
-                return (false, "NOT_FOUND", "Email not found.", null);
-            }
+			var refreshTokenResponse = JWT.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null));
 
-            System.Console.WriteLine("verificationSession.UserId: " + verificationSession.UserId);
-            System.Console.WriteLine("email.UserId: " + email.UserId);
+			if (refreshTokenResponse.isSuccess && refreshTokenResponse.token != null)
+			{
+				refreshTokenString = refreshTokenResponse.token;
 
-            if (verificationSession.UserId != email.UserId)
-            {
-                return (false, "INVALID_SESSION", "Invalid verification session for this email.", null);
-            }
+				var accessTokenResponse = JWT.GenerateAccessToken(refreshTokenString);
 
-            verificationSession.IsUsed = true;
-            email.State = EmailState.Verified;
+				if (accessTokenResponse.isSuccess && accessTokenResponse.token != null)
+				{
+					accessTokenString = accessTokenResponse.token;
+				}
+				else
+				{
+					return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+				}
+			}
+			else
+			{
+				return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+			}
 
-            await _dbContext.SaveChangesAsync();
-
-            return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
-        }
-        catch
-        {
-            return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
-        }
-    }
-
-    public async Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request)
-    {
-        try
-        {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
-
-            if (user == null)
-            {
-                return (false, "NOT_FOUND", "User not found.", null, null);
-            }
-
-            if (!PasswordHasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
-            {
-                return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
-            }
-
-            string accessTokenString;
-            string refreshTokenString;
-
-            var refreshTokenResponse = JWT.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null));
-
-            if (refreshTokenResponse.isSuccess && refreshTokenResponse.token != null)
-            {
-                refreshTokenString = refreshTokenResponse.token;
-
-                var accessTokenResponse = JWT.GenerateAccessToken(refreshTokenString);
-
-                if (accessTokenResponse.isSuccess && accessTokenResponse.token != null)
-                {
-                    accessTokenString = accessTokenResponse.token;
-                }
-                else
-                {
-                    return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
-                }
-            }
-            else
-            {
-                return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
-            }
-
-            var session = new Session
-            {
-                Target = SessionTarget.User,
-                User = user
-            };
+			var session = new Session
+			{
+				Target = SessionTarget.User,
+				User = user
+			};
 
 
-            Token refreshToken = new Token
-            {
-                TokenString = refreshTokenString,
-                Type = TokenType.Refresh,
-                Target = TokenTarget.User,
-                Session = session,
-                User = user,
-                CreatedAt = DateTime.UtcNow,
-            };
+			Token refreshToken = new Token
+			{
+				TokenString = refreshTokenString,
+				Type = TokenType.Refresh,
+				Target = TokenTarget.User,
+				Session = session,
+				User = user,
+				CreatedAt = DateTime.UtcNow,
+			};
 
-            Token accessToken = new Token
-            {
-                TokenString = accessTokenString,
-                Type = TokenType.Access,
-                Target = TokenTarget.User,
-                ParentToken = refreshToken,
-                Session = session,
-                User = user,
-                CreatedAt = DateTime.UtcNow,
-            };
+			Token accessToken = new Token
+			{
+				TokenString = accessTokenString,
+				Type = TokenType.Access,
+				Target = TokenTarget.User,
+				ParentToken = refreshToken,
+				Session = session,
+				User = user,
+				CreatedAt = DateTime.UtcNow,
+			};
 
-            _dbContext.Tokens.Add(refreshToken);
-            _dbContext.Tokens.Add(accessToken);
-            _dbContext.Sessions.Add(session);
-            await _dbContext.SaveChangesAsync();
+			await _tokenRepository.AddToken(refreshToken);
+			await _tokenRepository.AddToken(accessToken);
+			await _sessionRepository.AddSession(session);
 
-            return (true, "SUCCESS", "Login successful.", accessTokenString, refreshTokenString);
-        }
-        catch
-        {
-            return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
-        }
-    }
+			return (true, "SUCCESS", "Login successful.", accessTokenString, refreshTokenString);
+		}
+		catch
+		{
+			return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
+		}
+	}
 }
