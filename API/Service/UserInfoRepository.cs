@@ -70,19 +70,19 @@ namespace API.Service
 				catch { }
 			}
 
-		}
-		public async Task RemovePhoneNumberById(long Id)
-		{
-			var phoneNumber = await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Id == Id);
-			if (phoneNumber != null)
-			{
-				try
-				{
-					_Context.UserPhoneNumbers.Remove(phoneNumber);
-					await _Context.SaveChangesAsync();
-				}
-				catch { }
-			}
+        }
+        public async Task RemovePhoneNumberById(long Id)
+        {
+            var phoneNumber = await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Id == Id);
+            if (phoneNumber != null)
+            {
+                try
+                {
+                    _Context.UserPhoneNumbers.Remove(phoneNumber);
+                    await _Context.SaveChangesAsync();
+                }
+                catch { }
+            }
 
 		}
 		public async Task<User?> GetUserByUserName(string Username)
