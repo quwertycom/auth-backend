@@ -5,6 +5,7 @@ using API.Contracts.Requests.Auth;
 using API.Data;
 using API.Models;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 
 namespace API.Service;
 
@@ -17,11 +18,14 @@ public interface IAuthService
 
 public class AuthService : IAuthService
 {
-    private readonly AuthDbContext _dbContext;
-
-    public AuthService(AuthDbContext dbContext)
+    private readonly IUserInfoRepository _userInfoRepository;
+    private readonly ITokenRepository _tokenRepository;
+    private readonly ISessionRepository _sessionRepository;
+    public AuthService(IUserInfoRepository userInfoRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
     {
-        _dbContext = dbContext;
+        _userInfoRepository = userInfoRepository;
+        _tokenRepository = tokenRepository;
+        _sessionRepository = sessionRepository;
     }
 
     public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
@@ -46,29 +50,26 @@ public class AuthService : IAuthService
             {
                 return (false, "INVALID_PHONE_NUMBER", "Invalid phone number format.", null);
             }
-
-            var usernameExists = await _dbContext.Users.AnyAsync(u => u.Username == request.Username);
+            var user = await _userInfoRepository.GetUserByUsername(request.Username);
+            var usernameExists = user != null;
             if (usernameExists)
             {
                 return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
             }
+            var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
+            var emailExists = email != null && email.State != EmailState.Created && email.State != EmailState.Deleted;
 
-            var emailExists = await _dbContext.UserEmails.AnyAsync(
-                ue => ue.Email == request.Email &&
-                ue.State != EmailState.Created &&
-                ue.State != EmailState.Deleted
-            );
             if (emailExists)
             {
                 return (false, "EMAIL_TAKEN", "Email already exists, please try a different email.", null);
             }
+            PhoneNumber? phoneNumber = null;
+            if (request.PhoneNumber != null)
+            {
+                phoneNumber = await _userInfoRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
+            }
+            var phoneNumberExists = phoneNumber != null && phoneNumber.State != PhoneState.Created && phoneNumber.State != PhoneState.Deleted && phoneNumber.Type != PhoneType.Recovery;
 
-            var phoneNumberExists = request.PhoneNumber != null && await _dbContext.UserPhoneNumbers.AnyAsync(
-                upn => upn.Phone == request.PhoneNumber &&
-                upn.State != PhoneState.Created &&
-                upn.State != PhoneState.Deleted &&
-                upn.Type != PhoneType.Recovery
-            );
             if (phoneNumberExists)
             {
                 return (false, "PHONE_NUMBER_TAKEN", "Phone number already exists, please try a different phone number.", null);
@@ -81,7 +82,7 @@ public class AuthService : IAuthService
 
             var hashedPassword = PasswordHasher.Hash(request.Password);
 
-            var user = new User
+            var newUser = new User
             {
                 Username = request.Username,
                 FirstName = request.FirstName,
@@ -91,59 +92,29 @@ public class AuthService : IAuthService
                 PasswordSalt = hashedPassword.salt,
             };
 
-            if (emailExists)
-            {
-                var existingEmail = await _dbContext.UserEmails.FirstOrDefaultAsync(ue => ue.Email == request.Email);
-                if (existingEmail != null)
-                {
-                    if (existingEmail.CreatedAt <= DateTime.UtcNow.AddHours(-24))
-                    {
-                        _dbContext.UserEmails.Remove(existingEmail);
-                    }
-                }
-            }
-
-            if (phoneNumberExists)
-            {
-                var existingPhoneNumber = await _dbContext.UserPhoneNumbers.FirstOrDefaultAsync(upn => upn.Phone == request.PhoneNumber);
-                if (existingPhoneNumber != null)
-                {
-                    _dbContext.UserPhoneNumbers.Remove(existingPhoneNumber);
-                }
-            }
-
-            var email = new EmailAddress
+            var newEmail = new EmailAddress
             {
                 Email = request.Email,
                 Type = EmailType.Primary,
                 State = EmailState.Created,
-                User = user,
+                User = newUser,
             };
-
-            var PhoneNumber = request.PhoneNumber != null ? new PhoneNumber
-            {
-                Phone = request.PhoneNumber,
-                Type = PhoneType.Primary,
-                State = PhoneState.Created,
-                User = user,
-            } : null;
 
             var otp = OTPGenerator.GenerateOTP();
 
             var otpSession = new VerificationSession
             {
-                Email = email,
-                User = user,
+                Email = newEmail,
+                User = newUser,
                 Code = otp,
                 IsUsed = false,
             };
 
-            _dbContext.Users.Add(user);
-            _dbContext.UserEmails.Add(email);
-            _dbContext.VerificationSessions.Add(otpSession);
-            await _dbContext.SaveChangesAsync();
+            await _userInfoRepository.AddUser(newUser);
+            await _userInfoRepository.AddEmail(newEmail);
+            await _sessionRepository.AddSession(otpSession);
 
-            await EmailSender.SendOtpEmailAsync(email.Email, otp);
+            await EmailSender.SendOtpEmailAsync(newEmail.Email, otp);
 
             return (true, "OTP_SENT", "8 Digits code has been sent to your email. Please verify your email and login.", otpSession.Id);
         }
@@ -157,37 +128,22 @@ public class AuthService : IAuthService
     {
         try
         {
-            var verificationSession = await _dbContext.VerificationSessions
-                .Where(vs => vs.Id == request.VerificationSessionID)
-                .Include(vs => vs.User)
-                .Include(vs => vs.Email)
-                .FirstOrDefaultAsync();
+            var verificationSession = await _sessionRepository.GetSeession(request.VerificationSessionID);
 
             Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
-
-            if (verificationSession == null)
+            switch (verificationSession)
             {
-                return (false, "NOT_FOUND", "Verification session not found.", null);
+                case null:
+                    return (false, "NOT_FOUND", "Verification session not found.", null);
+                case var session when session.Code != request.OTP:
+                    return (false, "INVALID_OTP", "Invalid OTP.", null);
+                case var session when session.IsUsed:
+                    return (false, "ALREADY_USED", "OTP already used.", null);
+                case var session when session.CreatedAt.AddMinutes(session.ExpiryMinutes) < DateTime.UtcNow:
+                    return (false, "EXPIRED", "OTP expired.", null);
             }
 
-            if (verificationSession.Code != request.OTP)
-            {
-                return (false, "INVALID_OTP", "Invalid OTP.", null);
-            }
-
-            if (verificationSession.IsUsed)
-            {
-                return (false, "ALREADY_USED", "OTP already used.", null);
-            }
-
-            if (verificationSession.CreatedAt.AddMinutes(verificationSession.ExpiryMinutes) < DateTime.UtcNow)
-            {
-                return (false, "EXPIRED", "OTP expired.", null);
-            }
-
-            var email = await _dbContext.UserEmails
-                .Include(ue => ue.User)
-                .FirstOrDefaultAsync(ue => ue.Email == request.Email);
+            var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
 
             if (email == null)
             {
@@ -203,9 +159,7 @@ public class AuthService : IAuthService
             }
 
             verificationSession.IsUsed = true;
-            email.State = EmailState.Verified;
-
-            await _dbContext.SaveChangesAsync();
+            await _userInfoRepository.ChangeEmailState(email.Id, EmailState.Verified);
 
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
         }
@@ -219,7 +173,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _userInfoRepository.GetUserByUsername(request.Username);
 
             if (user == null)
             {
@@ -284,10 +238,9 @@ public class AuthService : IAuthService
                 CreatedAt = DateTime.UtcNow,
             };
 
-            _dbContext.Tokens.Add(refreshToken);
-            _dbContext.Tokens.Add(accessToken);
-            _dbContext.Sessions.Add(session);
-            await _dbContext.SaveChangesAsync();
+            await _tokenRepository.AddToken(refreshToken);
+            await _tokenRepository.AddToken(accessToken);
+            await _sessionRepository.AddSession(session);
 
             return (true, "SUCCESS", "Login successful.", accessTokenString, refreshTokenString);
         }
