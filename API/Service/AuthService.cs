@@ -50,21 +50,25 @@ public class AuthService : IAuthService
             {
                 return (false, "INVALID_PHONE_NUMBER", "Invalid phone number format.", null);
             }
-            var user = _userInfoRepository.GetUserByUserName(request.Username);
-            var usernameExists = (user != null) ? true : false;
+            var user = await _userInfoRepository.GetUserByUsername(request.Username);
+            var usernameExists = user != null;
             if (usernameExists)
             {
                 return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
             }
             var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
-            var emailExists = (email != null && email.State != EmailState.Created && email.State != EmailState.Deleted) ? true : false;
+            var emailExists = email != null && email.State != EmailState.Created && email.State != EmailState.Deleted;
 
             if (emailExists)
             {
                 return (false, "EMAIL_TAKEN", "Email already exists, please try a different email.", null);
             }
-            var phoneNumber = await _userInfoRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
-            var phoneNumberExists = (phoneNumber != null && phoneNumber.State != PhoneState.Created && phoneNumber.State != PhoneState.Deleted && phoneNumber.Type != PhoneType.Recovery) ? true : false;
+            PhoneNumber? phoneNumber = null;
+            if (request.PhoneNumber != null)
+            {
+                phoneNumber = await _userInfoRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
+            }
+            var phoneNumberExists = phoneNumber != null && phoneNumber.State != PhoneState.Created && phoneNumber.State != PhoneState.Deleted && phoneNumber.Type != PhoneType.Recovery;
 
             if (phoneNumberExists)
             {
