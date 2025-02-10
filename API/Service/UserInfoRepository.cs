@@ -16,6 +16,8 @@ namespace API.Service
         public Task RemovePhoneNumberById(long Id);
         public Task RemoveEmailById(long Id);
         public Task<User?> GetUserByUserName(string Username);
+        public Task UpdateUserLastLogin(long UserId);
+        public Task ChangeUserState(long UserId, UserState newState);
     }
     public class UserInfoRepository : IUserInfoRepository
     {
@@ -88,6 +90,26 @@ namespace API.Service
         public async Task<User?> GetUserByUserName(string Username)
         {
             return await _Context.Users.FirstOrDefaultAsync(u => u.Username == Username);
+        }
+        public async Task UpdateUserLastLogin(long UserId)
+        {
+            var user = await _Context.Users.FirstOrDefaultAsync(u => u.Id == UserId);
+            if (user != null)
+            {
+                user.LastLoginAt = DateTime.UtcNow;
+                _Context.Users.Update(user);
+                await _Context.SaveChangesAsync();
+            }
+        }
+        public async Task ChangeUserState(long UserId, UserState newState)
+        {
+            var user = await _Context.Users.FirstOrDefaultAsync(u => u.Id == UserId);
+            if (user != null)
+            {
+                user.State = newState;
+                _Context.Users.Update(user);
+                await _Context.SaveChangesAsync();
+            }
         }
     }
 }

@@ -130,7 +130,6 @@ public class AuthService : IAuthService
         {
             var verificationSession = await _sessionRepository.GetSeession(request.VerificationSessionID);
 
-            Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
             switch (verificationSession)
             {
                 case null:
@@ -150,17 +149,36 @@ public class AuthService : IAuthService
                 return (false, "NOT_FOUND", "Email not found.", null);
             }
 
-            System.Console.WriteLine("verificationSession.UserId: " + verificationSession.UserId);
-            System.Console.WriteLine("email.UserId: " + email.UserId);
-
             if (verificationSession.UserId != email.UserId)
             {
                 return (false, "INVALID_SESSION", "Invalid verification session for this email.", null);
             }
 
+            var user = await _userInfoRepository.GetUserByUsername(verificationSession.User.Username);
+
+            if (user == null)
+            {
+                return (false, "NOT_FOUND", "User not found.", null);
+            }
+
+            if (user.State != UserState.PendingVerification)
+            {
+                return (false, "USER_NOT_ACTIVE", "Account not activated", null);
+            }
+
+            if (user.EmailAddresses.Any(e => e.Email == email.Email && e.State == EmailState.Verified))
+            {
+                return (false, "EMAIL_ALREADY_VERIFIED", "Email already verified.", null);
+            }
+
+            if (user.EmailAddresses.Any(e => e.Email == email.Email && e.State == EmailState.Blacklisted))
+            {
+                return (false, "EMAIL_BLACKLISTED", "Email is blacklisted.", null);
+            }
+
             verificationSession.IsUsed = true;
             await _userInfoRepository.ChangeEmailState(email.Id, EmailState.Verified);
-
+            await _userInfoRepository.ChangeUserState(user.Id, UserState.Active);
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
         }
         catch
@@ -180,10 +198,17 @@ public class AuthService : IAuthService
                 return (false, "NOT_FOUND", "User not found.", null, null);
             }
 
+            if (user.State != UserState.Active)
+            {
+                return (false, "USER_NOT_ACTIVE", "Account not activated", null, null);
+            }
+
             if (!PasswordHasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
             {
                 return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
             }
+
+            await _userInfoRepository.UpdateUserLastLogin(user.Id);
 
             string accessTokenString;
             string refreshTokenString;
@@ -216,7 +241,6 @@ public class AuthService : IAuthService
                 User = user
             };
 
-
             Token refreshToken = new Token
             {
                 TokenString = refreshTokenString,
@@ -238,9 +262,9 @@ public class AuthService : IAuthService
                 CreatedAt = DateTime.UtcNow,
             };
 
+            await _sessionRepository.AddSession(session);
             await _tokenRepository.AddToken(refreshToken);
             await _tokenRepository.AddToken(accessToken);
-            await _sessionRepository.AddSession(session);
 
             return (true, "SUCCESS", "Login successful.", accessTokenString, refreshTokenString);
         }
