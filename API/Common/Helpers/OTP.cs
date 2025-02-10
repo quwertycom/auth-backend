@@ -1,4 +1,3 @@
-
 namespace API.Common.Helpers;
 
 public static class OTPGenerator
