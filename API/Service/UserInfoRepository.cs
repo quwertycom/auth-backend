@@ -20,7 +20,7 @@ namespace API.Service
     public class UserInfoRepository : IUserInfoRepository
     {
         private readonly AuthDbContext _Context;
-        private UserInfoRepository(AuthDbContext context)
+        public UserInfoRepository(AuthDbContext context)
         {
             _Context = context;
         }
