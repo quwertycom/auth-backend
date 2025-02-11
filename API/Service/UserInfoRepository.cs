@@ -7,15 +7,15 @@ namespace API.Service
 {
 	public interface IUserInfoRepository
 	{
-		public Task<EmailAddress> GetEmailModelByEmail(string Email);
+		public Task<EmailAddress?> GetEmailModelByEmail(string Email);
 		public Task ChangeEmailState(long EmailId, EmailState newState);
 		public Task AddUser(User user);
 		public Task AddEmail(EmailAddress emailAddress);
-		public Task<User> GetUserByUsername(string Username);
-		public Task<PhoneNumber> GetPhoneNumberModelByPhoneNumber(string PhoneNumber);
+		public Task<User?> GetUserByUsername(string Username);
+		public Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber);
 		public Task RemovePhoneNumberById(long Id);
 		public Task RemoveEmailById(long Id);
-		public Task<User> GetUserByUserName(string Username);
+		public Task<User?> GetUserByUserName(string Username);
 	}
 	public class UserInfoRepository : IUserInfoRepository
 	{
@@ -24,7 +24,7 @@ namespace API.Service
 		{
 			_Context = context;
 		}
-		public async Task<EmailAddress> GetEmailModelByEmail(string Email)
+		public async Task<EmailAddress?> GetEmailModelByEmail(string Email)
 		{
 			return await _Context.UserEmails
 				.Include(ue => ue.User)
@@ -39,7 +39,7 @@ namespace API.Service
 				_Context.SaveChanges();
 			}
 		}
-		public async Task<PhoneNumber> GetPhoneNumberModelByPhoneNumber(string PhoneNumber)
+		public async Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber)
 		{
 			return await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Phone == PhoneNumber);
 		}
@@ -53,7 +53,7 @@ namespace API.Service
 			await _Context.UserEmails.AddAsync(emailAddress);
 			await _Context.SaveChangesAsync();
 		}
-		public async Task<User> GetUserByUsername(string Username)
+		public async Task<User?> GetUserByUsername(string Username)
 		{
 			return await _Context.Users.FirstOrDefaultAsync(u => u.Username == Username);
 		}
@@ -85,7 +85,7 @@ namespace API.Service
 			}
 
 		}
-		public async Task<User> GetUserByUserName(string Username)
+		public async Task<User?> GetUserByUserName(string Username)
 		{
 			return await _Context.Users.FirstOrDefaultAsync(u => u.Username == Username);
 		}
