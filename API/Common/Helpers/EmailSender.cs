@@ -32,7 +32,7 @@ public static class EmailSender
         _isInitialized = true;
     }
 
-    public static async Task SendOtpEmailAsync(string toEmail, string otp)
+    public static async Task<bool> SendOtpEmailAsync(string toEmail, string otp)
     {
         if (!_isInitialized)
         {
@@ -53,11 +53,11 @@ public static class EmailSender
         {
             if (_smtpClient is null) throw new InvalidOperationException("SMTP client is not initialized.");
             await _smtpClient.SendMailAsync(mailMessage).ConfigureAwait(true);
+            return true;
         }
-        catch (Exception ex)
+        catch
         {
-            // Handle exceptions (e.g., log the error)
-            throw new InvalidOperationException("Failed to send email", ex);
+            return false;
         }
     }
 }

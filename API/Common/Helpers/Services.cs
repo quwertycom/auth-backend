@@ -20,22 +20,22 @@ public static class Services
         InitializeHelpers(builder.Configuration);
     }
 
-	private static void AddControllerServices(WebApplicationBuilder builder)
-	{
-		try
-		{
-			builder.Services.AddScoped<IAuthService, AuthService>();
-			builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-			builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-			builder.Services.AddScoped<IUserInfoRepository, UserInfoRepository>();
-			builder.Services.AddScoped<IPasswordService, PasswordService>();
-			// add other services in the future
-		}
-		catch (Exception ex)
-		{
-			throw new Exception($"Failed to add controller services: {ex.Message}");
-		}
-	}
+    private static void AddControllerServices(WebApplicationBuilder builder)
+    {
+        try
+        {
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+            builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+            builder.Services.AddScoped<IUserInfoRepository, UserInfoRepository>();
+            builder.Services.AddScoped<IPasswordService, PasswordService>();
+            // add other services in the future
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to add controller services: {ex.Message}");
+        }
+    }
 
     private static void AddDbContext(WebApplicationBuilder builder)
     {

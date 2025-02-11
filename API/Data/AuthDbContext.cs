@@ -69,7 +69,8 @@ public class AuthDbContext : DbContext
             entity.HasMany(u => u.EmailAddresses)
                 .WithOne(e => e.User)
                 .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
 
             entity.HasMany(u => u.PhoneNumbers)
                 .WithOne(p => p.User)
@@ -359,7 +360,8 @@ public class AuthDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany(u => u.EmailAddresses)
                 .HasForeignKey(ue => ue.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_UserEmails_Users");
 
             // Custom columns
             entity.Property(e => e.Email).HasColumnName("email");
