@@ -426,5 +426,36 @@ public class AuthDbContext : DbContext
             entity.Property(vs => vs.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(vs => vs.IsUsed).HasDefaultValue(false).HasColumnName("is_used");
         });
+
+        // ResetPasswordRequest configurations
+        modelBuilder.Entity<ResetPasswordRequest>(entity =>
+        {
+            entity.ToTable("reset_password_requests");
+
+            // Relationships
+            entity.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.EmailAddress)
+                .WithMany()
+                .HasForeignKey(r => r.EmailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Indexes
+            entity.HasIndex(r => r.UserId);
+            entity.HasIndex(r => r.EmailId);
+            entity.HasIndex(r => r.OTP);
+
+            // Column configurations
+            entity.Property(r => r.CreatedAt)
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("created_at");
+            
+            entity.Property(r => r.ExpiredAt)
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("expired_at");
+        });
     }
 }
