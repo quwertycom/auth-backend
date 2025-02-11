@@ -35,6 +35,7 @@ public class AuthDbContext : DbContext
 
     // Verification related
     public DbSet<VerificationSession> VerificationSessions { get; set; } = null!;
+    public DbSet<ResetPasswordRequest> ResetPasswordRequests { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
 	[ApiController]
-	[Route("Password")]
+	[Route("api/password")]
 	[Authorize]
 	public class PasswordController : Controller
 	{
@@ -15,13 +15,13 @@ namespace API.Controllers
 		{
 			_passwordService = passwordService;
 		}
-		[HttpPost("SentOTP")]
+		[HttpPost("sent-otp")]
 		public async Task SendOTP([FromBody] long UserId)
 		{
 			await _passwordService.SendOTP(UserId);
 		}
-		[HttpPost("ResetPassword")]
-		public async Task ResetPassword(ResetPasswordModel model)
+		[HttpPost("reset-password")]
+		public async Task ResetPassword(ResetPasswordRequest model)
 		{
 			await _passwordService.ChangePassword(model.UserId, model.Password, model.OTP);
 		}
