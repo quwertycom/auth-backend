@@ -1,23 +1,22 @@
 ﻿using API.Data;
 using API.Models;
 
-namespace API.Service
+namespace API.Service;
+
+public interface ITokenRepository
 {
-    public interface ITokenRepository
+    public Task AddToken(Token token);
+}
+public class TokenRepository : ITokenRepository
+{
+    private readonly AuthDbContext _Context;
+    public TokenRepository(AuthDbContext context)
     {
-        public Task AddToken(Token token);
+        _Context = context;
     }
-    public class TokenRepository : ITokenRepository
+    public async Task AddToken(Token token)
     {
-        private readonly AuthDbContext _Context;
-        public TokenRepository(AuthDbContext context)
-        {
-            _Context = context;
-        }
-        public async Task AddToken(Token token)
-        {
-            await _Context.Tokens.AddAsync(token);
-            await _Context.SaveChangesAsync();
-        }
+        await _Context.Tokens.AddAsync(token);
+        await _Context.SaveChangesAsync();
     }
 }
