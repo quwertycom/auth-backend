@@ -64,3 +64,5 @@ node_modules/
 # Publishing
 *.pubxml
 *.publishproj
+
+**/.DS_Store
