@@ -19,6 +19,8 @@ public class Program
             builder.Configuration.GetSection("Database"));
         builder.Services.Configure<JwtSettings>(
             builder.Configuration.GetSection("Jwt"));
+        builder.Services.Configure<EmailSettings>(
+            builder.Configuration.GetSection("Email"));
 
         // Initialize services via Services helper
         Services.Initialize(builder);
