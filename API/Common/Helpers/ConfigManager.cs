@@ -49,18 +49,15 @@ public static class ConfigManager
     private static void ValidateConfiguration(IConfiguration configuration)
     {
         // Database settings validation
-        var dbSettings = configuration.GetSection("Database").Get<DatabaseSettings>();
-        if (dbSettings == null)
-            throw new InvalidOperationException("Database configuration is missing");
+        var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
+        var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
+        var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
+        var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
 
-        if (string.IsNullOrEmpty(dbSettings.Password))
-            throw new InvalidOperationException("Database password is not configured");
-
-        if (string.IsNullOrEmpty(dbSettings.Username))
-            throw new InvalidOperationException("Database username is not configured");
-
-        if (string.IsNullOrEmpty(dbSettings.Database))
-            throw new InvalidOperationException("Database name is not configured");
+        if (string.IsNullOrEmpty(dbHost)) throw new InvalidOperationException("POSTGRES_HOST not configured");
+        if (string.IsNullOrEmpty(dbName)) throw new InvalidOperationException("POSTGRES_DB not configured");
+        if (string.IsNullOrEmpty(dbUser)) throw new InvalidOperationException("POSTGRES_USER not configured");
+        if (string.IsNullOrEmpty(dbPassword)) throw new InvalidOperationException("POSTGRES_PASSWORD not configured");
 
         // JWT settings validation
         var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>();
@@ -89,8 +86,8 @@ public static class ConfigManager
 
         // Log configuration status (but not sensitive values)
         Console.WriteLine("\nConfiguration validated successfully:");
-        Console.WriteLine($"Database Host: {dbSettings.Host}");
-        Console.WriteLine($"Database Name: {dbSettings.Database}");
+        Console.WriteLine($"Database Host: {dbHost}");
+        Console.WriteLine($"Database Name: {dbName}");
         Console.WriteLine($"JWT Issuer: {jwtSettings.Issuer}");
         Console.WriteLine($"JWT Audience: {jwtSettings.Audience}");
         Console.WriteLine($"Email Host: {emailSettings.Host}\n");

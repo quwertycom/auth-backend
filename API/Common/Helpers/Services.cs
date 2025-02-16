@@ -43,15 +43,14 @@ public static class Services
         {
             builder.Services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
             {
-                var dbSettings = serviceProvider.GetRequiredService<IOptions<DatabaseSettings>>().Value;
                 var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
 
                 var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
                 {
-                    Host = isRunningInDocker ? "db" : dbSettings.Host,
-                    Database = dbSettings.Database,
-                    Username = dbSettings.Username,
-                    Password = dbSettings.Password,
+                    Host = isRunningInDocker ? "db" : Environment.GetEnvironmentVariable("POSTGRES_HOST"),
+                    Database = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? throw new ArgumentNullException("POSTGRES_DB"),
+                    Username = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? throw new ArgumentNullException("POSTGRES_USER"),
+                    Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? throw new ArgumentNullException("POSTGRES_PASSWORD"),
                     Pooling = true,
                     MinPoolSize = 5,
                     MaxPoolSize = 100
