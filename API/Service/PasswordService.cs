@@ -4,8 +4,8 @@ using API.Common.Helpers;
 using API.Data;
 using API.Models;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.WebRequestMethods;
 using System.Text.Json.Serialization;
+using API.Repositories.Interfaces;
 
 namespace API.Service;
 public interface IPasswordService

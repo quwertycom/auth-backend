@@ -4,6 +4,8 @@ using API.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using API.Repositories.Interfaces;
+using API.Repositories;
 
 namespace API.Common.Helpers;
 
@@ -11,29 +13,37 @@ public static class Services
 {
     public static void Initialize(WebApplicationBuilder builder)
     {
-        // Add configuration first
         ConfigManager.AddConfiguration(builder.Services, builder.Configuration);
-
-        // Add other services
         AddDbContext(builder);
-        AddControllerServices(builder);
+        AddServices(builder);
+        AddRepositories(builder);
         InitializeHelpers(builder.Configuration);
     }
 
-    private static void AddControllerServices(WebApplicationBuilder builder)
+    private static void AddServices(WebApplicationBuilder builder)
     {
         try
         {
             builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-            builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-            builder.Services.AddScoped<IUserInfoRepository, UserInfoRepository>();
             builder.Services.AddScoped<IPasswordService, PasswordService>();
-            // add other services in the future
         }
         catch (Exception ex)
         {
-            throw new Exception($"Failed to add controller services: {ex.Message}");
+            throw new Exception($"Failed to add services: {ex.Message}");
+        }
+    }
+
+    private static void AddRepositories(WebApplicationBuilder builder)
+    {
+        try
+        {
+            builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+            builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+            builder.Services.AddScoped<IUserInfoRepository, UserInfoRepository>();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to add repositories: {ex.Message}");
         }
     }
 
