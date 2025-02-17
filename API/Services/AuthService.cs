@@ -145,8 +145,17 @@ public class AuthService : IAuthService
                 return (false, "NOT_FOUND", "Email not found.", null);
             }
 
-            System.Console.WriteLine("verificationSession.UserId: " + verificationSession.UserId);
-            System.Console.WriteLine("email.UserId: " + email.UserId);
+            var user = await _userRepository.GetUserById(verificationSession.UserId);
+
+            if (user == null)
+            {
+                return (false, "NOT_FOUND", "User not found.", null);
+            }
+
+            if (user.State == UserState.PendingVerification)
+            {
+                await _userRepository.ChangeUserState(user.Id, UserState.Active);
+            }
 
             if (verificationSession.UserId != email.UserId)
             {
@@ -155,7 +164,7 @@ public class AuthService : IAuthService
 
             verificationSession.IsUsed = true;
             await _userRepository.ChangeEmailState(email.Id, EmailState.Verified);
-
+    
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
         }
         catch

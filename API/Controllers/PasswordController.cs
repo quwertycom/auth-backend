@@ -71,10 +71,60 @@ namespace API.Controllers
                 return BadRequest(new ErrorResponse
                 {
                     Status = "error",
-                    Message = "Email is required"
+                    Message = "Email or username is required"
                 });
             }
         }
+
+
+        [HttpPost("validate-reset-code")]
+        [ProducesResponseType(typeof(ValidateResetCodeResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ValidateResetCode([FromBody] ValidateResetCodeRequest request)
+        {
+            if (request.Code.Length != 32)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Status = "error",
+                    Message = "Invalid reset code"
+                });
+            }
+            else
+            {
+                var response = await _passwordService.ValidateResetCode(request.Code);
+                if (response.isSuccess)
+                {
+                    return Ok(new ValidateResetCodeResponse
+                    {
+                        Status = response.status,
+                        Message = response.message,
+                        IsValid = response.isValid
+                    });
+                }
+                else
+                {
+                    if (response.status == "INTERNAL_ERROR")
+                    {
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                        {
+                            Status = response.status,
+                            Message = response.message ?? "Internal server error, please try again later, if issue persists contact support."
+                        });
+                    }
+                    else
+                    {
+                        return BadRequest(new ErrorResponse
+                        {
+                            Status = response.status,
+                            Message = response.message
+                        });
+                    }
+                }
+            }
+        }
+
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword()
         {

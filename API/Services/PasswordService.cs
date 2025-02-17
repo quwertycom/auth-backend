@@ -20,16 +20,7 @@ public class PasswordService : IPasswordService
 
     public async Task<(bool isSuccess, string status, string message)> ChangePassword(long UsertId, string Password, string otp)
     {
-        var User = await _Context.Users.FirstOrDefaultAsync(x => x.Id == UsertId);
-        if (User != null && await CheckIsOTPValid(UsertId, otp))
-        {
-            var hashedPassword = Hasher.Hash(Password);
-            User.PasswordHash = hashedPassword.hash;
-            User.PasswordSalt = hashedPassword.salt;
-            await _Context.SaveChangesAsync();
-            return (true, "success", "Password changed successfully");
-        }
-        return (false, "error", "Invalid OTP");
+        return (false, "error", "Not implemented yet");
     }
 
     public async Task<(bool isSuccess, string status, string message)> RequestResetViaEmail(string email)
@@ -127,16 +118,26 @@ public class PasswordService : IPasswordService
             return (false, "INTERNAL_ERROR", ex.Message ?? "Internal server error, please try again later, if issue persists contact support.");
         }
     }
-    private async Task<bool> CheckIsOTPValid(long UserId, string OTP)
+
+    public async Task<(bool isSuccess, string status, string message, bool isValid)> ValidateResetCode(string code)
     {
-        var UserOTP = await _Context.VerificationSessions.FirstOrDefaultAsync(x => x.UserId == UserId && x.CreatedAt.AddMinutes(x.ExpiryMinutes) > DateTime.Now);
-        if (UserOTP != null)
+        try
         {
-            if (UserOTP.Code.Equals(OTP))
-            {
-                return true;
-            }
+            var (codeHash, _) = Hasher.Hash(code, "");
+            var request = await _Context.ResetPasswordRequests.FirstOrDefaultAsync(x => x.CodeHash == codeHash);
+
+            if (request == null)
+                return (false, "INVALID_CODE", "Invalid reset code", false);
+            else if (request.ExpiredAt < DateTime.Now)
+                return (false, "EXPIRED_CODE", "Reset code has expired", false);
+            else if (request.IsUsed)
+                return (false, "USED_CODE", "Reset code has already been used", false);
+            else
+                return (true, "SUCCESS", "Reset code is valid", true);
         }
-        return false;
+        catch (Exception ex)
+        {
+            return (false, "INTERNAL_ERROR", ex.Message ?? "Internal server error, please try again later, if issue persists contact support.", false);
+        }
     }
 }
