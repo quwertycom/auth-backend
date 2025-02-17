@@ -28,10 +28,6 @@ namespace API.Models
         public required string CodeHash { get; set; }
 
         [Required]
-        [Column("salt")]
-        public required string Salt { get; set; }
-
-        [Required]
         [Column("is_used")]
         public required bool IsUsed { get; set; } = false;
 

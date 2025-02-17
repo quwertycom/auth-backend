@@ -469,7 +469,6 @@ public class AuthDbContext : DbContext
                 .HasColumnName("expired_at");
 
             entity.Property(r => r.CodeHash).HasColumnName("code_hash");
-            entity.Property(r => r.Salt).HasColumnName("salt");
         });
     }
 }
