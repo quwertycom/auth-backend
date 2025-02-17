@@ -39,6 +39,10 @@ public class PasswordService : IPasswordService
             }
             else
             {
+                if (Password.Length < 8)
+                {
+                    return (false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters long.");
+                }
                 var (newHash, newSalt) = Hasher.Hash(Password);
                 System.Console.WriteLine("New Hash: " + newHash);
                 await _UserRepository.UpdateUserPassword(request.User, newHash, newSalt);
