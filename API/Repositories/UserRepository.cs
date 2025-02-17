@@ -10,70 +10,120 @@ namespace API.Repositories;
 public class UserRepository : IUserRepository
 {
     private readonly AuthDbContext _Context;
+
     public UserRepository(AuthDbContext context)
     {
         _Context = context;
     }
+
     public async Task AddUser(User user)
     {
-        await _Context.Users.AddAsync(user);
-        await _Context.SaveChangesAsync();
+        try
+        {
+            await _Context.Users.AddAsync(user);
+            await _Context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw;
+        }
     }
     public async Task AddEmail(EmailAddress emailAddress)
     {
-        await _Context.UserEmails.AddAsync(emailAddress);
-        await _Context.SaveChangesAsync();
+        try
+        {
+            await _Context.UserEmails.AddAsync(emailAddress);
+            await _Context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw;
+        }
     }
     public async Task<User?> GetUserByUsername(string Username)
     {
-        return await _Context.Users.FirstOrDefaultAsync(u => u.Username == Username);
+        try
+        {
+            return await _Context.Users.FirstOrDefaultAsync(u => u.Username == Username);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
     public async Task<EmailAddress?> GetEmailModelByEmail(string Email)
     {
-        return await _Context.UserEmails
+        try
+        {
+            return await _Context.UserEmails
                 .Include(ue => ue.User)
                 .FirstOrDefaultAsync(ue => ue.Email == Email);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
     public async Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber)
     {
-        return await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Phone == PhoneNumber);
+        try
+        {
+            return await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Phone == PhoneNumber);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
     public async Task ChangeEmailState(long EmailId, EmailState newState)
     {
-        var email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.Id == EmailId);
-        if (email != null)
+        try
         {
+            var email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.Id == EmailId);
+            if (email != null)
+            {
             email.State = newState;
-            _Context.SaveChanges();
+                await _Context.SaveChangesAsync();
+            }
+        }
+        catch (Exception)
+        {
+            throw;
         }
     }
     public async Task RemoveEmailById(long Id)
     {
-        var Email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.Id == Id);
-        if (Email != null)
+        try
         {
-            try
+            var Email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.Id == Id);
+            if (Email is null)
             {
-                _Context.UserEmails.Remove(Email);
-                await _Context.SaveChangesAsync();
+                throw new Exception("NOT_FOUND");
             }
-            catch { }
+            _Context.UserEmails.Remove(Email);
+            await _Context.SaveChangesAsync();
         }
-
+        catch (Exception)
+        {
+            throw;
+        }
     }
     public async Task RemovePhoneNumberById(long Id)
     {
-        var phoneNumber = await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Id == Id);
-        if (phoneNumber != null)
+        try
         {
-            try
+            var phoneNumber = await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Id == Id);
+            if (phoneNumber is null)
             {
-                _Context.UserPhoneNumbers.Remove(phoneNumber);
-                await _Context.SaveChangesAsync();
+                throw new Exception("Phone number not found");
             }
-            catch { }
+            _Context.UserPhoneNumbers.Remove(phoneNumber);
+            await _Context.SaveChangesAsync();
         }
-
+        catch (Exception)
+        {
+            throw;
+        }
     }
     public async Task<ResetPasswordRequest?> SendResetPasswordRequest(long UserId)
     {
@@ -97,9 +147,19 @@ public class UserRepository : IUserRepository
                     await _Context.SaveChangesAsync();
                     return resetPasswordRequest;
                 }
+                else
+                {
+                    throw new Exception("EMAIL_NOT_FOUND");
+                }
             }
-            return null;
+            else
+            {
+                throw new Exception("NOT_FOUND");
+            }
         }
-        catch { return null; }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 }
