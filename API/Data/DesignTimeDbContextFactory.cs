@@ -32,11 +32,11 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AuthDbCont
         // Get database configuration
         var host = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
         var port = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
-        var database = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? 
+        var database = Environment.GetEnvironmentVariable("POSTGRES_DB") ??
                       throw new InvalidOperationException("POSTGRES_DB not configured");
-        var username = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? 
+        var username = Environment.GetEnvironmentVariable("POSTGRES_USER") ??
                       throw new InvalidOperationException("POSTGRES_USER not configured");
-        var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? 
+        var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ??
                       throw new InvalidOperationException("POSTGRES_PASSWORD not configured");
 
         var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();

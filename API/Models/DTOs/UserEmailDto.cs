@@ -7,4 +7,4 @@ public class UserEmailDto
     public EmailType Type { get; set; }
     public EmailState State { get; set; }
     public long UserId { get; set; }
-} 
+}

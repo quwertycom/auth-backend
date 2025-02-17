@@ -463,7 +463,7 @@ public class AuthDbContext : DbContext
             entity.Property(r => r.CreatedAt)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("created_at");
-            
+
             entity.Property(r => r.ExpiredAt)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("expired_at");
