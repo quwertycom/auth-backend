@@ -14,25 +14,6 @@ public class UserRepository : IUserRepository
     {
         _Context = context;
     }
-    public async Task<EmailAddress?> GetEmailModelByEmail(string Email)
-    {
-        return await _Context.UserEmails
-                .Include(ue => ue.User)
-                .FirstOrDefaultAsync(ue => ue.Email == Email);
-    }
-    public async Task ChangeEmailState(long EmailId, EmailState newState)
-    {
-        var email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.Id == EmailId);
-        if (email != null)
-        {
-            email.State = newState;
-            _Context.SaveChanges();
-        }
-    }
-    public async Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber)
-    {
-        return await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Phone == PhoneNumber);
-    }
     public async Task AddUser(User user)
     {
         await _Context.Users.AddAsync(user);
@@ -46,6 +27,25 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetUserByUsername(string Username)
     {
         return await _Context.Users.FirstOrDefaultAsync(u => u.Username == Username);
+    }
+    public async Task<EmailAddress?> GetEmailModelByEmail(string Email)
+    {
+        return await _Context.UserEmails
+                .Include(ue => ue.User)
+                .FirstOrDefaultAsync(ue => ue.Email == Email);
+    }
+    public async Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber)
+    {
+        return await _Context.UserPhoneNumbers.FirstOrDefaultAsync(x => x.Phone == PhoneNumber);
+    }
+    public async Task ChangeEmailState(long EmailId, EmailState newState)
+    {
+        var email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.Id == EmailId);
+        if (email != null)
+        {
+            email.State = newState;
+            _Context.SaveChanges();
+        }
     }
     public async Task RemoveEmailById(long Id)
     {
@@ -74,10 +74,6 @@ public class UserRepository : IUserRepository
             catch { }
         }
 
-    }
-    public async Task<User?> GetUserByUserName(string Username)
-    {
-        return await _Context.Users.FirstOrDefaultAsync(u => u.Username == Username);
     }
     public async Task<ResetPasswordRequest?> SendResetPasswordRequest(long UserId)
     {
