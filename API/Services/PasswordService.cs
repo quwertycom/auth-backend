@@ -11,11 +11,11 @@ namespace API.Services;
 public class PasswordService : IPasswordService
 {
     private readonly AuthDbContext _Context;
-    private readonly IUserInfoRepository _UserInfoRepository;
-    public PasswordService(AuthDbContext context, IUserInfoRepository userInfoRepository)
+    private readonly IUserRepository _UserRepository;
+    public PasswordService(AuthDbContext context, IUserRepository userRepository)
     {
         _Context = context;
-        _UserInfoRepository = userInfoRepository;
+        _UserRepository = userRepository;
     }
 
     public async Task<(bool isSuccess, string status, string message)> ChangePassword(long UsertId, string Password, string otp)
@@ -68,7 +68,7 @@ public class PasswordService : IPasswordService
                 Console.WriteLine("User: " + User?.Id ?? "Not found");
                 if (User != null)
                 {
-                    var ResetRequest = await _UserInfoRepository.SendResetPasswordRequest(User.Id);
+                    var ResetRequest = await _UserRepository.SendResetPasswordRequest(User.Id);
                     Console.WriteLine("ResetRequest: " + ResetRequest?.OTP ?? "Not found");
                     if (ResetRequest != null)
                     {
@@ -114,7 +114,7 @@ public class PasswordService : IPasswordService
                 var primaryEmail = await _Context.UserEmails.FirstOrDefaultAsync(x => x.UserId == User.Id && x.Type == EmailType.Primary && x.State == EmailState.Verified);
                 if (primaryEmail != null)
                 {
-                    var ResetRequest = await _UserInfoRepository.SendResetPasswordRequest(User.Id);
+                    var ResetRequest = await _UserRepository.SendResetPasswordRequest(User.Id);
                     if (ResetRequest != null)
                     {
                         var EmailSentSuccessfully = await EmailSender.SendOtpEmailAsync(primaryEmail.Email, ResetRequest.OTP);

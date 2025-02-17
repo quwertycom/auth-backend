@@ -3,7 +3,7 @@ using API.Common.Enums;
 
 namespace API.Repositories.Interfaces;
 
-public interface IUserInfoRepository
+public interface IUserRepository
 {
     public Task<EmailAddress?> GetEmailModelByEmail(string Email);
     public Task ChangeEmailState(long EmailId, EmailState newState);

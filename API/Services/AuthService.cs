@@ -13,12 +13,12 @@ namespace API.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IUserInfoRepository _userInfoRepository;
+    private readonly IUserRepository _userRepository;
     private readonly ITokenRepository _tokenRepository;
     private readonly ISessionRepository _sessionRepository;
-    public AuthService(IUserInfoRepository userInfoRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
+    public AuthService(IUserRepository userRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
     {
-        _userInfoRepository = userInfoRepository;
+        _userRepository = userRepository;
         _tokenRepository = tokenRepository;
         _sessionRepository = sessionRepository;
     }
@@ -45,13 +45,13 @@ public class AuthService : IAuthService
             {
                 return (false, "INVALID_PHONE_NUMBER", "Invalid phone number format.", null);
             }
-            var user = await _userInfoRepository.GetUserByUsername(request.Username);
+            var user = await _userRepository.GetUserByUsername(request.Username);
             var usernameExists = user != null;
             if (usernameExists)
             {
                 return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
             }
-            var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
+            var email = await _userRepository.GetEmailModelByEmail(request.Email);
             var emailExists = email != null && email.State != EmailState.Created && email.State != EmailState.Deleted;
 
             if (emailExists)
@@ -61,7 +61,7 @@ public class AuthService : IAuthService
             PhoneNumber? phoneNumber = null;
             if (request.PhoneNumber != null)
             {
-                phoneNumber = await _userInfoRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
+                phoneNumber = await _userRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
             }
             var phoneNumberExists = phoneNumber != null && phoneNumber.State != PhoneState.Created && phoneNumber.State != PhoneState.Deleted && phoneNumber.Type != PhoneType.Recovery;
 
@@ -105,8 +105,8 @@ public class AuthService : IAuthService
                 IsUsed = false,
             };
 
-            await _userInfoRepository.AddUser(newUser);
-            await _userInfoRepository.AddEmail(newEmail);
+            await _userRepository.AddUser(newUser);
+            await _userRepository.AddEmail(newEmail);
             await _sessionRepository.AddSession(otpSession);
 
             await EmailSender.SendOtpEmailAsync(newEmail.Email, otp);
@@ -138,7 +138,7 @@ public class AuthService : IAuthService
                     return (false, "EXPIRED", "OTP expired.", null);
             }
 
-            var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
+            var email = await _userRepository.GetEmailModelByEmail(request.Email);
 
             if (email == null)
             {
@@ -154,7 +154,7 @@ public class AuthService : IAuthService
             }
 
             verificationSession.IsUsed = true;
-            await _userInfoRepository.ChangeEmailState(email.Id, EmailState.Verified);
+            await _userRepository.ChangeEmailState(email.Id, EmailState.Verified);
 
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
         }
@@ -168,7 +168,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            var user = await _userInfoRepository.GetUserByUsername(request.Username);
+            var user = await _userRepository.GetUserByUsername(request.Username);
 
             if (user == null)
             {

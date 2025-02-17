@@ -40,7 +40,7 @@ public static class Services
         {
             builder.Services.AddScoped<ISessionRepository, SessionRepository>();
             builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-            builder.Services.AddScoped<IUserInfoRepository, UserInfoRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
         }
         catch (Exception ex)
         {

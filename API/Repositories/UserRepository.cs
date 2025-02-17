@@ -7,10 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Repositories;
 
-public class UserInfoRepository : IUserInfoRepository
+public class UserRepository : IUserRepository
 {
     private readonly AuthDbContext _Context;
-    public UserInfoRepository(AuthDbContext context)
+    public UserRepository(AuthDbContext context)
     {
         _Context = context;
     }
