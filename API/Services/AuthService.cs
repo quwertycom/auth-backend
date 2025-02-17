@@ -164,7 +164,7 @@ public class AuthService : IAuthService
 
             verificationSession.IsUsed = true;
             await _userRepository.ChangeEmailState(email.Id, EmailState.Verified);
-    
+
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
         }
         catch

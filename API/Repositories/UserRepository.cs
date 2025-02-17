@@ -124,7 +124,7 @@ public class UserRepository : IUserRepository
             var email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.Id == EmailId);
             if (email != null)
             {
-            email.State = newState;
+                email.State = newState;
                 await _Context.SaveChangesAsync();
             }
         }
@@ -182,7 +182,7 @@ public class UserRepository : IUserRepository
             await _Context.SaveChangesAsync();
             return request;
         }
-        catch 
+        catch
         {
             throw;
         }

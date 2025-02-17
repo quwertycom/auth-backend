@@ -12,7 +12,8 @@ public static class RandomGenerator
         for (int i = 0; i < length; i++)
         {
             uint num;
-            do {
+            do
+            {
                 RandomNumberGenerator.Fill(randomNumber);
                 num = randomNumber[0];
             } while (num >= 250);

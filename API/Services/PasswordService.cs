@@ -20,7 +20,8 @@ public class PasswordService : IPasswordService
 
     public async Task<(bool isSuccess, string status, string message)> ChangePassword(string code, string Password)
     {
-        try {
+        try
+        {
             var (codeHash, _) = Hasher.Hash(code, "");
             var request = await _Context.ResetPasswordRequests
                 .Include(x => x.User)
@@ -127,7 +128,7 @@ public class PasswordService : IPasswordService
                     var request = await _UserRepository.CreateResetPasswordRequest(User, Email, codeHash);
                     if (request != null)
                     {
-                          var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, code);
+                        var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, code);
                         if (EmailSentSuccessfully)
                         {
                             return (true, "SUCCESS", "Reset password request sent successfully");
