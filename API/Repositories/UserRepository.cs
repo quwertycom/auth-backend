@@ -167,40 +167,22 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
-    public async Task<(ResetPasswordRequest? request, string code)> SendResetPasswordRequest(long UserId)
+    public async Task<ResetPasswordRequest?> CreateResetPasswordRequest(User user, EmailAddress email, string codeHash)
     {
         try
         {
-            var user = await _Context.Users.FirstOrDefaultAsync(u => u.Id == UserId);
-            if (user != null)
+            var request = new ResetPasswordRequest
             {
-                var email = await _Context.UserEmails.FirstOrDefaultAsync(e => e.UserId == UserId && e.State == EmailState.Verified && e.Type == EmailType.Primary);
-                if (email != null)
-                {
-                    var code = RandomGenerator.GenerateAlphanumericCode(32);
-                    var (codeHash, _) = Hasher.Hash(code, "");
-                    var resetPasswordRequest = new ResetPasswordRequest
-                    {
-                        User = user,
-                        EmailAddress = email,
-                        CodeHash = codeHash,
-                        IsUsed = false,
-                    };
-                    await _Context.ResetPasswordRequests.AddAsync(resetPasswordRequest);
-                    await _Context.SaveChangesAsync();
-                    return (resetPasswordRequest, code);
-                }
-                else
-                {
-                    throw new Exception("EMAIL_NOT_FOUND");
-                }
-            }
-            else
-            {
-                throw new Exception("NOT_FOUND");
-            }
+                User = user,
+                EmailAddress = email,
+                CodeHash = codeHash,
+                IsUsed = false,
+            };
+            await _Context.ResetPasswordRequests.AddAsync(request);
+            await _Context.SaveChangesAsync();
+            return request;
         }
-        catch (Exception)
+        catch 
         {
             throw;
         }
@@ -210,7 +192,7 @@ public class UserRepository : IUserRepository
         try
         {
             if (user == null) throw new Exception("NOT_FOUND");
-            
+
             user.PasswordHash = newHash;
             user.PasswordSalt = newSalt;
             await _Context.SaveChangesAsync();

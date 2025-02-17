@@ -70,10 +70,12 @@ public class PasswordService : IPasswordService
                 var User = Email.User;
                 if (User != null && User.State == UserState.Active)
                 {
-                    var requestResponse = await _UserRepository.SendResetPasswordRequest(User.Id);
-                    if (requestResponse.request != null)
+                    var code = RandomGenerator.GenerateAlphanumericCode(32);
+                    var (codeHash, _) = Hasher.Hash(code, "");
+                    var request = await _UserRepository.CreateResetPasswordRequest(User, Email, codeHash);
+                    if (request != null)
                     {
-                        var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, requestResponse.code);
+                        var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, code);
                         if (EmailSentSuccessfully)
                         {
                             return (true, "SUCCESS", "Reset password request sent successfully");
@@ -120,10 +122,12 @@ public class PasswordService : IPasswordService
                     .FirstOrDefaultAsync(x => x.UserId == User.Id && x.Type == EmailType.Primary && x.State == EmailState.Verified);
                 if (Email != null)
                 {
-                    var requestResponse = await _UserRepository.SendResetPasswordRequest(User.Id);
-                    if (requestResponse.request != null)
+                    var code = RandomGenerator.GenerateAlphanumericCode(32);
+                    var (codeHash, _) = Hasher.Hash(code, "");
+                    var request = await _UserRepository.CreateResetPasswordRequest(User, Email, codeHash);
+                    if (request != null)
                     {
-                        var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, requestResponse.code);
+                          var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, code);
                         if (EmailSentSuccessfully)
                         {
                             return (true, "SUCCESS", "Reset password request sent successfully");
