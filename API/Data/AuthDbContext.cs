@@ -2,6 +2,7 @@ using API.Models;
 using Microsoft.EntityFrameworkCore;
 using API.Common.Enums;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace API.Data;
 
@@ -54,6 +55,16 @@ public class AuthDbContext : DbContext
                 {
                     property.SetValueConverter(dateTimeConverter);
                 }
+            }
+        }
+
+        // Auto-configure Snowflake IDs for all entities
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var idProperty = entityType.FindProperty("Id");
+            if (idProperty != null && idProperty.ClrType == typeof(long))
+            {
+                idProperty.ValueGenerated = ValueGenerated.Never;
             }
         }
 
