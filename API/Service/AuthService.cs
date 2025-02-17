@@ -210,12 +210,12 @@ public class AuthService : IAuthService
                 return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
             }
 
+
             var session = new Session
             {
                 Target = SessionTarget.User,
                 User = user
             };
-
 
             Token refreshToken = new Token
             {
@@ -237,10 +237,14 @@ public class AuthService : IAuthService
                 User = user,
                 CreatedAt = DateTime.UtcNow,
             };
+            Console.WriteLine("user.Id: " + user.Id);
+            Console.WriteLine("session.Id: " + session.Id);
+            Console.WriteLine("refreshToken.Id: " + refreshToken.Id);
+            Console.WriteLine("accessToken.Id: " + accessToken.Id);
 
+            await _sessionRepository.AddSession(session);
             await _tokenRepository.AddToken(refreshToken);
             await _tokenRepository.AddToken(accessToken);
-            await _sessionRepository.AddSession(session);
 
             return (true, "SUCCESS", "Login successful.", accessTokenString, refreshTokenString);
         }
