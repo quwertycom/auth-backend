@@ -5,7 +5,7 @@ using API.Configuration;
 
 namespace API.Common.Helpers;
 
-public static class PasswordHasher
+public static class Hasher
 {
     private static bool _isInitialized;
     private static int _iterations;
@@ -43,8 +43,9 @@ public static class PasswordHasher
         }
 
         // Generate a random salt
-        byte[] salt = RandomNumberGenerator.GetBytes(_saltSize);
-        string saltBase64 = Convert.ToBase64String(salt);
+        string saltBase64 = RandomGenerator.GenerateSalt(_saltSize);
+        byte[] salt = Convert.FromBase64String(saltBase64);
+
 
         // Hash the password with the salt
         byte[] hash = Rfc2898DeriveBytes.Pbkdf2(

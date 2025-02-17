@@ -86,7 +86,7 @@ public static class Services
             var initializationTasks = new Dictionary<string, Action>
             {
                 { "JWT", () => JWT.Initialize(configuration) },
-                { "PasswordHasher", () => PasswordHasher.Initialize(configuration) },
+                { "Hasher", () => Hasher.Initialize(configuration) },
                 { "Snowflake", () => Snowflake.Initialize(configuration) },
                 { "EmailSender", () => EmailSender.Initialize(configuration) }
             };

@@ -75,7 +75,7 @@ public class AuthService : IAuthService
                 return (false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters long.", null);
             }
 
-            var hashedPassword = PasswordHasher.Hash(request.Password);
+            var hashedPassword = Hasher.Hash(request.Password);
 
             var newUser = new User
             {
@@ -175,7 +175,7 @@ public class AuthService : IAuthService
                 return (false, "NOT_FOUND", "User not found.", null, null);
             }
 
-            if (!PasswordHasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
+            if (!Hasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
             {
                 return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
             }

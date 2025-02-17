@@ -23,7 +23,7 @@ public class PasswordService : IPasswordService
         var User = await _Context.Users.FirstOrDefaultAsync(x => x.Id == UsertId);
         if (User != null && await CheckIsOTPValid(UsertId, otp))
         {
-            var hashedPassword = PasswordHasher.Hash(Password);
+            var hashedPassword = Hasher.Hash(Password);
             User.PasswordHash = hashedPassword.hash;
             User.PasswordSalt = hashedPassword.salt;
             await _Context.SaveChangesAsync();
@@ -31,27 +31,6 @@ public class PasswordService : IPasswordService
         }
         return (false, "error", "Invalid OTP");
     }
-    // public async Task SendOTP(long UserId)
-    // {
-    // 	var Email = await _Context.UserEmails.FirstOrDefaultAsync(x => x.UserId == UserId);
-    // 	var User = await _Context.Users.FirstOrDefaultAsync(x => x.Id == UserId);
-    // 	if (User != null && Email != null)
-    // 	{
-    // 		var otp = OTPGenerator.GenerateOTP();
-    // 		var otpSession = new VerificationSession
-    // 		{
-    // 			Email = Email,
-    // 			User = User,
-    // 			Code = otp,
-    // 			IsUsed = false,
-    // 		};
-    // 		_Context.VerificationSessions.Add(otpSession);
-    // 		if (await _Context.SaveChangesAsync() > 0)
-    // 		{
-    // 			await EmailSender.SendOtpEmailAsync(Email.Email, otp);
-    // 		}
-    // 	}
-    // }
 
     public async Task<(bool isSuccess, string status, string message)> RequestResetViaEmail(string email)
     {
@@ -68,11 +47,11 @@ public class PasswordService : IPasswordService
                 Console.WriteLine("User: " + User?.Id ?? "Not found");
                 if (User != null)
                 {
-                    var ResetRequest = await _UserRepository.SendResetPasswordRequest(User.Id);
-                    Console.WriteLine("ResetRequest: " + ResetRequest?.OTP ?? "Not found");
-                    if (ResetRequest != null)
+                    var requestResponse = await _UserRepository.SendResetPasswordRequest(User.Id);
+                    Console.WriteLine("ResetRequest: " + requestResponse.request?.CodeHash ?? "Not found");
+                    if (requestResponse.request != null)
                     {
-                        var EmailSentSuccessfully = await EmailSender.SendOtpEmailAsync(Email.Email, ResetRequest.OTP);
+                        var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, requestResponse.code);
                         Console.WriteLine("EmailSentSuccessfully: " + EmailSentSuccessfully);
                         if (EmailSentSuccessfully)
                         {
@@ -100,7 +79,12 @@ public class PasswordService : IPasswordService
         }
         catch (Exception ex)
         {
-            return (false, "INTERNAL_ERROR", ex.Message ?? "Internal server error, please try again later, if issue persists contact support.");
+            if (ex.Message.Contains("NOT_FOUND"))
+                return (false, "USER_NOT_FOUND", "User not found");
+            else if (ex.Message.Contains("EMAIL_NOT_FOUND"))
+                return (false, "EMAIL_NOT_FOUND", "Email not found");
+            else
+                return (false, "INTERNAL_ERROR", ex.Message ?? "Internal server error, please try again later, if issue persists contact support.");
         }
     }
 
@@ -111,13 +95,14 @@ public class PasswordService : IPasswordService
             var User = await _Context.Users.FirstOrDefaultAsync(x => x.Username == username);
             if (User != null)
             {
-                var primaryEmail = await _Context.UserEmails.FirstOrDefaultAsync(x => x.UserId == User.Id && x.Type == EmailType.Primary && x.State == EmailState.Verified);
-                if (primaryEmail != null)
+                var Email = await _Context.UserEmails
+                    .FirstOrDefaultAsync(x => x.UserId == User.Id && x.Type == EmailType.Primary && x.State == EmailState.Verified);
+                if (Email != null)
                 {
-                    var ResetRequest = await _UserRepository.SendResetPasswordRequest(User.Id);
-                    if (ResetRequest != null)
+                    var requestResponse = await _UserRepository.SendResetPasswordRequest(User.Id);
+                    if (requestResponse.request != null)
                     {
-                        var EmailSentSuccessfully = await EmailSender.SendOtpEmailAsync(primaryEmail.Email, ResetRequest.OTP);
+                        var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, requestResponse.code);
                         if (EmailSentSuccessfully)
                         {
                             return (true, "SUCCESS", "Reset password request sent successfully");

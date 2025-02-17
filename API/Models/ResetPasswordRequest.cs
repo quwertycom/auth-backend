@@ -24,8 +24,12 @@ namespace API.Models
         public required EmailAddress EmailAddress { get; set; }
 
         [Required]
-        [Column("otp")]
-        public required string OTP { get; set; }
+        [Column("code_hash")]
+        public required string CodeHash { get; set; }
+
+        [Required]
+        [Column("salt")]
+        public required string Salt { get; set; }
 
         [Required]
         [Column("is_used")]

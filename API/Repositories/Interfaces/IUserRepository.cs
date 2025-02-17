@@ -13,5 +13,5 @@ public interface IUserRepository
     public Task ChangeEmailState(long EmailId, EmailState newState);
     public Task RemoveEmailById(long Id);
     public Task RemovePhoneNumberById(long Id);
-    public Task<ResetPasswordRequest?> SendResetPasswordRequest(long UserId);
+    public Task<(ResetPasswordRequest? request, string code)> SendResetPasswordRequest(long UserId);
 }

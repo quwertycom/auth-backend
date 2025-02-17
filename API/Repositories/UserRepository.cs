@@ -125,7 +125,7 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
-    public async Task<ResetPasswordRequest?> SendResetPasswordRequest(long UserId)
+    public async Task<(ResetPasswordRequest? request, string code)> SendResetPasswordRequest(long UserId)
     {
         try
         {
@@ -135,17 +135,19 @@ public class UserRepository : IUserRepository
                 var email = await _Context.UserEmails.FirstOrDefaultAsync(e => e.UserId == UserId && e.State == EmailState.Verified && e.Type == EmailType.Primary);
                 if (email != null)
                 {
-                    var otp = RandomGenerator.GenerateNumberCode(8);
+                    var code = RandomGenerator.GenerateAlphanumericCode(32);
+                    var (codeHash, salt) = Hasher.Hash(code);
                     var resetPasswordRequest = new ResetPasswordRequest
                     {
                         User = user,
                         EmailAddress = email,
-                        OTP = otp,
+                        CodeHash = codeHash,
+                        Salt = salt,
                         IsUsed = false,
                     };
                     await _Context.ResetPasswordRequests.AddAsync(resetPasswordRequest);
                     await _Context.SaveChangesAsync();
-                    return resetPasswordRequest;
+                    return (resetPasswordRequest, code);
                 }
                 else
                 {

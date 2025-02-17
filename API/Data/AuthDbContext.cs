@@ -457,7 +457,7 @@ public class AuthDbContext : DbContext
             // Indexes
             entity.HasIndex(r => r.UserId);
             entity.HasIndex(r => r.EmailId);
-            entity.HasIndex(r => r.OTP);
+            entity.HasIndex(r => r.CodeHash);
 
             // Column configurations
             entity.Property(r => r.CreatedAt)
@@ -467,6 +467,9 @@ public class AuthDbContext : DbContext
             entity.Property(r => r.ExpiredAt)
                 .HasColumnType("timestamp with time zone")
                 .HasColumnName("expired_at");
+
+            entity.Property(r => r.CodeHash).HasColumnName("code_hash");
+            entity.Property(r => r.Salt).HasColumnName("salt");
         });
     }
 }
