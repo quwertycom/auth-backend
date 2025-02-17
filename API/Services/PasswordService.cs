@@ -38,21 +38,16 @@ public class PasswordService : IPasswordService
         {
             var Email = await _Context.UserEmails
                 .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Email == email);
-            Console.WriteLine("Email: " + Email?.Email ?? "Not found");
-            Console.WriteLine(JsonSerializer.Serialize(Email, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.IgnoreCycles }));
+                .FirstOrDefaultAsync(x => x.Email == email && x.State == EmailState.Verified);
             if (Email != null)
             {
                 var User = Email.User;
-                Console.WriteLine("User: " + User?.Id ?? "Not found");
-                if (User != null)
+                if (User != null && User.State == UserState.Active)
                 {
                     var requestResponse = await _UserRepository.SendResetPasswordRequest(User.Id);
-                    Console.WriteLine("ResetRequest: " + requestResponse.request?.CodeHash ?? "Not found");
                     if (requestResponse.request != null)
                     {
                         var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, requestResponse.code);
-                        Console.WriteLine("EmailSentSuccessfully: " + EmailSentSuccessfully);
                         if (EmailSentSuccessfully)
                         {
                             return (true, "SUCCESS", "Reset password request sent successfully");
@@ -92,7 +87,7 @@ public class PasswordService : IPasswordService
     {
         try
         {
-            var User = await _Context.Users.FirstOrDefaultAsync(x => x.Username == username);
+            var User = await _Context.Users.FirstOrDefaultAsync(x => x.Username == username && x.State == UserState.Active);
             if (User != null)
             {
                 var Email = await _Context.UserEmails
