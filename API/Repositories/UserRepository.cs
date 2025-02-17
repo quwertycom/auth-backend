@@ -209,21 +209,15 @@ public class UserRepository : IUserRepository
     {
         try
         {
-            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user == null) throw new Exception("NOT_FOUND");
             
             user.PasswordHash = newHash;
             user.PasswordSalt = newSalt;
             await _Context.SaveChangesAsync();
         }
-        catch (DbUpdateConcurrencyException ex)
+        catch (Exception)
         {
-            // Log error: ex.Message
-            throw new Exception("Concurrency error updating password");
-        }
-        catch (DbUpdateException ex)
-        {
-            // Log error: ex.InnerException?.Message
-            throw new Exception("Database error updating password");
+            throw;
         }
     }
 }
