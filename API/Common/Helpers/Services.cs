@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using API.Repositories.Interfaces;
 using API.Repositories;
+using API.Services.Interfaces;
 
 namespace API.Common.Helpers;
 

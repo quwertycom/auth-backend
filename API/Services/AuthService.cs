@@ -95,7 +95,7 @@ public class AuthService : IAuthService
                 User = newUser,
             };
 
-            var otp = OTPGenerator.GenerateOTP();
+            var otp = RandomGenerator.GenerateNumberCode(8);
 
             var otpSession = new VerificationSession
             {

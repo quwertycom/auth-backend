@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using API.Contracts.Requests.Password;
 using API.Contracts.Responses.Password;
 using API.Contracts.Responses.Common;
-
+using API.Services.Interfaces;
 namespace API.Controllers
 {
     [ApiController]

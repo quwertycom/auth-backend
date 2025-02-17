@@ -89,7 +89,7 @@ public class UserInfoRepository : IUserInfoRepository
                 var email = await _Context.UserEmails.FirstOrDefaultAsync(e => e.UserId == UserId && e.State == EmailState.Verified && e.Type == EmailType.Primary);
                 if (email != null)
                 {
-                    var otp = OTPGenerator.GenerateOTP();
+                    var otp = RandomGenerator.GenerateNumberCode(8);
                     var resetPasswordRequest = new ResetPasswordRequest
                     {
                         User = user,

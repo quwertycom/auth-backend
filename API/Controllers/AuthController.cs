@@ -3,6 +3,7 @@ using API.Services;
 using API.Contracts.Responses.Auth;
 using API.Contracts.Responses.Common;
 using API.Contracts.Requests.Auth;
+using API.Services.Interfaces;
 
 namespace API.Controllers;
 
