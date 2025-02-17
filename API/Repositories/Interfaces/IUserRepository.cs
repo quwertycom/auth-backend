@@ -8,7 +8,9 @@ public interface IUserRepository
     public Task AddUser(User user);
     public Task AddEmail(EmailAddress emailAddress);
     public Task<User?> GetUserByUsername(string Username);
+    public Task<User?> GetUserById(long Id);
     public Task<EmailAddress?> GetEmailModelByEmail(string Email);
+    public Task<EmailAddress?> GetEmailModelByUserId(long UserId);
     public Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber);
     public Task ChangeEmailState(long EmailId, EmailState newState);
     public Task RemoveEmailById(long Id);

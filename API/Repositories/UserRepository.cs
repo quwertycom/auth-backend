@@ -51,6 +51,17 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
+    public async Task<User?> GetUserById(long Id)
+    {
+        try
+        {
+            return await _Context.Users.FirstOrDefaultAsync(u => u.Id == Id);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
     public async Task<EmailAddress?> GetEmailModelByEmail(string Email)
     {
         try
@@ -58,6 +69,17 @@ public class UserRepository : IUserRepository
             return await _Context.UserEmails
                 .Include(ue => ue.User)
                 .FirstOrDefaultAsync(ue => ue.Email == Email);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+    public async Task<EmailAddress?> GetEmailModelByUserId(long UserId)
+    {
+        try
+        {
+            return await _Context.UserEmails.FirstOrDefaultAsync(x => x.UserId == UserId);
         }
         catch (Exception)
         {
