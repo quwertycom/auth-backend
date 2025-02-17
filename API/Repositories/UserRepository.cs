@@ -97,6 +97,26 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
+    public async Task ChangeUserState(long UserId, UserState newState)
+    {
+        try
+        {
+            var user = await _Context.Users.FirstOrDefaultAsync(x => x.Id == UserId);
+            if (user == null)
+            {
+                throw new Exception("NOT_FOUND");
+            }
+            else
+            {
+                user.State = newState;
+                await _Context.SaveChangesAsync();
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
     public async Task ChangeEmailState(long EmailId, EmailState newState)
     {
         try

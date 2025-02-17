@@ -12,6 +12,7 @@ public interface IUserRepository
     public Task<EmailAddress?> GetEmailModelByEmail(string Email);
     public Task<EmailAddress?> GetEmailModelByUserId(long UserId);
     public Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber);
+    public Task ChangeUserState(long UserId, UserState newState);
     public Task ChangeEmailState(long EmailId, EmailState newState);
     public Task RemoveEmailById(long Id);
     public Task RemovePhoneNumberById(long Id);
