@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using API.Repositories.Interfaces;
 
-namespace API.Service;
+namespace API.Services;
 public interface IPasswordService
 {
     public Task<(bool isSuccess, string status, string message)> ChangePassword(long UsertId, string Password, string otp);

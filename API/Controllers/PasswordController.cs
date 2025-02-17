@@ -1,5 +1,5 @@
 ﻿using API.Models;
-using API.Service;
+using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using API.Contracts.Requests.Password;

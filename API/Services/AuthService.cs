@@ -7,7 +7,7 @@ using API.Models;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using API.Repositories.Interfaces;
-namespace API.Service;
+namespace API.Services;
 
 public interface IAuthService
 {

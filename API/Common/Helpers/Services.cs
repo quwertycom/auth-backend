@@ -1,5 +1,5 @@
 using API.Data;
-using API.Service;
+using API.Services;
 using API.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

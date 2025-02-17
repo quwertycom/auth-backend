@@ -21,7 +21,7 @@ public class Program
             builder.Configuration.GetSection("Email"));
 
         // Initialize services via Services helper
-        Services.Initialize(builder);
+        Common.Helpers.Services.Initialize(builder);
 
         // Add services to the container
         builder.Services.AddControllers();
