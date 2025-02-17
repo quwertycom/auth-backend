@@ -136,7 +136,7 @@ public class UserRepository : IUserRepository
                 if (email != null)
                 {
                     var code = RandomGenerator.GenerateAlphanumericCode(32);
-                    var (codeHash, salt) = Hasher.Hash(code, "");
+                    var (codeHash, _) = Hasher.Hash(code, "");
                     var resetPasswordRequest = new ResetPasswordRequest
                     {
                         User = user,
