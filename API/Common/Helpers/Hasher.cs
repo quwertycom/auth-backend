@@ -35,16 +35,32 @@ public static class Hasher
         _isInitialized = true;
     }
 
-    public static (string hash, string salt) Hash(string password)
+    public static (string hash, string salt) Hash(string password, string? customSalt = null)
     {
         if (!_isInitialized)
         {
             throw new InvalidOperationException("PasswordHasher is not initialized. Call Initialize() first.");
         }
 
-        // Generate a random salt
-        string saltBase64 = RandomGenerator.GenerateSalt(_saltSize);
-        byte[] salt = Convert.FromBase64String(saltBase64);
+        string saltBase64;
+        byte[] salt;
+
+        if (customSalt == null)
+        {
+            // Generate a random salt
+            saltBase64 = RandomGenerator.GenerateSalt(_saltSize);
+            salt = Convert.FromBase64String(saltBase64);
+        }
+        else if (customSalt == "")
+        {
+            saltBase64 = "";
+            salt = Array.Empty<byte>();
+        }
+        else
+        {
+            saltBase64 = customSalt;
+            salt = Convert.FromBase64String(saltBase64);
+        }
 
 
         // Hash the password with the salt
