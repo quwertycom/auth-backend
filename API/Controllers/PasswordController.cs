@@ -2,9 +2,7 @@
 using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using API.Contracts.Requests.Password;
-using API.Contracts.Responses.Password;
-using API.Contracts.Responses.Common;
+using API.Contracts;
 using API.Services.Interfaces;
 namespace API.Controllers
 {
@@ -19,10 +17,10 @@ namespace API.Controllers
         }
 
         [HttpPost("request-reset")]
-        [ProducesResponseType(typeof(RequestResetResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RequestReset([FromBody] RequestResetRequest request)
+        [ProducesResponseType(typeof(Contracts.Responses.Password.RequestResetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RequestReset([FromBody] Contracts.Requests.Password.RequestResetRequest request)
         {
             if (request.Email != null && request.Email != "")
             {
@@ -31,7 +29,7 @@ namespace API.Controllers
                 Console.WriteLine("Response: " + response.message);
                 if (response.isSuccess)
                 {
-                    return Ok(new RequestResetResponse
+                    return Ok(new Contracts.Responses.Password.RequestResetResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -39,7 +37,7 @@ namespace API.Controllers
                 }
                 else
                 {
-                    return BadRequest(new ErrorResponse
+                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -51,7 +49,7 @@ namespace API.Controllers
                 var response = await _passwordService.RequestResetViaUsername(request.Username);
                 if (response.isSuccess)
                 {
-                    return Ok(new RequestResetResponse
+                    return Ok(new Contracts.Responses.Password.RequestResetResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -59,7 +57,7 @@ namespace API.Controllers
                 }
                 else
                 {
-                    return BadRequest(new ErrorResponse
+                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -68,7 +66,7 @@ namespace API.Controllers
             }
             else
             {
-                return BadRequest(new ErrorResponse
+                return BadRequest(new Contracts.Responses.Common.ErrorResponse
                 {
                     Status = "error",
                     Message = "Email or username is required"
@@ -78,14 +76,14 @@ namespace API.Controllers
 
 
         [HttpPost("validate-reset-code")]
-        [ProducesResponseType(typeof(ValidateResetCodeResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ValidateResetCode([FromBody] ValidateResetCodeRequest request)
+        [ProducesResponseType(typeof(Contracts.Responses.Password.ValidateResetCodeResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ValidateResetCode([FromBody] Contracts.Requests.Password.ValidateResetCodeRequest request)
         {
             if (request.Code.Length != 32)
             {
-                return BadRequest(new ErrorResponse
+                return BadRequest(new Contracts.Responses.Common.ErrorResponse
                 {
                     Status = "error",
                     Message = "Invalid reset code"
@@ -96,7 +94,7 @@ namespace API.Controllers
                 var response = await _passwordService.ValidateResetCode(request.Code);
                 if (response.isSuccess)
                 {
-                    return Ok(new ValidateResetCodeResponse
+                    return Ok(new Contracts.Responses.Password.ValidateResetCodeResponse
                     {
                         Status = response.status,
                         Message = response.message,
@@ -107,7 +105,7 @@ namespace API.Controllers
                 {
                     if (response.status == "INTERNAL_ERROR")
                     {
-                        return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                        return StatusCode(StatusCodes.Status500InternalServerError, new Contracts.Responses.Common.ErrorResponse
                         {
                             Status = response.status,
                             Message = response.message ?? "Internal server error, please try again later, if issue persists contact support."
@@ -115,7 +113,7 @@ namespace API.Controllers
                     }
                     else
                     {
-                        return BadRequest(new ErrorResponse
+                        return BadRequest(new Contracts.Responses.Common.ErrorResponse
                         {
                             Status = response.status,
                             Message = response.message
@@ -125,10 +123,40 @@ namespace API.Controllers
             }
         }
 
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword()
+        [HttpPost("reset")]
+        [ProducesResponseType(typeof(Contracts.Responses.Password.ResetPasswordResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ResetPassword([FromBody] Contracts.Requests.Password.ResetPasswordRequest request)
         {
-            return Ok();
+            var response = await _passwordService.ChangePassword(request.Code, request.NewPassword);
+            if (response.isSuccess)
+            {
+                return Ok(new Contracts.Responses.Password.ResetPasswordResponse
+                {
+                    Status = response.status,
+                    Message = response.message
+                });
+            }
+            else
+            {
+                if (response.status == "INTERNAL_ERROR")
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new Contracts.Responses.Common.ErrorResponse
+                    {
+                        Status = response.status,
+                        Message = response.message ?? "Internal server error, please try again later, if issue persists contact support."
+                    });
+                }
+                else
+                {
+                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                    {
+                        Status = response.status,
+                        Message = response.message
+                    });
+                }
+            }
         }
     }
 }

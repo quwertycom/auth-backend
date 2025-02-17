@@ -18,9 +18,40 @@ public class PasswordService : IPasswordService
         _UserRepository = userRepository;
     }
 
-    public async Task<(bool isSuccess, string status, string message)> ChangePassword(long UsertId, string Password, string otp)
+    public async Task<(bool isSuccess, string status, string message)> ChangePassword(string code, string Password)
     {
-        return (false, "error", "Not implemented yet");
+        try {
+            var (codeHash, _) = Hasher.Hash(code, "");
+            var request = await _Context.ResetPasswordRequests
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.CodeHash == codeHash);
+            if (request == null)
+            {
+                return (false, "INVALID_CODE", "Invalid reset code");
+            }
+            else if (request.IsUsed)
+            {
+                return (false, "USED_CODE", "Reset code has already been used");
+            }
+            else if (request.ExpiredAt <= DateTime.UtcNow)
+            {
+                return (false, "EXPIRED_CODE", "Reset code has expired");
+            }
+            else
+            {
+                var (newHash, newSalt) = Hasher.Hash(Password);
+                System.Console.WriteLine("New Hash: " + newHash);
+                await _UserRepository.UpdateUserPassword(request.User, newHash, newSalt);
+                request.IsUsed = true;
+                await _Context.SaveChangesAsync();
+                Console.WriteLine("Password changed successfully");
+                return (true, "SUCCESS", "Password changed successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            return (false, "INTERNAL_ERROR", ex.Message ?? "Internal server error, please try again later, if issue persists contact support.");
+        }
     }
 
     public async Task<(bool isSuccess, string status, string message)> RequestResetViaEmail(string email)
@@ -128,7 +159,7 @@ public class PasswordService : IPasswordService
 
             if (request == null)
                 return (false, "INVALID_CODE", "Invalid reset code", false);
-            else if (request.ExpiredAt < DateTime.Now)
+            else if (request.ExpiredAt < DateTime.UtcNow)
                 return (false, "EXPIRED_CODE", "Reset code has expired", false);
             else if (request.IsUsed)
                 return (false, "USED_CODE", "Reset code has already been used", false);

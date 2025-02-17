@@ -205,4 +205,25 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
+    public async Task UpdateUserPassword(User user, string newHash, string newSalt)
+    {
+        try
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            
+            user.PasswordHash = newHash;
+            user.PasswordSalt = newSalt;
+            await _Context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Log error: ex.Message
+            throw new Exception("Concurrency error updating password");
+        }
+        catch (DbUpdateException ex)
+        {
+            // Log error: ex.InnerException?.Message
+            throw new Exception("Database error updating password");
+        }
+    }
 }
