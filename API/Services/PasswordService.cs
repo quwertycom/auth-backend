@@ -6,14 +6,8 @@ using API.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using API.Repositories.Interfaces;
-
+using API.Services.Interfaces;
 namespace API.Services;
-public interface IPasswordService
-{
-    public Task<(bool isSuccess, string status, string message)> ChangePassword(long UsertId, string Password, string otp);
-    public Task<(bool isSuccess, string status, string message)> RequestResetViaEmail(string Email);
-    public Task<(bool isSuccess, string status, string message)> RequestResetViaUsername(string Username);
-}
 public class PasswordService : IPasswordService
 {
     private readonly AuthDbContext _Context;

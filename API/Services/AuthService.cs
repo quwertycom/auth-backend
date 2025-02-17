@@ -7,14 +7,9 @@ using API.Models;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using API.Repositories.Interfaces;
-namespace API.Services;
+using API.Services.Interfaces;
 
-public interface IAuthService
-{
-    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
-    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
-    Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
-}
+namespace API.Services;
 
 public class AuthService : IAuthService
 {
