@@ -1,22 +1,12 @@
-﻿using API.Common.Enums;
+using API.Common.Enums;
+using API.Common.Helpers;
 using API.Data;
 using API.Models;
+using API.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using API.Common.Helpers;
-namespace API.Service;
-public interface IUserInfoRepository
-{
-    public Task<EmailAddress?> GetEmailModelByEmail(string Email);
-    public Task ChangeEmailState(long EmailId, EmailState newState);
-    public Task AddUser(User user);
-    public Task AddEmail(EmailAddress emailAddress);
-    public Task<User?> GetUserByUsername(string Username);
-    public Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber);
-    public Task RemovePhoneNumberById(long Id);
-    public Task RemoveEmailById(long Id);
-    public Task<User?> GetUserByUserName(string Username);
-    public Task<ResetPasswordRequest?> SendResetPasswordRequest(long UserId);
-}
+
+namespace API.Repositories;
+
 public class UserInfoRepository : IUserInfoRepository
 {
     private readonly AuthDbContext _Context;

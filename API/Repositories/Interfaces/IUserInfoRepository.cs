@@ -1,0 +1,18 @@
+using API.Models;
+using API.Common.Enums;
+
+namespace API.Repositories.Interfaces;
+
+public interface IUserInfoRepository
+{
+    public Task<EmailAddress?> GetEmailModelByEmail(string Email);
+    public Task ChangeEmailState(long EmailId, EmailState newState);
+    public Task AddUser(User user);
+    public Task AddEmail(EmailAddress emailAddress);
+    public Task<User?> GetUserByUsername(string Username);
+    public Task<PhoneNumber?> GetPhoneNumberModelByPhoneNumber(string PhoneNumber);
+    public Task RemovePhoneNumberById(long Id);
+    public Task RemoveEmailById(long Id);
+    public Task<User?> GetUserByUserName(string Username);
+    public Task<ResetPasswordRequest?> SendResetPasswordRequest(long UserId);
+}
