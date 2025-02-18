@@ -2,6 +2,7 @@ using API.Models;
 using Microsoft.EntityFrameworkCore;
 using API.Common.Enums;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace API.Data;
 
@@ -35,6 +36,7 @@ public class AuthDbContext : DbContext
 
     // Verification related
     public DbSet<VerificationSession> VerificationSessions { get; set; } = null!;
+    public DbSet<ResetPasswordRequest> ResetPasswordRequests { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,6 +58,16 @@ public class AuthDbContext : DbContext
             }
         }
 
+        // Auto-configure Snowflake IDs for all entities
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var idProperty = entityType.FindProperty("Id");
+            if (idProperty != null && idProperty.ClrType == typeof(long))
+            {
+                idProperty.ValueGenerated = ValueGenerated.Never;
+            }
+        }
+
         // User configurations
         modelBuilder.Entity<User>(entity =>
         {
@@ -68,7 +80,8 @@ public class AuthDbContext : DbContext
             entity.HasMany(u => u.EmailAddresses)
                 .WithOne(e => e.User)
                 .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
 
             entity.HasMany(u => u.PhoneNumbers)
                 .WithOne(p => p.User)
@@ -358,7 +371,8 @@ public class AuthDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany(u => u.EmailAddresses)
                 .HasForeignKey(ue => ue.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_UserEmails_Users");
 
             // Custom columns
             entity.Property(e => e.Email).HasColumnName("email");
@@ -422,6 +436,39 @@ public class AuthDbContext : DbContext
             // Custom columns
             entity.Property(vs => vs.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(vs => vs.IsUsed).HasDefaultValue(false).HasColumnName("is_used");
+        });
+
+        // ResetPasswordRequest configurations
+        modelBuilder.Entity<ResetPasswordRequest>(entity =>
+        {
+            entity.ToTable("reset_password_requests");
+
+            // Relationships
+            entity.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.EmailAddress)
+                .WithMany()
+                .HasForeignKey(r => r.EmailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Indexes
+            entity.HasIndex(r => r.UserId);
+            entity.HasIndex(r => r.EmailId);
+            entity.HasIndex(r => r.CodeHash);
+
+            // Column configurations
+            entity.Property(r => r.CreatedAt)
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("created_at");
+
+            entity.Property(r => r.ExpiredAt)
+                .HasColumnType("timestamp with time zone")
+                .HasColumnName("expired_at");
+
+            entity.Property(r => r.CodeHash).HasColumnName("code_hash");
         });
     }
 }

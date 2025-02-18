@@ -1,9 +1,12 @@
 using API.Data;
-using API.Service;
+using API.Services;
 using API.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using API.Repositories.Interfaces;
+using API.Repositories;
+using API.Services.Interfaces;
 
 namespace API.Common.Helpers;
 
@@ -11,28 +14,37 @@ public static class Services
 {
     public static void Initialize(WebApplicationBuilder builder)
     {
-        // Add configuration first
         ConfigManager.AddConfiguration(builder.Services, builder.Configuration);
-
-        // Add other services
         AddDbContext(builder);
-        AddControllerServices(builder);
+        AddServices(builder);
+        AddRepositories(builder);
         InitializeHelpers(builder.Configuration);
     }
 
-    private static void AddControllerServices(WebApplicationBuilder builder)
+    private static void AddServices(WebApplicationBuilder builder)
     {
         try
         {
             builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-            builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-            builder.Services.AddScoped<IUserInfoRepository, UserInfoRepository>();
-            // add other services in the future
+            builder.Services.AddScoped<IPasswordService, PasswordService>();
         }
         catch (Exception ex)
         {
-            throw new Exception($"Failed to add controller services: {ex.Message}");
+            throw new Exception($"Failed to add services: {ex.Message}");
+        }
+    }
+
+    private static void AddRepositories(WebApplicationBuilder builder)
+    {
+        try
+        {
+            builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+            builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to add repositories: {ex.Message}");
         }
     }
 
@@ -42,15 +54,14 @@ public static class Services
         {
             builder.Services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
             {
-                var dbSettings = serviceProvider.GetRequiredService<IOptions<DatabaseSettings>>().Value;
                 var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
 
                 var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
                 {
-                    Host = isRunningInDocker ? "db" : dbSettings.Host,
-                    Database = dbSettings.Database,
-                    Username = dbSettings.Username,
-                    Password = dbSettings.Password,
+                    Host = isRunningInDocker ? "db" : Environment.GetEnvironmentVariable("POSTGRES_HOST"),
+                    Database = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? throw new ArgumentNullException("POSTGRES_DB"),
+                    Username = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? throw new ArgumentNullException("POSTGRES_USER"),
+                    Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? throw new ArgumentNullException("POSTGRES_PASSWORD"),
                     Pooling = true,
                     MinPoolSize = 5,
                     MaxPoolSize = 100
@@ -75,7 +86,7 @@ public static class Services
             var initializationTasks = new Dictionary<string, Action>
             {
                 { "JWT", () => JWT.Initialize(configuration) },
-                { "PasswordHasher", () => PasswordHasher.Initialize(configuration) },
+                { "Hasher", () => Hasher.Initialize(configuration) },
                 { "Snowflake", () => Snowflake.Initialize(configuration) },
                 { "EmailSender", () => EmailSender.Initialize(configuration) }
             };

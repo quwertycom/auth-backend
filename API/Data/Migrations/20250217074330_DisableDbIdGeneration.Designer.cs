@@ -3,6 +3,7 @@ using System;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API.Data.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250217074330_DisableDbIdGeneration")]
+    partial class DisableDbIdGeneration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -433,11 +436,6 @@ namespace API.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<string>("CodeHash")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("code_hash");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -454,15 +452,20 @@ namespace API.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_used");
 
+                    b.Property<string>("OTP")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("otp");
+
                     b.Property<long>("UserId")
                         .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CodeHash");
-
                     b.HasIndex("EmailId");
+
+                    b.HasIndex("OTP");
 
                     b.HasIndex("UserId");
 

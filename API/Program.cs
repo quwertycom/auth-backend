@@ -15,13 +15,13 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Configure strongly-typed settings
-        builder.Services.Configure<DatabaseSettings>(
-            builder.Configuration.GetSection("Database"));
         builder.Services.Configure<JwtSettings>(
             builder.Configuration.GetSection("Jwt"));
+        builder.Services.Configure<EmailSettings>(
+            builder.Configuration.GetSection("Email"));
 
         // Initialize services via Services helper
-        Services.Initialize(builder);
+        Common.Helpers.Services.Initialize(builder);
 
         // Add services to the container
         builder.Services.AddControllers();

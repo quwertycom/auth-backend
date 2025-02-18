@@ -3,6 +3,7 @@ using System;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API.Data.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250211142925_FixCircularReferenceBetweenUserAndEmail")]
+    partial class FixCircularReferenceBetweenUserAndEmail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,8 +28,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Account", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("AccountName")
                         .IsRequired()
@@ -79,8 +85,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Application", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -134,8 +143,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.ApplicationAccount", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long>("AccountId")
                         .HasColumnType("bigint")
@@ -161,8 +173,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Developer", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -209,8 +224,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.EmailAddress", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -256,8 +274,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Notification", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AccountId")
                         .HasColumnType("bigint")
@@ -319,8 +340,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Organization", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -350,8 +374,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.OrganizationRole", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -383,8 +410,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.PhoneNumber", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -430,17 +460,18 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.ResetPasswordRequest", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    b.Property<string>("CodeHash")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("code_hash");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<long>("EmailAddressId")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("EmailId")
                         .HasColumnType("bigint")
@@ -454,26 +485,32 @@ namespace API.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_used");
 
+                    b.Property<string>("OTP")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("otp");
+
                     b.Property<long>("UserId")
                         .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CodeHash");
-
-                    b.HasIndex("EmailId");
+                    b.HasIndex("EmailAddressId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("reset_password_requests", (string)null);
+                    b.ToTable("ResetPasswordRequests");
                 });
 
             modelBuilder.Entity("API.Models.Session", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AccountId")
                         .HasColumnType("bigint")
@@ -525,8 +562,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Token", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AccountId")
                         .HasColumnType("bigint")
@@ -617,8 +657,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.User", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("timestamp with time zone")
@@ -685,8 +728,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.VerificationSession", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -888,7 +934,7 @@ namespace API.Data.Migrations
                 {
                     b.HasOne("API.Models.EmailAddress", "EmailAddress")
                         .WithMany()
-                        .HasForeignKey("EmailId")
+                        .HasForeignKey("EmailAddressId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -6,24 +6,19 @@ using API.Data;
 using API.Models;
 using Microsoft.EntityFrameworkCore;
 using Polly;
+using API.Repositories.Interfaces;
+using API.Services.Interfaces;
 
-namespace API.Service;
-
-public interface IAuthService
-{
-    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request);
-    Task<(bool isSuccess, string status, string message, long? verificationSessionID)> VerifyEmailAsync(VerifyEmailRequest request);
-    Task<(bool isSuccess, string status, string message, string? accessToken, string? refreshToken)> LoginAsync(LoginRequest request);
-}
+namespace API.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IUserInfoRepository _userInfoRepository;
+    private readonly IUserRepository _userRepository;
     private readonly ITokenRepository _tokenRepository;
     private readonly ISessionRepository _sessionRepository;
-    public AuthService(IUserInfoRepository userInfoRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
+    public AuthService(IUserRepository userRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
     {
-        _userInfoRepository = userInfoRepository;
+        _userRepository = userRepository;
         _tokenRepository = tokenRepository;
         _sessionRepository = sessionRepository;
     }
@@ -50,13 +45,13 @@ public class AuthService : IAuthService
             {
                 return (false, "INVALID_PHONE_NUMBER", "Invalid phone number format.", null);
             }
-            var user = await _userInfoRepository.GetUserByUsername(request.Username);
+            var user = await _userRepository.GetUserByUsername(request.Username);
             var usernameExists = user != null;
             if (usernameExists)
             {
                 return (false, "USERNAME_TAKEN", "Username already exists, please try a different username.", null);
             }
-            var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
+            var email = await _userRepository.GetEmailModelByEmail(request.Email);
             var emailExists = email != null && email.State != EmailState.Created && email.State != EmailState.Deleted;
 
             if (emailExists)
@@ -66,7 +61,7 @@ public class AuthService : IAuthService
             PhoneNumber? phoneNumber = null;
             if (request.PhoneNumber != null)
             {
-                phoneNumber = await _userInfoRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
+                phoneNumber = await _userRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber);
             }
             var phoneNumberExists = phoneNumber != null && phoneNumber.State != PhoneState.Created && phoneNumber.State != PhoneState.Deleted && phoneNumber.Type != PhoneType.Recovery;
 
@@ -80,7 +75,7 @@ public class AuthService : IAuthService
                 return (false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters long.", null);
             }
 
-            var hashedPassword = PasswordHasher.Hash(request.Password);
+            var hashedPassword = Hasher.Hash(request.Password);
 
             var newUser = new User
             {
@@ -100,7 +95,7 @@ public class AuthService : IAuthService
                 User = newUser,
             };
 
-            var otp = OTPGenerator.GenerateOTP();
+            var otp = RandomGenerator.GenerateNumberCode(8);
 
             var otpSession = new VerificationSession
             {
@@ -110,8 +105,8 @@ public class AuthService : IAuthService
                 IsUsed = false,
             };
 
-            await _userInfoRepository.AddUser(newUser);
-            await _userInfoRepository.AddEmail(newEmail);
+            await _userRepository.AddUser(newUser);
+            await _userRepository.AddEmail(newEmail);
             await _sessionRepository.AddSession(otpSession);
 
             await EmailSender.SendOtpEmailAsync(newEmail.Email, otp);
@@ -130,6 +125,7 @@ public class AuthService : IAuthService
         {
             var verificationSession = await _sessionRepository.GetSeession(request.VerificationSessionID);
 
+            Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
             switch (verificationSession)
             {
                 case null:
@@ -142,11 +138,23 @@ public class AuthService : IAuthService
                     return (false, "EXPIRED", "OTP expired.", null);
             }
 
-            var email = await _userInfoRepository.GetEmailModelByEmail(request.Email);
+            var email = await _userRepository.GetEmailModelByEmail(request.Email);
 
             if (email == null)
             {
                 return (false, "NOT_FOUND", "Email not found.", null);
+            }
+
+            var user = await _userRepository.GetUserById(verificationSession.UserId);
+
+            if (user == null)
+            {
+                return (false, "NOT_FOUND", "User not found.", null);
+            }
+
+            if (user.State == UserState.PendingVerification)
+            {
+                await _userRepository.ChangeUserState(user.Id, UserState.Active);
             }
 
             if (verificationSession.UserId != email.UserId)
@@ -154,31 +162,9 @@ public class AuthService : IAuthService
                 return (false, "INVALID_SESSION", "Invalid verification session for this email.", null);
             }
 
-            var user = await _userInfoRepository.GetUserByUsername(verificationSession.User.Username);
-
-            if (user == null)
-            {
-                return (false, "NOT_FOUND", "User not found.", null);
-            }
-
-            if (user.State != UserState.PendingVerification)
-            {
-                return (false, "USER_NOT_ACTIVE", "Account not activated", null);
-            }
-
-            if (user.EmailAddresses.Any(e => e.Email == email.Email && e.State == EmailState.Verified))
-            {
-                return (false, "EMAIL_ALREADY_VERIFIED", "Email already verified.", null);
-            }
-
-            if (user.EmailAddresses.Any(e => e.Email == email.Email && e.State == EmailState.Blacklisted))
-            {
-                return (false, "EMAIL_BLACKLISTED", "Email is blacklisted.", null);
-            }
-
             verificationSession.IsUsed = true;
-            await _userInfoRepository.ChangeEmailState(email.Id, EmailState.Verified);
-            await _userInfoRepository.ChangeUserState(user.Id, UserState.Active);
+            await _userRepository.ChangeEmailState(email.Id, EmailState.Verified);
+
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
         }
         catch
@@ -191,24 +177,17 @@ public class AuthService : IAuthService
     {
         try
         {
-            var user = await _userInfoRepository.GetUserByUsername(request.Username);
+            var user = await _userRepository.GetUserByUsername(request.Username);
 
             if (user == null)
             {
                 return (false, "NOT_FOUND", "User not found.", null, null);
             }
 
-            if (user.State != UserState.Active)
-            {
-                return (false, "USER_NOT_ACTIVE", "Account not activated", null, null);
-            }
-
-            if (!PasswordHasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
+            if (!Hasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
             {
                 return (false, "INVALID_PASSWORD", "Invalid password.", null, null);
             }
-
-            await _userInfoRepository.UpdateUserLastLogin(user.Id);
 
             string accessTokenString;
             string refreshTokenString;
@@ -234,6 +213,7 @@ public class AuthService : IAuthService
             {
                 return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null, null);
             }
+
 
             var session = new Session
             {
@@ -261,6 +241,10 @@ public class AuthService : IAuthService
                 User = user,
                 CreatedAt = DateTime.UtcNow,
             };
+            Console.WriteLine("user.Id: " + user.Id);
+            Console.WriteLine("session.Id: " + session.Id);
+            Console.WriteLine("refreshToken.Id: " + refreshToken.Id);
+            Console.WriteLine("accessToken.Id: " + accessToken.Id);
 
             await _sessionRepository.AddSession(session);
             await _tokenRepository.AddToken(refreshToken);

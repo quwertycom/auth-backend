@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using API.Common.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.Common.Helpers;
+using System.Text.Json.Serialization;
 
 namespace API.Models;
 
@@ -38,6 +39,7 @@ public class User
     [Required]
     public virtual ICollection<PhoneNumber> PhoneNumbers { get; set; } = new List<PhoneNumber>();
 
+    [JsonIgnore]
     [Required]
     public virtual ICollection<EmailAddress> EmailAddresses { get; set; } = new List<EmailAddress>();
 

@@ -1,12 +1,9 @@
-﻿using API.Data;
+using API.Data;
 using API.Models;
+using API.Repositories.Interfaces;
 
-namespace API.Service;
+namespace API.Repositories;
 
-public interface ITokenRepository
-{
-    public Task AddToken(Token token);
-}
 public class TokenRepository : ITokenRepository
 {
     private readonly AuthDbContext _Context;

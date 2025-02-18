@@ -1,15 +1,11 @@
-﻿using API.Data;
+
+using API.Data;
 using API.Models;
+using API.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace API.Service;
+namespace API.Repositories;
 
-public interface ISessionRepository
-{
-    public Task AddSession(Session session);
-    public Task<VerificationSession?> GetSeession(long VerificationSessionID);
-    public Task AddSession(VerificationSession session);
-}
 public class SessionRepository : ISessionRepository
 {
     private readonly AuthDbContext _Context;
