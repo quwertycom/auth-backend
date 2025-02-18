@@ -1,4 +1,3 @@
-
 namespace API.Common.Enums;
 
 public enum PhoneType
