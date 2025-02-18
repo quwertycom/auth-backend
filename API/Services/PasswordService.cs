@@ -23,9 +23,7 @@ public class PasswordService : IPasswordService
         try
         {
             var (codeHash, _) = Hasher.Hash(code, "");
-            var request = await _Context.ResetPasswordRequests
-                .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.CodeHash == codeHash);
+            var request = await _UserRepository.GetResetPasswordRequestByCodeHash(codeHash);
             if (request == null)
             {
                 return (false, "INVALID_CODE", "Invalid reset code");
@@ -63,12 +61,10 @@ public class PasswordService : IPasswordService
     {
         try
         {
-            var Email = await _Context.UserEmails
-                .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Email == email && x.State == EmailState.Verified);
+            var Email = await _UserRepository.GetEmailModelByEmail(email);
             if (Email != null)
             {
-                var User = Email.User;
+                var User = await _UserRepository.GetUserById(Email.UserId);
                 if (User != null && User.State == UserState.Active)
                 {
                     var code = RandomGenerator.GenerateAlphanumericCode(32);
@@ -116,11 +112,10 @@ public class PasswordService : IPasswordService
     {
         try
         {
-            var User = await _Context.Users.FirstOrDefaultAsync(x => x.Username == username && x.State == UserState.Active);
+            var User = await _UserRepository.GetUserByUsername(username);
             if (User != null)
             {
-                var Email = await _Context.UserEmails
-                    .FirstOrDefaultAsync(x => x.UserId == User.Id && x.Type == EmailType.Primary && x.State == EmailState.Verified);
+                var Email = await _UserRepository.GetEmailModelByUserId(User.Id);
                 if (Email != null)
                 {
                     var code = RandomGenerator.GenerateAlphanumericCode(32);
@@ -164,7 +159,7 @@ public class PasswordService : IPasswordService
         try
         {
             var (codeHash, _) = Hasher.Hash(code, "");
-            var request = await _Context.ResetPasswordRequests.FirstOrDefaultAsync(x => x.CodeHash == codeHash);
+            var request = await _UserRepository.GetResetPasswordRequestByCodeHash(codeHash);
 
             if (request == null)
                 return (false, "INVALID_CODE", "Invalid reset code", false);

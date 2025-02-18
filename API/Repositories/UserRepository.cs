@@ -187,6 +187,17 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
+    public async Task<ResetPasswordRequest?> GetResetPasswordRequestByCodeHash(string codeHash)
+    {
+        try
+        {
+            return await _Context.ResetPasswordRequests.FirstOrDefaultAsync(x => x.CodeHash == codeHash);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
     public async Task UpdateUserPassword(User user, string newHash, string newSalt)
     {
         try
