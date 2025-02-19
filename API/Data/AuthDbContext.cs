@@ -258,6 +258,7 @@ public class AuthDbContext : DbContext
 
             // Indexes
             entity.HasIndex(s => s.UserId);
+            entity.HasIndex(s => s.IsRevoked);
             entity.HasIndex(s => new { s.Target, s.UserId });
             entity.HasIndex(s => new { s.AccountId, s.ApplicationId });
 
@@ -279,10 +280,21 @@ public class AuthDbContext : DbContext
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Add column configuration
+            entity.Property(s => s.IsRevoked)
+                .HasDefaultValue(false)
+                .HasColumnName("is_revoked");
+
             // Custom columns
             entity.Property(s => s.Target).HasConversion<string>().HasMaxLength(20).HasColumnName("target");
             entity.Property(s => s.CreatedAt).HasColumnType("timestamp").HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
             entity.Property(s => s.LastUsedAt).HasColumnType("timestamp").HasColumnName("last_used_at");
+
+            entity.HasMany(s => s.Tokens)
+                .WithOne(t => t.Session)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasPrincipalKey(s => s.Id)
+                .HasForeignKey(t => t.SessionId);
         });
 
         // Notification configurations
@@ -470,5 +482,26 @@ public class AuthDbContext : DbContext
 
             entity.Property(r => r.CodeHash).HasColumnName("code_hash");
         });
+    }
+
+    public override int SaveChanges()
+    {
+        ChangeTracker.DetectChanges();
+        
+        var revokedSessions = ChangeTracker.Entries<Session>()
+            .Where(e => e.State == EntityState.Modified 
+                        && e.Property(x => x.IsRevoked).CurrentValue)
+            .Select(e => e.Entity)
+            .ToList();
+
+        foreach (var session in revokedSessions)
+        {
+            foreach (var token in session.Tokens)
+            {
+                token.IsRevoked = true;
+            }
+        }
+        
+        return base.SaveChanges();
     }
 }

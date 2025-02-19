@@ -33,6 +33,10 @@ public class Session
     public long? ApplicationId { get; set; }
 
     [Required]
+    [Column("is_revoked")]
+    public bool IsRevoked { get; set; } = false;
+
+    [Required]
     public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
 
     [Required]
