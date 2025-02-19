@@ -7,13 +7,11 @@ namespace API.Services;
 public class TokenService : ITokenService
 {
     private readonly IUserRepository _userRepository;
-    private readonly ITokenRepository _tokenRepository;
     private readonly ISessionRepository _sessionRepository;
 
-    public TokenService(IUserRepository userRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
+    public TokenService(IUserRepository userRepository, ISessionRepository sessionRepository)
     {
         _userRepository = userRepository;
-        _tokenRepository = tokenRepository;
         _sessionRepository = sessionRepository;
     }
 
@@ -21,7 +19,7 @@ public class TokenService : ITokenService
     {
         try
         {
-            var tokenModel = await _tokenRepository.GetTokenByTokenString(token);
+            var tokenModel = await _sessionRepository.GetTokenByTokenString(token);
             if (tokenModel == null)
                 return (false, "INVALID_TOKEN", "Invalid token.", false, null, null);
             else if (tokenModel.ExpiresAt < DateTime.UtcNow)

@@ -10,4 +10,8 @@ public interface ISessionRepository
     public Task<Session?> GetSessionByTokenId(long tokenId);
     public Task RevokeSession(long sessionId);
     public Task<string> GetSessionState(long sessionId);
+    public Task AddToken(Token token);
+    public Task<Token?> GetTokenByTokenString(string tokenString);
+    public Task<Token?> GetTokenByUserId(long userId);
+    public Task<IEnumerable<Token>> GetSessionTokensBySessionId(long sessionId);
 }

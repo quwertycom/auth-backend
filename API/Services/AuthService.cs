@@ -14,13 +14,11 @@ namespace API.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
-    private readonly ITokenRepository _tokenRepository;
     private readonly ISessionRepository _sessionRepository;
     private readonly IVerificationRepository _verificationRepository;
-    public AuthService(IUserRepository userRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository)
+    public AuthService(IUserRepository userRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository)
     {
         _userRepository = userRepository;
-        _tokenRepository = tokenRepository;
         _sessionRepository = sessionRepository;
         _verificationRepository = verificationRepository;
     }
@@ -250,8 +248,8 @@ public class AuthService : IAuthService
             Console.WriteLine("accessToken.Id: " + accessToken.Id);
 
             await _sessionRepository.AddSession(session);
-            await _tokenRepository.AddToken(refreshToken);
-            await _tokenRepository.AddToken(accessToken);
+            await _sessionRepository.AddToken(refreshToken);
+            await _sessionRepository.AddToken(accessToken);
 
             return (true, "SUCCESS", "Login successful.", accessTokenString, refreshTokenString);
         }
