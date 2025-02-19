@@ -276,4 +276,106 @@ public class AuthControllerTests : TestBase
         Assert.NotNull(response);
         Assert.Equal("INTERNAL_SERVER_ERROR", response.Status);
     }
+
+    [Fact]
+    public async Task LoginAsync_ValidCredentials_ReturnsOkResult()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "testuser",
+            Password = "Password123"
+        };
+
+        _mockAuthService.LoginAsync(Arg.Any<LoginRequest>())
+            .Returns((true, "SUCCESS", "Login successful", "accessToken", "refreshToken"));
+
+        // Act
+        var result = await _controller.LoginAsync(request) as OkObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+
+        var response = result.Value as LoginResponse;
+        Assert.NotNull(response);
+        Assert.Equal("SUCCESS", response.Status);
+        Assert.Equal("accessToken", response.AccessToken);
+        Assert.Equal("refreshToken", response.RefreshToken);
+    }
+
+    [Fact]
+    public async Task LoginAsync_InvalidCredentials_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "testuser",
+            Password = "wrongPassword"
+        };
+
+        _mockAuthService.LoginAsync(Arg.Any<LoginRequest>())
+            .Returns((false, "INVALID_PASSWORD", "Invalid credentials.", null, null));
+
+        // Act
+        var result = await _controller.LoginAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("INVALID_CREDENTIALS", response.Status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_UserNotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "nonexistentuser",
+            Password = "anyPassword"
+        };
+
+        _mockAuthService.LoginAsync(Arg.Any<LoginRequest>())
+            .Returns((false, "NOT_FOUND", "User not found.", null, null));
+
+        // Act
+        var result = await _controller.LoginAsync(request) as BadRequestObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("INVALID_CREDENTIALS", response.Status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_InternalServerError_ReturnsStatusCode500()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "testuser",
+            Password = "Password123"
+        };
+
+        _mockAuthService.LoginAsync(Arg.Any<LoginRequest>())
+            .Returns((false, "INTERNAL_SERVER_ERROR", "Something went wrong", null, null));
+
+        // Act
+        var result = await _controller.LoginAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("INTERNAL_SERVER_ERROR", response.Status);
+    }
 } 
