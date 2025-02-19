@@ -1,4 +1,3 @@
-
 using API.Data;
 using API.Models;
 using API.Repositories.Interfaces;
@@ -9,22 +8,16 @@ namespace API.Repositories;
 public class SessionRepository : ISessionRepository
 {
     private readonly AuthDbContext _Context;
-    public SessionRepository(AuthDbContext context)
+    private readonly IVerificationRepository _verificationRepository;
+    public SessionRepository(AuthDbContext context, IVerificationRepository verificationRepository)
     {
         _Context = context;
+        _verificationRepository = verificationRepository;
     }
     public async Task AddSession(Session session)
     {
         await _Context.Sessions.AddAsync(session);
         await _Context.SaveChangesAsync();
-    }
-    public async Task<VerificationSession?> GetSeession(long VerificationSessionID)
-    {
-        return await _Context.VerificationSessions
-        .Where(vs => vs.Id == VerificationSessionID)
-        .Include(vs => vs.User)
-        .Include(vs => vs.Email)
-        .FirstOrDefaultAsync();
     }
     public async Task AddSession(VerificationSession session)
     {

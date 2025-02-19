@@ -12,10 +12,12 @@ public class PasswordService : IPasswordService
 {
     private readonly AuthDbContext _Context;
     private readonly IUserRepository _UserRepository;
-    public PasswordService(AuthDbContext context, IUserRepository userRepository)
+    private readonly IVerificationRepository _VerificationRepository;
+    public PasswordService(AuthDbContext context, IUserRepository userRepository, IVerificationRepository verificationRepository)
     {
         _Context = context;
         _UserRepository = userRepository;
+        _VerificationRepository = verificationRepository;
     }
 
     public async Task<(bool isSuccess, string status, string message)> ChangePassword(string code, string Password)
@@ -23,7 +25,7 @@ public class PasswordService : IPasswordService
         try
         {
             var (codeHash, _) = Hasher.Hash(code, "");
-            var request = await _UserRepository.GetResetPasswordRequestByCodeHash(codeHash);
+            var request = await _VerificationRepository.GetResetPasswordRequestByCodeHash(codeHash);
             if (request == null)
             {
                 return (false, "INVALID_CODE", "Invalid reset code");
@@ -46,6 +48,7 @@ public class PasswordService : IPasswordService
                 System.Console.WriteLine("New Hash: " + newHash);
                 await _UserRepository.UpdateUserPassword(request.User, newHash, newSalt);
                 request.IsUsed = true;
+                await _VerificationRepository.UpdateResetPasswordRequest(request);
                 await _Context.SaveChangesAsync();
                 Console.WriteLine("Password changed successfully");
                 return (true, "SUCCESS", "Password changed successfully");
@@ -69,7 +72,14 @@ public class PasswordService : IPasswordService
                 {
                     var code = RandomGenerator.GenerateAlphanumericCode(32);
                     var (codeHash, _) = Hasher.Hash(code, "");
-                    var request = await _UserRepository.CreateResetPasswordRequest(User, Email, codeHash);
+                    var request = new ResetPasswordRequest
+                    {
+                        User = User,
+                        EmailAddress = Email,
+                        CodeHash = codeHash,
+                        IsUsed = false,
+                    };
+                    await _VerificationRepository.AddResetPasswordRequest(request);
                     if (request != null)
                     {
                         var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, code);
@@ -120,7 +130,14 @@ public class PasswordService : IPasswordService
                 {
                     var code = RandomGenerator.GenerateAlphanumericCode(32);
                     var (codeHash, _) = Hasher.Hash(code, "");
-                    var request = await _UserRepository.CreateResetPasswordRequest(User, Email, codeHash);
+                    var request = new ResetPasswordRequest
+                    {
+                        User = User,
+                        EmailAddress = Email,
+                        CodeHash = codeHash,
+                        IsUsed = false,
+                    };
+                    await _VerificationRepository.AddResetPasswordRequest(request);
                     if (request != null)
                     {
                         var EmailSentSuccessfully = await EmailSender.SendResetPasswordEmailAsync(Email.Email, code);
@@ -159,7 +176,7 @@ public class PasswordService : IPasswordService
         try
         {
             var (codeHash, _) = Hasher.Hash(code, "");
-            var request = await _UserRepository.GetResetPasswordRequestByCodeHash(codeHash);
+            var request = await _VerificationRepository.GetResetPasswordRequestByCodeHash(codeHash);
 
             if (request == null)
                 return (false, "INVALID_CODE", "Invalid reset code", false);

@@ -16,11 +16,13 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly ITokenRepository _tokenRepository;
     private readonly ISessionRepository _sessionRepository;
-    public AuthService(IUserRepository userRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository)
+    private readonly IVerificationRepository _verificationRepository;
+    public AuthService(IUserRepository userRepository, ITokenRepository tokenRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository)
     {
         _userRepository = userRepository;
         _tokenRepository = tokenRepository;
         _sessionRepository = sessionRepository;
+        _verificationRepository = verificationRepository;
     }
 
     public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
@@ -107,7 +109,7 @@ public class AuthService : IAuthService
 
             await _userRepository.AddUser(newUser);
             await _userRepository.AddEmail(newEmail);
-            await _sessionRepository.AddSession(otpSession);
+            await _verificationRepository.AddVerificationSession(otpSession);
 
             await EmailSender.SendOtpEmailAsync(newEmail.Email, otp);
 
@@ -123,7 +125,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            var verificationSession = await _sessionRepository.GetSeession(request.VerificationSessionID);
+            var verificationSession = await _verificationRepository.GetVerificationSessionById(request.VerificationSessionID);
 
             Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
             switch (verificationSession)
@@ -163,6 +165,7 @@ public class AuthService : IAuthService
             }
 
             verificationSession.IsUsed = true;
+            await _verificationRepository.UpdateVerificationSession(verificationSession);
             await _userRepository.ChangeEmailState(email.Id, EmailState.Verified);
 
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);

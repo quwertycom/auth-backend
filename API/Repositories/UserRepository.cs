@@ -167,37 +167,6 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
-    public async Task<ResetPasswordRequest?> CreateResetPasswordRequest(User user, EmailAddress email, string codeHash)
-    {
-        try
-        {
-            var request = new ResetPasswordRequest
-            {
-                User = user,
-                EmailAddress = email,
-                CodeHash = codeHash,
-                IsUsed = false,
-            };
-            await _Context.ResetPasswordRequests.AddAsync(request);
-            await _Context.SaveChangesAsync();
-            return request;
-        }
-        catch
-        {
-            throw;
-        }
-    }
-    public async Task<ResetPasswordRequest?> GetResetPasswordRequestByCodeHash(string codeHash)
-    {
-        try
-        {
-            return await _Context.ResetPasswordRequests.FirstOrDefaultAsync(x => x.CodeHash == codeHash);
-        }
-        catch (Exception)
-        {
-            throw;
-        }
-    }
     public async Task UpdateUserPassword(User user, string newHash, string newSalt)
     {
         try
