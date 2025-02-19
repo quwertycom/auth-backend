@@ -28,7 +28,7 @@ public static class Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IPasswordService, PasswordService>();
-            builder.Services.AddScoped<IVerificationRepository, VerificationRepository>();
+            builder.Services.AddScoped<ISessionService, SessionService>();
         }
         catch (Exception ex)
         {
