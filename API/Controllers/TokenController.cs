@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using API.Services.Interfaces;
-
 namespace API.Controllers;
 
 [ApiController]
@@ -16,10 +15,60 @@ public class TokenController : ControllerBase
     }
 
     [HttpPost("validate")]
-    public async Task<IActionResult> ValidateTokenAsync(string token)
+    [ProducesResponseType(typeof(Contracts.Responses.Token.ValidateTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ValidateTokenAsync([FromBody] Contracts.Requests.Token.ValidateTokenRequest request)
     {
-        // TODO: Use validation and create response and request models
-        var result = await _tokenService.ValidateAsync(token);
-        return Ok(result);
+        if (request.Token == null || request.Token == "")
+        {
+            return BadRequest(new Contracts.Responses.Common.ErrorResponse
+            {
+                Status = "error",
+                Message = "Token is required"
+            });
+        }
+        else
+        {
+            var result = await _tokenService.ValidateAsync(request.Token);
+            if (result.isSuccess) {
+                if (result.isValid) {
+                    return Ok(new Contracts.Responses.Token.ValidateTokenResponse
+                    {
+                        Status = result.status ?? "SUCCESS",
+                        Message = result.message ?? "Token is valid",
+                        IsValid = result.isValid
+                    });
+                }
+                else
+                {
+                    return Ok(new Contracts.Responses.Token.ValidateTokenResponse
+                    {
+                        Status = result.status ?? "SUCCESS",
+                        Message = result.message ?? "Token is not valid",
+                        IsValid = false
+                    });
+                }
+            }
+            else
+            {
+                if (result.status == "INTERNAL_ERROR")
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new Contracts.Responses.Common.ErrorResponse
+                    {
+                        Status = result.status ?? "INTERNAL_ERROR",
+                        Message = result.message ?? "Internal server error, please try again later, if issue persists contact support."
+                    });
+                }
+                else
+                {
+                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                    {
+                        Status = result.status ?? "ERROR",
+                        Message = result.message ?? "Failed to validate token."
+                    });
+                }
+            }
+        }
     }
 }
