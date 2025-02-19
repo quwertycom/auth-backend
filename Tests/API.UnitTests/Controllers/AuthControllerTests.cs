@@ -1,0 +1,174 @@
+using API.Controllers;
+using API.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using NSubstitute;
+using Xunit;
+using API.Contracts.Requests.Auth;
+using API.Contracts.Responses.Auth;
+using API.Contracts.Responses.Common;
+using API.Common.Enums;
+using Microsoft.AspNetCore.Http;
+
+namespace API.UnitTests.Controllers;
+
+public class AuthControllerTests : TestBase
+{
+    private readonly AuthController _controller;
+    private readonly IAuthService _mockAuthService;
+
+    public AuthControllerTests()
+    {
+        _mockAuthService = GetMock<IAuthService>();
+        _controller = new AuthController(_mockAuthService);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_ValidRequest_ReturnsOkResult()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            Email = "test@example.com",
+            Password = "Password123",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((true, "OTP_SENT", "OTP message", 123));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as OkObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+
+        var response = result.Value as RegisterResponse;
+        Assert.NotNull(response);
+        Assert.Equal("SUCCESS", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_InvalidUsername_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "",
+            Email = "test@example.com",
+            Password = "Password123",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((false, "USERNAME_INVALID", "Username invalid", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as BadRequestObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("USERNAME_INVALID", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_PasswordTooShort_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            Email = "test@example.com",
+            Password = "Pass",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((false, "PASSWORD_TOO_SHORT", "Password too short", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as BadRequestObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("PASSWORD_TOO_SHORT", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_InternalServerError_ReturnsStatusCode500()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            Email = "test@example.com",
+            Password = "Password123",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((true, "INTERNAL_SERVER_ERROR", "Internal server error", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("INTERNAL_SERVER_ERROR", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_EmailTaken_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            Email = "test@example.com",
+            Password = "Password123",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((false, "EMAIL_TAKEN", "Email already exists", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as BadRequestObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("EMAIL_TAKEN", response.Status);
+    }
+} 
