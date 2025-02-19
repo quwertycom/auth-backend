@@ -19,9 +19,4 @@ public class SessionRepository : ISessionRepository
         await _Context.Sessions.AddAsync(session);
         await _Context.SaveChangesAsync();
     }
-    public async Task AddSession(VerificationSession session)
-    {
-        await _Context.VerificationSessions.AddAsync(session);
-        await _Context.SaveChangesAsync();
-    }
 }
