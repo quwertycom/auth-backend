@@ -138,13 +138,25 @@ public class SessionRepository : ISessionRepository
     {
         try
         {
-            var session = await GetSessionById(sessionId);
-            if (session == null)
-                throw new Exception("NOT_FOUND");
-            else if (session.IsRevoked)
-                throw new Exception("ALREADY_REVOKED");
+            var sessionToRevoke = await _Context.Sessions
+                .Include(s => s.Tokens)
+                .FirstOrDefaultAsync(s => s.Id == sessionId);
 
-            session.IsRevoked = true;
+            if (sessionToRevoke == null)
+            {
+                throw new Exception("NOT_FOUND");
+            }
+
+            var tokensToRevoke = await _Context.Tokens
+                .Where(t => t.SessionId == sessionId && !t.IsRevoked && !t.IsRefreshed && t.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync();
+
+            foreach (var token in tokensToRevoke)
+            {
+                token.IsRevoked = true;
+            }
+
+            sessionToRevoke.IsRevoked = true;
             await _Context.SaveChangesAsync();
         }
         catch (Exception)

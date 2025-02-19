@@ -483,25 +483,4 @@ public class AuthDbContext : DbContext
             entity.Property(r => r.CodeHash).HasColumnName("code_hash");
         });
     }
-
-    public override int SaveChanges()
-    {
-        ChangeTracker.DetectChanges();
-
-        var revokedSessions = ChangeTracker.Entries<Session>()
-            .Where(e => e.State == EntityState.Modified
-                        && e.Property(x => x.IsRevoked).CurrentValue)
-            .Select(e => e.Entity)
-            .ToList();
-
-        foreach (var session in revokedSessions)
-        {
-            foreach (var token in session.Tokens)
-            {
-                token.IsRevoked = true;
-            }
-        }
-
-        return base.SaveChanges();
-    }
 }
