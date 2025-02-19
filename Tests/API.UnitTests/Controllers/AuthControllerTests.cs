@@ -171,4 +171,109 @@ public class AuthControllerTests : TestBase
         Assert.NotNull(response);
         Assert.Equal("EMAIL_TAKEN", response.Status);
     }
+
+    [Fact]
+    public async Task VerifyEmailAsync_ValidRequest_ReturnsOkResult()
+    {
+        // Arrange
+        var request = new VerifyEmailRequest
+        {
+            Email = "test@example.com",
+            OTP = "12345678",
+            VerificationSessionID = 123
+        };
+
+        _mockAuthService.VerifyEmailAsync(Arg.Any<VerifyEmailRequest>())
+            .Returns((true, "SUCCESS", "Email verified successfully.", 123));
+
+        // Act
+        var result = await _controller.VerifyEmailAsync(request) as OkObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+
+        var response = result.Value as VerifyEmailResponse;
+        Assert.NotNull(response);
+        Assert.Equal("SUCCESS", response.Status);
+        Assert.Equal("test@example.com", response.Email);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_InvalidOTP_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new VerifyEmailRequest
+        {
+            Email = "test@example.com",
+            OTP = "invalid",
+            VerificationSessionID = 123
+        };
+
+        _mockAuthService.VerifyEmailAsync(Arg.Any<VerifyEmailRequest>())
+            .Returns((false, "INVALID_OTP", "Invalid OTP.", null));
+
+        // Act
+        var result = await _controller.VerifyEmailAsync(request) as BadRequestObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("INVALID_OTP", response.Status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_SessionNotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new VerifyEmailRequest
+        {
+            Email = "test@example.com",
+            OTP = "12345678",
+            VerificationSessionID = 123
+        };
+
+        _mockAuthService.VerifyEmailAsync(Arg.Any<VerifyEmailRequest>())
+            .Returns((false, "NOT_FOUND", "Verification session not found.", null));
+
+        // Act
+        var result = await _controller.VerifyEmailAsync(request) as BadRequestObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("NOT_FOUND", response.Status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_InternalServerError_ReturnsStatusCode500()
+    {
+        // Arrange
+        var request = new VerifyEmailRequest
+        {
+            Email = "test@example.com",
+            OTP = "12345678",
+            VerificationSessionID = 123
+        };
+
+        _mockAuthService.VerifyEmailAsync(Arg.Any<VerifyEmailRequest>())
+            .Returns((true, "INTERNAL_SERVER_ERROR", "Something went wrong", null));
+
+        // Act
+        var result = await _controller.VerifyEmailAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("INTERNAL_SERVER_ERROR", response.Status);
+    }
 } 
