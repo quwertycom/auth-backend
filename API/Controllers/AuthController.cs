@@ -75,8 +75,6 @@ public class AuthController : ControllerBase
     {
         var response = await _authService.LoginAsync(request);
 
-        Console.WriteLine(response.status);
-
         if (response.isSuccess)
         {
             if (response.status == "SUCCESS" && response.accessToken != null && response.refreshToken != null)
@@ -87,9 +85,13 @@ public class AuthController : ControllerBase
         else
         {
             if (response.status == "NOT_FOUND" || response.status == "INVALID_PASSWORD")
+            {
                 return BadRequest(new ErrorResponse { Status = "INVALID_CREDENTIALS", Message = "Invalid credentials." });
+            }
             else
+            {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later or contact support if the issue persists." });
+            }
         }
     }
 }
