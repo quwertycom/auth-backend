@@ -18,9 +18,13 @@ public class TokenController : ControllerBase
     [ProducesResponseType(typeof(Contracts.Responses.Token.ValidateTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ValidateTokenAsync([FromBody] Contracts.Requests.Token.ValidateTokenRequest request)
+    public async Task<IActionResult> ValidateTokenAsync([FromHeader(Name = "Authorization")] string authHeader)
     {
-        if (request.Token == null || request.Token == "")
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            return BadRequest("Invalid authorization header");
+        
+        var token = authHeader.Substring("Bearer ".Length).Trim();
+        if (token == null || token == "")
         {
             return BadRequest(new Contracts.Responses.Common.ErrorResponse
             {
@@ -30,7 +34,7 @@ public class TokenController : ControllerBase
         }
         else
         {
-            var result = await _tokenService.ValidateAsync(request.Token);
+            var result = await _tokenService.ValidateAsync(token);
             if (result.isSuccess) {
                 if (result.isValid) {
                     return Ok(new Contracts.Responses.Token.ValidateTokenResponse
