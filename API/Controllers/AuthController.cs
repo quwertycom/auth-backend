@@ -23,9 +23,9 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RegisterUserAsync([FromBody] RegisterRequest? request)
+    public async Task<IActionResult> RegisterUserAsync([FromBody] RegisterRequest request)
     {
-        if (request == null)
+        if (request is null)
         {
             return BadRequest(new ErrorResponse { Status = "INVALID_REQUEST", Message = "Request cannot be null." });
         }
@@ -45,7 +45,7 @@ public class AuthController : ControllerBase
         }
         else
         {
-            if (response.status == "USERNAME_INVALID" || response.status == "PASSWORD_TOO_SHORT" || response.status == "EMAIL_TAKEN")
+            if (response.status == "USERNAME_INVALID" || response.status == "PASSWORD_TOO_SHORT" || response.status == "EMAIL_TAKEN" || response.status == "INVALID_EMAIL" || response.status == "PHONE_NUMBER_TAKEN")
             {
                 return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
             }
@@ -61,9 +61,9 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> VerifyEmailAsync([FromBody] VerifyEmailRequest? request)
+    public async Task<IActionResult> VerifyEmailAsync([FromBody] VerifyEmailRequest request)
     {
-        if (request == null)
+        if (request is null)
         {
             return BadRequest(new ErrorResponse { Status = "INVALID_REQUEST", Message = "Request cannot be null." });
         }
@@ -83,7 +83,14 @@ public class AuthController : ControllerBase
         }
         else
         {
-            return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
+            if (response.status == "INVALID_VERIFICATION_CODE" || response.status == "VERIFICATION_SESSION_NOT_FOUND" || response.status == "EXPIRED" || response.status == "ALREADY_USED" || response.status == "INVALID_OTP")
+            {
+                return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
+            }
         }
     }
 
@@ -91,9 +98,9 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> LoginAsync([FromBody] LoginRequest? request)
+    public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
     {
-        if (request == null)
+        if (request is null)
         {
             return BadRequest(new ErrorResponse { Status = "INVALID_REQUEST", Message = "Request cannot be null." });
         }
@@ -103,23 +110,23 @@ public class AuthController : ControllerBase
         if (response.isSuccess)
         {
             if (response.status == "SUCCESS" && response.accessToken != null && response.refreshToken != null)
+            {
                 return Ok(new LoginResponse { Status = response.status, Message = response.message, AccessToken = response.accessToken, RefreshToken = response.refreshToken });
+            }
             else
-                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later or contact support if the issue persists." });
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
+            }
         }
         else
         {
-            if (response.status == "NOT_FOUND" || response.status == "INVALID_PASSWORD")
-            {
-                return BadRequest(new ErrorResponse { Status = "INVALID_CREDENTIALS", Message = "Invalid credentials." });
-            }
-            else if (response.status == "ACCOUNT_LOCKED" || response.status == "USER_INACTIVE")
+            if (response.status == "NOT_FOUND" || response.status == "INVALID_PASSWORD" || response.status == "ACCOUNT_LOCKED" || response.status == "USER_INACTIVE")
             {
                 return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later or contact support if the issue persists." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
             }
         }
     }

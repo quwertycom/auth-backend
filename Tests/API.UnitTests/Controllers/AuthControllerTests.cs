@@ -71,7 +71,7 @@ public class AuthControllerTests : TestBase
             .Returns((false, "USERNAME_INVALID", "Username invalid", null));
 
         // Act
-        var result = await _controller.RegisterUserAsync(request) as BadRequestObjectResult;
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
 
         // Assert
         Assert.NotNull(result);
@@ -101,7 +101,7 @@ public class AuthControllerTests : TestBase
             .Returns((false, "PASSWORD_TOO_SHORT", "Password too short", null));
 
         // Act
-        var result = await _controller.RegisterUserAsync(request) as BadRequestObjectResult;
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
 
         // Assert
         Assert.NotNull(result);
@@ -128,7 +128,7 @@ public class AuthControllerTests : TestBase
         };
 
         _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
-            .Returns((true, "INTERNAL_SERVER_ERROR", "Internal server error", null));
+            .Returns((false, "INTERNAL_SERVER_ERROR", "Internal server error", null));
 
         // Act
         var result = await _controller.RegisterUserAsync(request) as ObjectResult;
@@ -161,7 +161,7 @@ public class AuthControllerTests : TestBase
             .Returns((false, "EMAIL_TAKEN", "Email already exists", null));
 
         // Act
-        var result = await _controller.RegisterUserAsync(request) as BadRequestObjectResult;
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
 
         // Assert
         Assert.NotNull(result);
@@ -170,6 +170,126 @@ public class AuthControllerTests : TestBase
         var response = result.Value as ErrorResponse;
         Assert.NotNull(response);
         Assert.Equal("EMAIL_TAKEN", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_InvalidEmailFormat_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            Email = "invalid-email",
+            Password = "Password123",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((false, "INVALID_EMAIL", "Invalid email format.", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("INVALID_EMAIL", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_ShortPassword_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            Email = "test@example.com",
+            Password = "Short",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters.", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("PASSWORD_TOO_SHORT", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_LongUsername_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = new string('A', 51), // Username longer than 50 characters
+            Email = "test@example.com",
+            Password = "Password123",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((false, "USERNAME_INVALID", "Username is too long.", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("USERNAME_INVALID", response.Status);
+    }
+
+    [Fact]
+    public async Task RegisterUserAsync_InvalidCharactersInUsername_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "test!user", // Username with invalid characters
+            Email = "test@example.com",
+            Password = "Password123",
+            FirstName = "Test",
+            LastName = "User",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male
+        };
+
+        _mockAuthService.RegisterUserAsync(Arg.Any<RegisterRequest>())
+            .Returns((false, "USERNAME_INVALID", "Username contains invalid characters.", null));
+
+        // Act
+        var result = await _controller.RegisterUserAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("USERNAME_INVALID", response.Status);
     }
 
     [Fact]
@@ -205,16 +325,16 @@ public class AuthControllerTests : TestBase
         // Arrange
         var request = new VerifyEmailRequest
         {
+            VerificationSessionID = 1,
             Email = "test@example.com",
-            OTP = "invalid",
-            VerificationSessionID = 123
+            OTP = "InvalidOTP"
         };
 
         _mockAuthService.VerifyEmailAsync(Arg.Any<VerifyEmailRequest>())
             .Returns((false, "INVALID_OTP", "Invalid OTP.", null));
 
         // Act
-        var result = await _controller.VerifyEmailAsync(request) as BadRequestObjectResult;
+        var result = await _controller.VerifyEmailAsync(request) as ObjectResult;
 
         // Assert
         Assert.NotNull(result);
@@ -231,16 +351,16 @@ public class AuthControllerTests : TestBase
         // Arrange
         var request = new VerifyEmailRequest
         {
+            VerificationSessionID = 999,
             Email = "test@example.com",
-            OTP = "12345678",
-            VerificationSessionID = 123
+            OTP = "12345678"
         };
 
         _mockAuthService.VerifyEmailAsync(Arg.Any<VerifyEmailRequest>())
-            .Returns((false, "NOT_FOUND", "Verification session not found.", null));
+            .Returns((false, "VERIFICATION_SESSION_NOT_FOUND", "Verification session not found.", null));
 
         // Act
-        var result = await _controller.VerifyEmailAsync(request) as BadRequestObjectResult;
+        var result = await _controller.VerifyEmailAsync(request) as ObjectResult;
 
         // Assert
         Assert.NotNull(result);
@@ -248,7 +368,7 @@ public class AuthControllerTests : TestBase
 
         var response = result.Value as ErrorResponse;
         Assert.NotNull(response);
-        Assert.Equal("NOT_FOUND", response.Status);
+        Assert.Equal("VERIFICATION_SESSION_NOT_FOUND", response.Status);
     }
 
     [Fact]
@@ -263,7 +383,7 @@ public class AuthControllerTests : TestBase
         };
 
         _mockAuthService.VerifyEmailAsync(Arg.Any<VerifyEmailRequest>())
-            .Returns((true, "INTERNAL_SERVER_ERROR", "Something went wrong", null));
+            .Returns((false, "INTERNAL_SERVER_ERROR", "Something went wrong", null));
 
         // Act
         var result = await _controller.VerifyEmailAsync(request) as ObjectResult;
@@ -326,7 +446,7 @@ public class AuthControllerTests : TestBase
 
         var response = result.Value as ErrorResponse;
         Assert.NotNull(response);
-        Assert.Equal("INVALID_CREDENTIALS", response.Status);
+        Assert.Equal("INVALID_PASSWORD", response.Status);
     }
 
     [Fact]
@@ -343,7 +463,7 @@ public class AuthControllerTests : TestBase
             .Returns((false, "NOT_FOUND", "User not found.", null, null));
 
         // Act
-        var result = await _controller.LoginAsync(request) as BadRequestObjectResult;
+        var result = await _controller.LoginAsync(request) as ObjectResult;
 
         // Assert
         Assert.NotNull(result);
@@ -351,7 +471,7 @@ public class AuthControllerTests : TestBase
 
         var response = result.Value as ErrorResponse;
         Assert.NotNull(response);
-        Assert.Equal("INVALID_CREDENTIALS", response.Status);
+        Assert.Equal("NOT_FOUND", response.Status);
     }
 
     [Fact]
@@ -378,4 +498,54 @@ public class AuthControllerTests : TestBase
         Assert.NotNull(response);
         Assert.Equal("INTERNAL_SERVER_ERROR", response.Status);
     }
-} 
+
+    [Fact]
+    public async Task LoginAsync_AccountLocked_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "lockeduser",
+            Password = "Password123"
+        };
+
+        _mockAuthService.LoginAsync(Arg.Any<LoginRequest>())
+            .Returns((false, "ACCOUNT_LOCKED", "Account is locked.", null, null));
+
+        // Act
+        var result = await _controller.LoginAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("ACCOUNT_LOCKED", response.Status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_UserNotActive_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "inactiveuser",
+            Password = "Password123"
+        };
+
+        _mockAuthService.LoginAsync(Arg.Any<LoginRequest>())
+            .Returns((false, "USER_INACTIVE", "User is not active.", null, null));
+
+        // Act
+        var result = await _controller.LoginAsync(request) as ObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+
+        var response = result.Value as ErrorResponse;
+        Assert.NotNull(response);
+        Assert.Equal("USER_INACTIVE", response.Status);
+    }
+}
