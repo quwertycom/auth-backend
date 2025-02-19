@@ -487,9 +487,9 @@ public class AuthDbContext : DbContext
     public override int SaveChanges()
     {
         ChangeTracker.DetectChanges();
-        
+
         var revokedSessions = ChangeTracker.Entries<Session>()
-            .Where(e => e.State == EntityState.Modified 
+            .Where(e => e.State == EntityState.Modified
                         && e.Property(x => x.IsRevoked).CurrentValue)
             .Select(e => e.Entity)
             .ToList();
@@ -501,7 +501,7 @@ public class AuthDbContext : DbContext
                 token.IsRevoked = true;
             }
         }
-        
+
         return base.SaveChanges();
     }
 }

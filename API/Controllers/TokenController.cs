@@ -22,7 +22,7 @@ public class TokenController : ControllerBase
     {
         if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
             return BadRequest("Invalid authorization header");
-        
+
         var token = authHeader.Substring("Bearer ".Length).Trim();
         if (token == null || token == "")
         {
@@ -35,8 +35,10 @@ public class TokenController : ControllerBase
         else
         {
             var result = await _tokenService.ValidateAsync(token);
-            if (result.isSuccess) {
-                if (result.isValid) {
+            if (result.isSuccess)
+            {
+                if (result.isValid)
+                {
                     return Ok(new Contracts.Responses.Token.ValidateTokenResponse
                     {
                         Status = result.status ?? "SUCCESS",

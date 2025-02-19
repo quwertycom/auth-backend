@@ -15,63 +15,79 @@ public class SessionRepository : ISessionRepository
         _Context = context;
         _verificationRepository = verificationRepository;
     }
-    
+
     public async Task AddSession(Session session)
     {
-        try {
+        try
+        {
             await _Context.Sessions.AddAsync(session);
             await _Context.SaveChangesAsync();
-        } catch (Exception) {
+        }
+        catch (Exception)
+        {
             throw;
         }
     }
 
     public async Task<Session?> GetSessionById(long sessionId)
     {
-        try {
+        try
+        {
             return await _Context.Sessions.FindAsync(sessionId);
-        } catch (Exception) {
+        }
+        catch (Exception)
+        {
             throw;
         }
     }
 
     public async Task<Session?> GetSessionByTokenString(string tokenString)
     {
-        try {
+        try
+        {
             return await _Context.Sessions.FirstOrDefaultAsync(s => s.Tokens.Any(t => t.TokenString == tokenString));
-        } catch (Exception) {
+        }
+        catch (Exception)
+        {
             throw;
         }
     }
 
     public async Task<Session?> GetSessionByTokenId(long tokenId)
     {
-        try {
+        try
+        {
             return await _Context.Sessions.FirstOrDefaultAsync(s => s.Tokens.Any(t => t.Id == tokenId));
-        } catch (Exception) {
+        }
+        catch (Exception)
+        {
             throw;
         }
     }
 
     public async Task RevokeSession(long sessionId)
     {
-        try {
+        try
+        {
             var session = await GetSessionById(sessionId);
-            if (session == null) 
+            if (session == null)
                 throw new Exception("NOT_FOUND");
             else if (session.IsRevoked)
                 throw new Exception("ALREADY_REVOKED");
-            
+
             session.IsRevoked = true;
             await _Context.SaveChangesAsync();
-        } catch (Exception) {
+        }
+        catch (Exception)
+        {
             throw;
         }
     }
 
     public async Task<string> GetSessionState(long sessionId)
     {
-        try {
+        try
+        {
             var session = await GetSessionById(sessionId);
             if (session == null)
                 throw new Exception("NOT_FOUND");
@@ -79,7 +95,9 @@ public class SessionRepository : ISessionRepository
                 return "REVOKED";
             else
                 return "ACTIVE";
-        } catch (Exception) {
+        }
+        catch (Exception)
+        {
             throw;
         }
     }

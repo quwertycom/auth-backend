@@ -14,7 +14,8 @@ public class TokenRepository : ITokenRepository
 
     public async Task AddToken(Token token)
     {
-        try {
+        try
+        {
             await _Context.Tokens.AddAsync(token);
             await _Context.SaveChangesAsync();
         }
@@ -26,7 +27,8 @@ public class TokenRepository : ITokenRepository
 
     public async Task<Token?> GetTokenByTokenString(string tokenString)
     {
-        try {
+        try
+        {
             return await _Context.Tokens.FirstOrDefaultAsync(t => t.TokenString == tokenString);
         }
         catch (Exception ex)
@@ -37,7 +39,8 @@ public class TokenRepository : ITokenRepository
 
     public async Task<Token?> GetTokenByUserId(long userId)
     {
-        try {
+        try
+        {
             return await _Context.Tokens.FirstOrDefaultAsync(t => t.UserId == userId);
         }
         catch (Exception ex)
@@ -48,7 +51,8 @@ public class TokenRepository : ITokenRepository
 
     public async Task<IEnumerable<Token>> GetSessionTokensBySessionId(long sessionId)
     {
-        try {
+        try
+        {
             return await _Context.Tokens.Where(t => t.SessionId == sessionId).ToListAsync();
         }
         catch (Exception ex)
