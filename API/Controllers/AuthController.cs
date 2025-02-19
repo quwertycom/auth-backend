@@ -23,8 +23,13 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RegisterUserAsync(RegisterRequest request)
+    public async Task<IActionResult> RegisterUserAsync([FromBody] RegisterRequest? request)
     {
+        if (request == null)
+        {
+            return BadRequest(new ErrorResponse { Status = "INVALID_REQUEST", Message = "Request cannot be null." });
+        }
+
         var response = await _authService.RegisterUserAsync(request);
 
         if (response.isSuccess)
@@ -38,7 +43,17 @@ public class AuthController : ControllerBase
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
             }
         }
-        return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
+        else
+        {
+            if (response.status == "USERNAME_INVALID" || response.status == "PASSWORD_TOO_SHORT" || response.status == "EMAIL_TAKEN")
+            {
+                return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
+            }
+        }
     }
 
     [HttpPost("register/verify-email")]
@@ -46,8 +61,13 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> VerifyEmailAsync(VerifyEmailRequest request)
+    public async Task<IActionResult> VerifyEmailAsync([FromBody] VerifyEmailRequest? request)
     {
+        if (request == null)
+        {
+            return BadRequest(new ErrorResponse { Status = "INVALID_REQUEST", Message = "Request cannot be null." });
+        }
+
         var response = await _authService.VerifyEmailAsync(request);
 
         if (response.isSuccess)
@@ -71,8 +91,13 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> LoginAsync(LoginRequest request)
+    public async Task<IActionResult> LoginAsync([FromBody] LoginRequest? request)
     {
+        if (request == null)
+        {
+            return BadRequest(new ErrorResponse { Status = "INVALID_REQUEST", Message = "Request cannot be null." });
+        }
+
         var response = await _authService.LoginAsync(request);
 
         if (response.isSuccess)
@@ -87,6 +112,10 @@ public class AuthController : ControllerBase
             if (response.status == "NOT_FOUND" || response.status == "INVALID_PASSWORD")
             {
                 return BadRequest(new ErrorResponse { Status = "INVALID_CREDENTIALS", Message = "Invalid credentials." });
+            }
+            else if (response.status == "ACCOUNT_LOCKED" || response.status == "USER_INACTIVE")
+            {
+                return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
             }
             else
             {
