@@ -1,9 +1,11 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using API.Configuration;
 
 namespace API.Common.Helpers;
 
-public static class PasswordHasher
+public static class Hasher
 {
     private static bool _isInitialized;
     private static int _iterations;
@@ -14,40 +16,52 @@ public static class PasswordHasher
     {
         if (_isInitialized) return;
 
-        // Load configuration values directly
-        _iterations = int.Parse(configuration["PasswordHasher:Iterations"] ?? "10000");
-        _saltSize = int.Parse(configuration["PasswordHasher:SaltSize"] ?? "16");
-        _keySize = int.Parse(configuration["PasswordHasher:KeySize"] ?? "32");
+        var settings = configuration.GetSection("PasswordHasher").Get<PasswordHasherSettings>()
+            ?? throw new InvalidOperationException("PasswordHasher settings are not configured");
 
-        // Validate parameters
+        _iterations = settings.Iterations;
+        _saltSize = settings.SaltSize;
+        _keySize = settings.KeySize;
+
         if (_iterations < 10000)
-        {
             throw new ArgumentException("Iterations must be at least 10000 for security");
-        }
 
         if (_saltSize < 16)
-        {
             throw new ArgumentException("Salt size must be at least 16 bytes");
-        }
 
         if (_keySize < 32)
-        {
             throw new ArgumentException("Key size must be at least 32 bytes");
-        }
 
         _isInitialized = true;
     }
 
-    public static (string hash, string salt) Hash(string password)
+    public static (string hash, string salt) Hash(string password, string? customSalt = null)
     {
         if (!_isInitialized)
         {
             throw new InvalidOperationException("PasswordHasher is not initialized. Call Initialize() first.");
         }
 
-        // Generate a random salt
-        byte[] salt = RandomNumberGenerator.GetBytes(_saltSize);
-        string saltBase64 = Convert.ToBase64String(salt);
+        string saltBase64;
+        byte[] salt;
+
+        if (customSalt == null)
+        {
+            // Generate a random salt
+            saltBase64 = RandomGenerator.GenerateSalt(_saltSize);
+            salt = Convert.FromBase64String(saltBase64);
+        }
+        else if (customSalt == "")
+        {
+            saltBase64 = "";
+            salt = Array.Empty<byte>();
+        }
+        else
+        {
+            saltBase64 = customSalt;
+            salt = Convert.FromBase64String(saltBase64);
+        }
+
 
         // Hash the password with the salt
         byte[] hash = Rfc2898DeriveBytes.Pbkdf2(

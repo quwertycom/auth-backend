@@ -1,62 +1,95 @@
-namespace API.Common.Helpers;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using API.Configuration;
 
-public static class Config
-{
-    public static string GetEnvironmentVariable(string variableName)
-    {
-        return Environment.GetEnvironmentVariable(variableName) ?? throw new InvalidOperationException($"{variableName} environment variable is not set");
-    }
-}
+namespace API.Common.Helpers;
 
 public static class ConfigManager
 {
-    public static IConfiguration LoadDevelopmentConfig()
+    private static IConfiguration? _configuration;
+
+    public static IConfiguration GetConfiguration(bool isDevelopment)
     {
-        DotEnv.Load(); // Load .env file in development
+        if (_configuration != null)
+            return _configuration;
 
         var builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddEnvironmentVariables();
+            .AddJsonFile($"appsettings.{(isDevelopment ? "Development" : "Production")}.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .AddUserSecrets<Program>(optional: true);
 
-        return builder.Build();
+        _configuration = builder.Build();
+        return _configuration;
     }
 
-    public static IConfiguration LoadProductionConfig()
+    public static void AddConfiguration(IServiceCollection services, IConfiguration configuration)
     {
-        var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddEnvironmentVariables();
+        // Register configuration sections as strongly-typed options
+        services.Configure<DatabaseSettings>(
+            configuration.GetSection("Database"));
 
-        return builder.Build();
+        services.Configure<JwtSettings>(
+            configuration.GetSection("Jwt"));
+
+        services.Configure<EmailSettings>(
+            configuration.GetSection("Email"));
+
+        services.Configure<PasswordHasherSettings>(
+            configuration.GetSection("PasswordHasher"));
+
+        services.Configure<SnowflakeSettings>(
+            configuration.GetSection("Snowflake"));
+
+        // Validate required configuration
+        ValidateConfiguration(configuration);
     }
 
-    private static class DotEnv
+    private static void ValidateConfiguration(IConfiguration configuration)
     {
-        public static void Load()
-        {
-            var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
-            if (!File.Exists(envPath))
-            {
-                return;
-            }
+        // Database settings validation
+        var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
+        var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
+        var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
+        var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
 
-            foreach (var line in File.ReadAllLines(envPath))
-            {
-                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
-                {
-                    continue;
-                }
+        if (string.IsNullOrEmpty(dbHost)) throw new InvalidOperationException("POSTGRES_HOST not configured");
+        if (string.IsNullOrEmpty(dbName)) throw new InvalidOperationException("POSTGRES_DB not configured");
+        if (string.IsNullOrEmpty(dbUser)) throw new InvalidOperationException("POSTGRES_USER not configured");
+        if (string.IsNullOrEmpty(dbPassword)) throw new InvalidOperationException("POSTGRES_PASSWORD not configured");
 
-                var parts = line.Split('=', 2, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length != 2)
-                {
-                    continue;
-                }
+        // JWT settings validation
+        var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>();
+        if (jwtSettings == null)
+            throw new InvalidOperationException("JWT configuration is missing");
 
-                Environment.SetEnvironmentVariable(parts[0].Trim(), parts[1].Trim());
-            }
-        }
+        if (string.IsNullOrEmpty(jwtSettings.SecretKey))
+            throw new InvalidOperationException("JWT secret key is not configured");
+
+        if (jwtSettings.SecretKey.Length < 32)
+            throw new InvalidOperationException("JWT secret key must be at least 32 characters long");
+
+        // Email settings validation
+        var emailSettings = configuration.GetSection("Email").Get<EmailSettings>();
+        if (emailSettings == null)
+            throw new InvalidOperationException("Email configuration is missing");
+
+        if (string.IsNullOrEmpty(emailSettings.Username))
+            throw new InvalidOperationException("Email username is not configured");
+
+        if (string.IsNullOrEmpty(emailSettings.Password))
+            throw new InvalidOperationException("Email password is not configured");
+
+        if (string.IsNullOrEmpty(emailSettings.FromEmail))
+            throw new InvalidOperationException("Email from address is not configured");
+
+        // Log configuration status (but not sensitive values)
+        Console.WriteLine("\nConfiguration validated successfully:");
+        Console.WriteLine($"Database Host: {dbHost}");
+        Console.WriteLine($"Database Name: {dbName}");
+        Console.WriteLine($"JWT Issuer: {jwtSettings.Issuer}");
+        Console.WriteLine($"JWT Audience: {jwtSettings.Audience}");
+        Console.WriteLine($"Email Host: {emailSettings.Host}\n");
     }
 }

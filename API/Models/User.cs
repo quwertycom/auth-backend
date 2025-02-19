@@ -2,14 +2,15 @@ using System.ComponentModel.DataAnnotations;
 using API.Common.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.Common.Helpers;
+using System.Text.Json.Serialization;
 
 namespace API.Models;
 
 public class User
 {
     [Key]
-    [Column("user_id")]
-    public long UserId { get; set; } = Snowflake.Generate();
+    [Column("id")]
+    public long Id { get; set; } = Snowflake.Generate();
 
     [Required]
     [MaxLength(50)]
@@ -27,9 +28,6 @@ public class User
     public required string LastName { get; set; }
 
     [Required]
-    public virtual ICollection<UserEmail> Emails { get; set; } = new List<UserEmail>();
-
-    [Required]
     public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
 
     [Required]
@@ -38,10 +36,12 @@ public class User
     [Required]
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
-    [Phone]
-    [MaxLength(20)]
-    [Column("phone_number")]
-    public string? PhoneNumber { get; set; } = null;
+    [Required]
+    public virtual ICollection<PhoneNumber> PhoneNumbers { get; set; } = new List<PhoneNumber>();
+
+    [JsonIgnore]
+    [Required]
+    public virtual ICollection<EmailAddress> EmailAddresses { get; set; } = new List<EmailAddress>();
 
     [Required]
     [MaxLength(256)]
@@ -62,7 +62,7 @@ public class User
     public UserGender Gender { get; set; }
     [Required]
     [Column("state")]
-    public UserState State { get; set; } = UserState.Active;
+    public UserState State { get; set; } = UserState.PendingVerification;
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

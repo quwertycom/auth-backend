@@ -1,55 +1,68 @@
-# User-specific files
+# IDE - Visual Studio
+.vs/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
 
-# Build results
+# IDE - VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
 [Dd]ebug/
 [Rr]elease/
 x64/
 x86/
 build/
-[Bb]in/
-[Oo]bj/
+[Oo]ut/
 
-# Visual Studio cache/options directory
-.vs/
-# Uncomment if you have tasks that create the project's static files in wwwroot
-# wwwroot/
-
-# NuGet Packages
+# NuGet
 *.nupkg
 **/packages/*
 !**/packages/build/
 
-# Publish Web Output
-*.pubxml
-*.publishproj
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
-
-# Others
-node_modules/
-
-# Environment variables
+# Environment files
 .env
 .env.*
 !.env.example
-.env.production
+appsettings.*.json
+!appsettings.json
 
-# Test Results
+# Test results
 **/TestResults/
 *.trx
+TestResults/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+logs/
+
+# Docker
+.docker/
+*.dockerignore
+
+# Documentation
+docs/_build/
+*.md
+!README.md
+
+# Project-specific
 migration.sql
 packages.txt
 package-list.txt
-API/appsettings.Development.json
 
-# Production settings
-appsettings.Production.json
+# Dependencies
+node_modules/
+
+# Publishing
+*.pubxml
+*.publishproj
+
+**/.DS_Store

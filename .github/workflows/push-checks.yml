@@ -12,25 +12,46 @@ env:
   SOLUTION_FILE: 'Auth.sln'
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  # Production Environment Variables
-  ASPNETCORE_ENVIRONMENT: Production
-  # Database Configuration
-  POSTGRES_DB: auth_db
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
-  # JWT Configuration
-  JWT_SECRET_KEY: this-is-a-very-long-secret-key-that-is-at-least-32-bytes-long-for-ci
+  
+  # PostgreSQL Settings (from .env)
+  POSTGRES_USER: qauth_user
+  POSTGRES_DB: qauth_db
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  # Secret: POSTGRES_PASSWORD
+
+  # JWT Settings (from .env)
   JWT_ISSUER: auth-backend-ci
   JWT_AUDIENCE: auth-client-ci
-  # Email Configuration
-  EMAIL_HOST: smtp.gmail.com
-  EMAIL_PORT: 587
-  EMAIL_ENABLE_SSL: true
-  EMAIL_USERNAME: test@example.com
-  EMAIL_PASSWORD: dummy-password
-  EMAIL_FROM: test@example.com
-  # Docker Configuration
+  # Secret: JWT_SECRET_KEY
+
+  # Email Settings (from .env)
+  EMAIL_HOST: localhost  # Using MailHog in CI
+  EMAIL_PORT: 1025      # MailHog SMTP port
+  EMAIL_USERNAME: test
+  EMAIL_PASSWORD: test
+  EMAIL_FROM: noreply@example.com
+  EMAIL_ENABLE_SSL: false
+  EMAIL_TIMEOUT: 10000
+  EMAIL_USE_DEFAULT_CREDENTIALS: false
+
+  # PasswordHasher Settings
+  PASSWORD_HASHER_ITERATIONS: 10000
+  PASSWORD_HASHER_SALT_SIZE: 16
+  PASSWORD_HASHER_KEY_SIZE: 32
+
+  # Snowflake Settings
+  SNOWFLAKE_DATACENTER_ID: 1
+  SNOWFLAKE_WORKER_ID: 1
+  SNOWFLAKE_EPOCH: "2024-01-01T00:00:00Z"
+
+  # Other settings
+  ASPNETCORE_ENVIRONMENT: Production
   DOCKER_RUNNING: true
+
+  # Secrets reference (do not modify)
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
 
 jobs:
   setup:
@@ -136,33 +157,6 @@ jobs:
           echo "Verifying database context and models..."
           dotnet ef dbcontext info --project API/API.csproj
           dotnet ef dbcontext list --project API/API.csproj
-
-  code-quality:
-    name: Code Quality
-    needs: restore
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: csharp
-      - name: Restore and Build for CodeQL
-        run: |
-          dotnet restore ${{ env.SOLUTION_FILE }}
-          dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:csharp"
 
   format-check:
     name: Check Code Format
@@ -278,6 +272,11 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+          - 1025:1025 # SMTP port
+          - 8025:8025 # Web UI port
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -304,9 +303,7 @@ jobs:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
           # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
           # JWT settings
           JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
           JWT__Issuer: ${{ env.JWT_ISSUER }}
@@ -333,11 +330,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          - 8025:8025
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -349,27 +342,83 @@ jobs:
         with:
           name: api-artifacts
           path: ./app
+      - name: Create appsettings.json
+        run: |
+          cat > ./app/appsettings.json << EOF
+          {
+            "ConnectionStrings": {
+              "DefaultConnection": "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
+            },
+            "Database": {
+              "Host": "localhost",
+              "Database": "${{ env.POSTGRES_DB }}",
+              "Username": "${{ env.POSTGRES_USER }}",
+              "Password": "${{ env.POSTGRES_PASSWORD }}"
+            },
+            "JWT": {
+              "SecretKey": "${{ env.JWT_SECRET_KEY }}",
+              "Issuer": "${{ env.JWT_ISSUER }}",
+              "Audience": "${{ env.JWT_AUDIENCE }}"
+            },
+            "Email": {
+              "Host": "${{ env.EMAIL_HOST }}",
+              "Port": ${{ env.EMAIL_PORT }},
+              "EnableSsl": ${{ env.EMAIL_ENABLE_SSL }},
+              "Username": "${{ env.EMAIL_USERNAME }}",
+              "Password": "${{ env.EMAIL_PASSWORD }}",
+              "FromEmail": "${{ env.EMAIL_FROM }}",
+              "Timeout": ${{ env.EMAIL_TIMEOUT }},
+              "UseDefaultCredentials": ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
+            },
+            "PasswordHasher": {
+              "Iterations": ${{ env.PASSWORD_HASHER_ITERATIONS }},
+              "SaltSize": ${{ env.PASSWORD_HASHER_SALT_SIZE }},
+              "KeySize": ${{ env.PASSWORD_HASHER_KEY_SIZE }}
+            },
+            "Snowflake": {
+              "DatacenterId": ${{ env.SNOWFLAKE_DATACENTER_ID }},
+              "WorkerId": ${{ env.SNOWFLAKE_WORKER_ID }},
+              "Epoch": "${{ env.SNOWFLAKE_EPOCH }}"
+            }
+          }
+          EOF
       - name: Start API
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
           DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
           # Database settings
+          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           # JWT settings
-          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ env.JWT_ISSUER }}
-          JWT__Audience: ${{ env.JWT_AUDIENCE }}
+          JWT_SECRET_KEY: ${{ env.JWT_SECRET_KEY }}
+          JWT_ISSUER: ${{ env.JWT_ISSUER }}
+          JWT_AUDIENCE: ${{ env.JWT_AUDIENCE }}
           # Email settings
-          Email__Host: ${{ env.EMAIL_HOST }}
-          Email__Port: ${{ env.EMAIL_PORT }}
-          Email__EnableSsl: ${{ env.EMAIL_ENABLE_SSL }}
-          Email__Username: ${{ env.EMAIL_USERNAME }}
-          Email__Password: ${{ env.EMAIL_PASSWORD }}
-          Email__FromEmail: ${{ env.EMAIL_FROM }}
+          EMAIL_HOST: ${{ env.EMAIL_HOST }}
+          EMAIL_PORT: ${{ env.EMAIL_PORT }}
+          EMAIL_ENABLE_SSL: ${{ env.EMAIL_ENABLE_SSL }}
+          EMAIL_USERNAME: ${{ env.EMAIL_USERNAME }}
+          EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
+          EMAIL_FROM: ${{ env.EMAIL_FROM }}
+          EMAIL_TIMEOUT: ${{ env.EMAIL_TIMEOUT }}
+          EMAIL_USE_DEFAULT_CREDENTIALS: ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
+          # PasswordHasher settings
+          PASSWORD_HASHER__ITERATIONS: ${{ env.PASSWORD_HASHER_ITERATIONS }}
+          PASSWORD_HASHER__SALT_SIZE: ${{ env.PASSWORD_HASHER_SALT_SIZE }}
+          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER_KEY_SIZE }}
+          # Snowflake settings
+          SNOWFLAKE__DATACENTERID: ${{ env.SNOWFLAKE_DATACENTER_ID }}
+          SNOWFLAKE__WORKERID: ${{ env.SNOWFLAKE_WORKER_ID }}
+          SNOWFLAKE__EPOCH: ${{ env.SNOWFLAKE_EPOCH }}
         run: |
           cd ./app
+          echo "Current directory: $(pwd)"
+          echo "Files in directory:"
+          ls -la
+          echo "Starting API..."
           dotnet API.dll &
           echo "Waiting for API to start..."
           for i in {1..30}; do

@@ -16,24 +16,25 @@ public class Session
     public required SessionTarget Target { get; set; }
 
     [Required]
-    [ForeignKey(nameof(User))]
-    [Column("user_id")]
-    public required long UserId { get; set; }
-
-    [Required]
     public required User User { get; set; }
 
-    [ForeignKey(nameof(Account))]
-    [Column("account_id")]
-    public long? AccountId { get; set; }
+    [Required]
+    [Column("user_id")]
+    public long UserId { get; set; }
 
     public Account? Account { get; set; }
 
-    [ForeignKey(nameof(Application))]
+    [Column("account_id")]
+    public long? AccountId { get; set; }
+
+    public Application? Application { get; set; }
+
     [Column("application_id")]
     public long? ApplicationId { get; set; }
 
-    public Application? Application { get; set; }
+    [Required]
+    [Column("is_revoked")]
+    public bool IsRevoked { get; set; } = false;
 
     [Required]
     public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();

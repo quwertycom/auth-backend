@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using API.Configuration;
 
 namespace API.Common.Helpers;
 
@@ -9,28 +10,30 @@ public static class EmailSender
     private static SmtpClient? _smtpClient;
     private static string? _fromEmail;
     private static bool _isInitialized = false;
-
+    private static string? _frontendUrl;
     public static void Initialize(IConfiguration configuration)
     {
         if (_isInitialized) return;
 
-        // Load configuration values directly
+        var settings = configuration.GetSection("Email").Get<EmailSettings>()
+            ?? throw new InvalidOperationException("Email settings are not configured");
+
         _smtpClient = new SmtpClient
         {
-            Host = configuration["Email:Host"] ?? throw new InvalidOperationException("Email:Host is not configured"),
-            Port = int.TryParse(configuration["Email:Port"], out var port) ? port : throw new InvalidOperationException("Email:Port is not a valid integer"),
-            EnableSsl = bool.TryParse(configuration["Email:EnableSsl"], out var enableSsl) ? enableSsl : throw new InvalidOperationException("Email:EnableSsl is not a valid boolean"),
-            Credentials = new NetworkCredential(
-                configuration["Email:Username"],
-                configuration["Email:Password"]
-            )
+            Host = settings.Host,
+            Port = settings.Port,
+            EnableSsl = settings.EnableSsl,
+            Credentials = new NetworkCredential(settings.Username, settings.Password),
+            Timeout = settings.Timeout,
+            UseDefaultCredentials = settings.UseDefaultCredentials
         };
-        _fromEmail = configuration["Email:FromEmail"] ?? throw new InvalidOperationException("Email:FromEmail is not configured");
 
+        _fromEmail = settings.FromEmail;
         _isInitialized = true;
+        _frontendUrl = configuration.GetSection("Frontend").GetSection("BaseUrl").Value ?? "http://localhost:3000";
     }
 
-    public static async Task SendOtpEmailAsync(string toEmail, string otp)
+    public static async Task<bool> SendOtpEmailAsync(string toEmail, string otp)
     {
         if (!_isInitialized)
         {
@@ -51,11 +54,40 @@ public static class EmailSender
         {
             if (_smtpClient is null) throw new InvalidOperationException("SMTP client is not initialized.");
             await _smtpClient.SendMailAsync(mailMessage).ConfigureAwait(true);
+            return true;
         }
         catch (Exception ex)
         {
-            // Handle exceptions (e.g., log the error)
-            throw new InvalidOperationException("Failed to send email", ex);
+            throw new Exception("ERROR: Failed to send OTP email, " + ex.Message);
+        }
+    }
+
+    public static async Task<bool> SendResetPasswordEmailAsync(string toEmail, string codeHash)
+    {
+        if (!_isInitialized)
+        {
+            throw new InvalidOperationException("EmailSender is not initialized. Call Initialize() first.");
+        }
+
+        var mailMessage = new MailMessage
+        {
+            From = new MailAddress(_fromEmail ?? throw new InvalidOperationException("FromEmail is not configured")),
+            Subject = "Reset Password",
+            Body = $"Your reset password link is: {_frontendUrl}/app/auth/reset-password?code={codeHash}",
+            IsBodyHtml = true,
+        };
+
+        mailMessage.To.Add(toEmail);
+
+        try
+        {
+            if (_smtpClient is null) throw new InvalidOperationException("SMTP client is not initialized.");
+            await _smtpClient.SendMailAsync(mailMessage).ConfigureAwait(true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("ERROR: Failed to send reset password email, " + ex.Message);
         }
     }
 }

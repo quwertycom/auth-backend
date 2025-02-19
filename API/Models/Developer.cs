@@ -28,6 +28,7 @@ public class Developer
 
     // Organization is required when Type is Organization
     public virtual Organization? Organization { get; set; }
+
     [Column("organization_id")]
     public long? OrganizationId { get; set; }
 

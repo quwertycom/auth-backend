@@ -25,11 +25,8 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Account", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("AccountName")
                         .IsRequired()
@@ -82,11 +79,8 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Application", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -140,11 +134,8 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.ApplicationAccount", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long>("AccountId")
                         .HasColumnType("bigint")
@@ -155,7 +146,7 @@ namespace API.Data.Migrations
                         .HasColumnName("application_id");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp without time zone")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
                     b.HasKey("Id");
@@ -170,11 +161,8 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Developer", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -218,14 +206,58 @@ namespace API.Data.Migrations
                     b.ToTable("developers", (string)null);
                 });
 
-            modelBuilder.Entity("API.Models.Notification", b =>
+            modelBuilder.Entity("API.Models.EmailAddress", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "Type")
+                        .IsUnique()
+                        .HasFilter("type = 'Primary'");
+
+                    b.ToTable("user_emails", (string)null);
+                });
+
+            modelBuilder.Entity("API.Models.Notification", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     b.Property<long?>("AccountId")
                         .HasColumnType("bigint")
@@ -287,11 +319,8 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Organization", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -321,14 +350,11 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.OrganizationRole", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp without time zone")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
                     b.Property<string>("Description")
@@ -354,14 +380,100 @@ namespace API.Data.Migrations
                     b.ToTable("organization_roles", (string)null);
                 });
 
-            modelBuilder.Entity("API.Models.Session", b =>
+            modelBuilder.Entity("API.Models.PhoneNumber", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "Type")
+                        .IsUnique()
+                        .HasFilter("type = 'Primary'");
+
+                    b.ToTable("user_phone_numbers", (string)null);
+                });
+
+            modelBuilder.Entity("API.Models.ResetPasswordRequest", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<long>("EmailId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("email_id");
+
+                    b.Property<DateTime>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_used");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodeHash");
+
+                    b.HasIndex("EmailId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("reset_password_requests", (string)null);
+                });
+
+            modelBuilder.Entity("API.Models.Session", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     b.Property<long?>("AccountId")
                         .HasColumnType("bigint")
@@ -380,6 +492,12 @@ namespace API.Data.Migrations
                         .HasColumnType("timestamp")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("IsRevoked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_revoked");
 
                     b.Property<DateTime?>("LastUsedAt")
                         .HasColumnType("timestamp")
@@ -401,6 +519,8 @@ namespace API.Data.Migrations
 
                     b.HasIndex("ApplicationId");
 
+                    b.HasIndex("IsRevoked");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("AccountId", "ApplicationId");
@@ -413,11 +533,8 @@ namespace API.Data.Migrations
             modelBuilder.Entity("API.Models.Token", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long?>("AccountId")
                         .HasColumnType("bigint")
@@ -440,6 +557,18 @@ namespace API.Data.Migrations
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("timestamp")
                         .HasColumnName("expires_at");
+
+                    b.Property<bool>("IsRefreshed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_refreshed");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_revoked");
+
+                    b.Property<long?>("ParentTokenId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("parent_token_id");
 
                     b.Property<long>("SessionId")
                         .HasColumnType("bigint")
@@ -477,6 +606,10 @@ namespace API.Data.Migrations
 
                     b.HasIndex("ExpiresAt");
 
+                    b.HasIndex("IsRevoked");
+
+                    b.HasIndex("ParentTokenId");
+
                     b.HasIndex("SessionId");
 
                     b.HasIndex("TokenString")
@@ -491,15 +624,12 @@ namespace API.Data.Migrations
 
             modelBuilder.Entity("API.Models.User", b =>
                 {
-                    b.Property<long>("UserId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<long>("Id")
                         .HasColumnType("bigint")
-                        .HasColumnName("user_id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("BirthDate")
-                        .HasColumnType("timestamp without time zone")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("birth_date");
 
                     b.Property<DateTime>("CreatedAt")
@@ -540,11 +670,6 @@ namespace API.Data.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("password_salt");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("phone_number");
-
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -557,11 +682,7 @@ namespace API.Data.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("username");
 
-                    b.HasKey("UserId");
-
-                    b.HasIndex("PhoneNumber")
-                        .IsUnique()
-                        .HasFilter("\"PhoneNumber\" IS NOT NULL");
+                    b.HasKey("Id");
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -569,64 +690,11 @@ namespace API.Data.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("API.Models.UserEmail", b =>
-                {
-                    b.Property<long>("UserEmailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("user_email_id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserEmailId"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("email");
-
-                    b.Property<bool>("IsPrimary")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_primary");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("state");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("UserEmailId");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "IsPrimary")
-                        .IsUnique()
-                        .HasFilter("is_primary = true");
-
-                    b.ToTable("user_emails", (string)null);
-                });
-
             modelBuilder.Entity("API.Models.VerificationSession", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -639,7 +707,7 @@ namespace API.Data.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<long>("EmailId")
+                    b.Property<long?>("EmailId")
                         .HasColumnType("bigint")
                         .HasColumnName("email_id");
 
@@ -653,7 +721,11 @@ namespace API.Data.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_used");
 
-                    b.Property<long?>("UserId")
+                    b.Property<long?>("PhoneId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("phone_id");
+
+                    b.Property<long>("UserId")
                         .HasColumnType("bigint")
                         .HasColumnName("user_id");
 
@@ -664,6 +736,8 @@ namespace API.Data.Migrations
 
                     b.HasIndex("EmailId");
 
+                    b.HasIndex("PhoneId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("verification_sessions", (string)null);
@@ -673,11 +747,11 @@ namespace API.Data.Migrations
                 {
                     b.Property<long>("AuthorizedAccountsId")
                         .HasColumnType("bigint")
-                        .HasColumnName("authorized_account_id");
+                        .HasColumnName("account_id");
 
                     b.Property<long>("AuthorizedDevelopersId")
                         .HasColumnType("bigint")
-                        .HasColumnName("authorized_developer_id");
+                        .HasColumnName("developer_id");
 
                     b.HasKey("AuthorizedAccountsId", "AuthorizedDevelopersId");
 
@@ -690,7 +764,7 @@ namespace API.Data.Migrations
                 {
                     b.Property<long>("MembersId")
                         .HasColumnType("bigint")
-                        .HasColumnName("member_id");
+                        .HasColumnName("account_id");
 
                     b.Property<long>("RolesId")
                         .HasColumnType("bigint")
@@ -760,15 +834,28 @@ namespace API.Data.Migrations
                     b.Navigation("Organization");
                 });
 
+            modelBuilder.Entity("API.Models.EmailAddress", b =>
+                {
+                    b.HasOne("API.Models.User", "User")
+                        .WithMany("EmailAddresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_UserEmails_Users");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("API.Models.Notification", b =>
                 {
                     b.HasOne("API.Models.Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("API.Models.Application", "Application")
                         .WithMany()
-                        .HasForeignKey("ApplicationId");
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("API.Models.User", "User")
                         .WithMany("Notifications")
@@ -794,11 +881,42 @@ namespace API.Data.Migrations
                     b.Navigation("Organization");
                 });
 
+            modelBuilder.Entity("API.Models.PhoneNumber", b =>
+                {
+                    b.HasOne("API.Models.User", "User")
+                        .WithMany("PhoneNumbers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("API.Models.ResetPasswordRequest", b =>
+                {
+                    b.HasOne("API.Models.EmailAddress", "EmailAddress")
+                        .WithMany()
+                        .HasForeignKey("EmailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EmailAddress");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("API.Models.Session", b =>
                 {
                     b.HasOne("API.Models.Account", "Account")
                         .WithMany("Sessions")
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("API.Models.ApplicationAccount", null)
                         .WithMany("Sessions")
@@ -806,7 +924,8 @@ namespace API.Data.Migrations
 
                     b.HasOne("API.Models.Application", "Application")
                         .WithMany("Sessions")
-                        .HasForeignKey("ApplicationId");
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("API.Models.User", "User")
                         .WithMany("Sessions")
@@ -825,7 +944,8 @@ namespace API.Data.Migrations
                 {
                     b.HasOne("API.Models.Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("API.Models.ApplicationAccount", "ApplicationAccount")
                         .WithMany()
@@ -834,7 +954,13 @@ namespace API.Data.Migrations
 
                     b.HasOne("API.Models.Application", "Application")
                         .WithMany()
-                        .HasForeignKey("ApplicationId");
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("API.Models.Token", "ParentToken")
+                        .WithMany()
+                        .HasForeignKey("ParentTokenId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("API.Models.Session", "Session")
                         .WithMany("Tokens")
@@ -854,36 +980,34 @@ namespace API.Data.Migrations
 
                     b.Navigation("ApplicationAccount");
 
+                    b.Navigation("ParentToken");
+
                     b.Navigation("Session");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("API.Models.UserEmail", b =>
-                {
-                    b.HasOne("API.Models.User", "User")
-                        .WithMany("Emails")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("API.Models.VerificationSession", b =>
                 {
-                    b.HasOne("API.Models.UserEmail", "Email")
+                    b.HasOne("API.Models.EmailAddress", "Email")
                         .WithMany()
                         .HasForeignKey("EmailId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("API.Models.PhoneNumber", "Phone")
+                        .WithMany()
+                        .HasForeignKey("PhoneId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("API.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Email");
+
+                    b.Navigation("Phone");
 
                     b.Navigation("User");
                 });
@@ -960,9 +1084,11 @@ namespace API.Data.Migrations
                 {
                     b.Navigation("Accounts");
 
-                    b.Navigation("Emails");
+                    b.Navigation("EmailAddresses");
 
                     b.Navigation("Notifications");
+
+                    b.Navigation("PhoneNumbers");
 
                     b.Navigation("Sessions");
                 });

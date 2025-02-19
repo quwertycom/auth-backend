@@ -1,7 +1,12 @@
 using API.Data;
-using API.Service;
+using API.Services;
+using API.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using API.Repositories.Interfaces;
+using API.Repositories;
+using API.Services.Interfaces;
 
 namespace API.Common.Helpers;
 
@@ -9,21 +14,39 @@ public static class Services
 {
     public static void Initialize(WebApplicationBuilder builder)
     {
+        ConfigManager.AddConfiguration(builder.Services, builder.Configuration);
         AddDbContext(builder);
-        AddControllerServices(builder);
+        AddServices(builder);
+        AddRepositories(builder);
         InitializeHelpers(builder.Configuration);
     }
 
-    private static void AddControllerServices(WebApplicationBuilder builder)
+    private static void AddServices(WebApplicationBuilder builder)
     {
         try
         {
             builder.Services.AddScoped<IAuthService, AuthService>();
-            // add other services in the future
+            builder.Services.AddScoped<ITokenService, TokenService>();
+            builder.Services.AddScoped<IPasswordService, PasswordService>();
+            builder.Services.AddScoped<ISessionService, SessionService>();
         }
-        catch
+        catch (Exception ex)
         {
-            throw new Exception("Failed to add controller services");
+            throw new Exception($"Failed to add services: {ex.Message}");
+        }
+    }
+
+    private static void AddRepositories(WebApplicationBuilder builder)
+    {
+        try
+        {
+            builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IVerificationRepository, VerificationRepository>();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to add repositories: {ex.Message}");
         }
     }
 
@@ -31,17 +54,16 @@ public static class Services
     {
         try
         {
-            builder.Services.AddDbContext<AuthDbContext>(options =>
+            builder.Services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
             {
                 var isRunningInDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
-                var host = isRunningInDocker ? "db" : "localhost";
 
                 var connectionStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
                 {
-                    Host = host,
-                    Database = builder.Configuration["POSTGRES_DB"],
-                    Username = builder.Configuration["POSTGRES_USER"],
-                    Password = builder.Configuration["POSTGRES_PASSWORD"],
+                    Host = isRunningInDocker ? "db" : Environment.GetEnvironmentVariable("POSTGRES_HOST"),
+                    Database = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? throw new ArgumentNullException("POSTGRES_DB"),
+                    Username = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? throw new ArgumentNullException("POSTGRES_USER"),
+                    Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? throw new ArgumentNullException("POSTGRES_PASSWORD"),
                     Pooling = true,
                     MinPoolSize = 5,
                     MaxPoolSize = 100
@@ -53,9 +75,9 @@ public static class Services
                 });
             });
         }
-        catch
+        catch (Exception ex)
         {
-            throw new Exception("Failed to add db context");
+            throw new Exception($"Failed to add db context: {ex.Message}");
         }
     }
 
@@ -63,44 +85,24 @@ public static class Services
     {
         try
         {
-            // Initialize JWT helper
-            try
+            var initializationTasks = new Dictionary<string, Action>
             {
-                JWT.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize JWT helper: {ex.Message}");
-            }
+                { "JWT", () => JWT.Initialize(configuration) },
+                { "Hasher", () => Hasher.Initialize(configuration) },
+                { "Snowflake", () => Snowflake.Initialize(configuration) },
+                { "EmailSender", () => EmailSender.Initialize(configuration) }
+            };
 
-            // Initialize PasswordHasher helper
-            try
+            foreach (var task in initializationTasks)
             {
-                PasswordHasher.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize PasswordHasher helper: {ex.Message}");
-            }
-
-            // Initialize Snowflake helper
-            try
-            {
-                Snowflake.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize Snowflake helper: {ex.Message}");
-            }
-
-            // Initialize EmailSender helper
-            try
-            {
-                EmailSender.Initialize(configuration);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to initialize EmailSender helper: {ex.Message}");
+                try
+                {
+                    task.Value();
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to initialize {task.Key} helper: {ex.Message}");
+                }
             }
         }
         catch (Exception ex)
