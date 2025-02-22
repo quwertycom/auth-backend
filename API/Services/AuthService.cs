@@ -189,6 +189,11 @@ public class AuthService : IAuthService
     {
         try
         {
+            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+            {
+                return (false, "INVALID_REQUEST", "Username and password are required.", null, null);
+            }
+
             var user = await _userRepository.GetUserByUsername(request.Username);
 
             if (user == null)
@@ -199,6 +204,11 @@ public class AuthService : IAuthService
             if (user.State == UserState.Suspended)
             {
                 return (false, "ACCOUNT_LOCKED", "Account is locked.", null, null);
+            }
+
+            if (user.State == UserState.Deleted)
+            {
+                return (false, "ACCOUNT_DELETED", "Account is deleted.", null, null);
             }
 
             if (user.State != UserState.Active)

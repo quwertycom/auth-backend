@@ -731,6 +731,100 @@ public class AuthServiceTests
         Assert.Equal("USER_INACTIVE", status);
     }
 
+    [Fact]
+    public async Task LoginAsync_EmptyUsername_ReturnsInvalidRequest()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "",
+            Password = "Password123"
+        };
+
+        // Act
+        var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("INVALID_REQUEST", status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_EmptyPassword_ReturnsInvalidRequest()
+    {
+        // Arrange
+        var request = new LoginRequest
+        {
+            Username = "testuser",
+            Password = ""
+        };
+
+        // Act
+        var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("INVALID_REQUEST", status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_DeletedUser_ReturnsAccountLocked()
+    {
+        // Arrange
+        var validUser = TestDataFactory.CreateValidUser();
+        validUser.State = UserState.Deleted;
+        var (hash, salt) = Hasher.Hash("Password123");
+        validUser.PasswordHash = hash;
+        validUser.PasswordSalt = salt;
+
+        var request = new LoginRequest
+        {
+            Username = "deleteduser",
+            Password = "Password123"
+        };
+
+        _userRepository.GetUserByUsername(request.Username)
+            .Returns(Task.FromResult<User?>(validUser));
+
+        // Act
+        var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("ACCOUNT_DELETED", status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_ValidCredentialsButTokenGenerationFails_ReturnsInternalError()
+    {
+        // Arrange
+        var validUser = TestDataFactory.CreateValidUser();
+        validUser.State = UserState.Active;
+        var (hash, salt) = Hasher.Hash("Password123");
+        validUser.PasswordHash = hash;
+        validUser.PasswordSalt = salt;
+
+        var request = new LoginRequest
+        {
+            Username = "testuser",
+            Password = "Password123"
+        };
+
+        _userRepository.GetUserByUsername(request.Username)
+            .Returns(Task.FromResult<User?>(validUser));
+        
+        // Force token generation failure
+        _sessionRepository.AddToken(Arg.Any<Token>())
+            .ThrowsAsync(new Exception("Token storage failed"));
+
+        // Act
+        var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("INTERNAL_SERVER_ERROR", status);
+    }
+
     //---------------------------------
     //--- Concurrent Requests ---------
     //---------------------------------
