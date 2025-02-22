@@ -21,10 +21,11 @@ public class AuthServiceTests
     private readonly IVerificationRepository _verificationRepository = Substitute.For<IVerificationRepository>();
     private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
     private readonly AuthService _authService;
+    private readonly IConfiguration _configuration;
 
     public AuthServiceTests()
     {
-        var configuration = new ConfigurationBuilder()
+        _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 {"Snowflake:MachineId", "1"},
@@ -38,12 +39,16 @@ public class AuthServiceTests
                 {"Email:Username", "your@example.com"},
                 {"Email:Password", "password"},
                 {"Email:FromEmail", "from@example.com"},
-                {"Email:DisableSend", "true"}
+                {"Email:DisableSend", "true"},
+                {"Jwt:SecretKey", "this-is-a-32-character-long-secret-key!"},
+                {"Jwt:Issuer", "test-issuer"},
+                {"Jwt:Audience", "test-audience"}
             })
             .Build();
         
-        Snowflake.Initialize(configuration);
-        Hasher.Initialize(configuration);
+        Snowflake.Initialize(_configuration);
+        Hasher.Initialize(_configuration);
+        JWT.Initialize(_configuration);
         
         _authService = new AuthService(_userRepository, _sessionRepository, _verificationRepository, _emailSender);
     }
@@ -306,7 +311,8 @@ public class AuthServiceTests
     public async Task VerifyEmailAsync_InvalidSessionId_ReturnsNotFound()
     {
         // Arrange
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns((VerificationSession?)null);
+        _verificationRepository.GetVerificationSessionById(999)
+            .Returns((VerificationSession?)null);
         
         var request = new VerifyEmailRequest
         {
@@ -568,5 +574,39 @@ public class AuthServiceTests
         // Assert
         Assert.False(isSuccess);
         Assert.Equal("INTERNAL_SERVER_ERROR", status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_ValidCredentials_ReturnsTokens()
+    {
+        // Arrange
+        var validUser = TestDataFactory.CreateValidUser();
+        var (hash, salt) = Hasher.Hash("Password123"); // Pre-hash test password
+        validUser.PasswordHash = hash;
+        validUser.PasswordSalt = salt;
+
+        var request = new LoginRequest
+        {
+            Username = "testuser",
+            Password = "Password123"
+        };
+
+        _userRepository.GetUserByUsername(request.Username)
+            .Returns(Task.FromResult<User?>(validUser));
+        _sessionRepository.AddSession(Arg.Any<Session>()).Returns(Task.CompletedTask);
+        _sessionRepository.AddToken(Arg.Any<Token>()).Returns(Task.CompletedTask);
+        
+        var authService = new AuthService(
+            _userRepository, 
+            _sessionRepository, 
+            _verificationRepository, 
+            _emailSender);
+
+        // Act
+        var (isSuccess, status, _, accessToken, refreshToken) = await authService.LoginAsync(request);
+
+        // Assert
+        Assert.True(isSuccess);
+        Assert.Equal("SUCCESS", status);
     }
 } 
