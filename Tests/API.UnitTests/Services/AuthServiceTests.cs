@@ -11,7 +11,7 @@ using NSubstitute.ExceptionExtensions;
 using System.Threading.Tasks;
 using System;
 using API.Common.Utilities.Interfaces;
-
+using API.UnitTests.Utilities;
 namespace API.UnitTests.Services;
 
 public class AuthServiceTests
@@ -126,7 +126,7 @@ public class AuthServiceTests
         };
 
         _userRepository.GetUserByUsername(request.Username)
-            .Returns(Task.FromResult<User?>(CreateValidUser()));
+            .Returns(Task.FromResult<User?>(TestDataFactory.CreateValidUser()));
 
         // Act
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
@@ -157,7 +157,7 @@ public class AuthServiceTests
             .Returns(new EmailAddress { 
                 Email = "test@example.com",
                 Type = EmailType.Primary,
-                User = CreateValidUser(),
+                User = TestDataFactory.CreateValidUser(),
                 State = EmailState.Verified
             });
 
@@ -192,7 +192,7 @@ public class AuthServiceTests
         _userRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber)
             .Returns(new PhoneNumber { 
                 Phone = "+15551234567",
-                User = CreateValidUser(),
+                User = TestDataFactory.CreateValidUser(),
                 State = PhoneState.Verified,
                 Type = PhoneType.Primary 
             });
@@ -261,7 +261,7 @@ public class AuthServiceTests
     public async Task VerifyEmailAsync_ValidSession_ReturnsSuccess()
     {
         // Arrange
-        var validUser = CreateValidUser();
+        var validUser = TestDataFactory.CreateValidUser();
         var session = new VerificationSession
         {
             Id = 123,
@@ -332,12 +332,12 @@ public class AuthServiceTests
             Code = "87654321",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow,
-            User = CreateValidUser(),
+            User = TestDataFactory.CreateValidUser(),
             Email = new EmailAddress {
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = CreateValidUser()
+                User = TestDataFactory.CreateValidUser()
             }
         };
         
@@ -367,7 +367,7 @@ public class AuthServiceTests
             Code = "12345678",
             IsUsed = true,
             CreatedAt = DateTime.UtcNow,
-            User = CreateValidUser()
+            User = TestDataFactory.CreateValidUser()
         };
         
         _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
@@ -397,7 +397,7 @@ public class AuthServiceTests
             IsUsed = false,
             CreatedAt = DateTime.UtcNow.AddMinutes(-15),
             ExpiryMinutes = 10,
-            User = CreateValidUser()
+            User = TestDataFactory.CreateValidUser()
         };
         
         _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
@@ -426,7 +426,7 @@ public class AuthServiceTests
             Code = "12345678",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow,
-            User = CreateValidUser()
+            User = TestDataFactory.CreateValidUser()
         };
         
         _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
@@ -435,7 +435,7 @@ public class AuthServiceTests
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = CreateValidUser()
+                User = TestDataFactory.CreateValidUser()
             });
         
         var request = new VerifyEmailRequest
@@ -462,12 +462,12 @@ public class AuthServiceTests
             Code = "12345678",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow,
-            User = CreateValidUser(),
+            User = TestDataFactory.CreateValidUser(),
             Email = new EmailAddress {
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = CreateValidUser()
+                User = TestDataFactory.CreateValidUser()
             }
         };
         
@@ -477,9 +477,9 @@ public class AuthServiceTests
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = CreateValidUser()
+                User = TestDataFactory.CreateValidUser()
             });
-        _userRepository.GetUserById(1).Returns(CreateValidUser());
+        _userRepository.GetUserById(1).Returns(TestDataFactory.CreateValidUser());
         
         var request = new VerifyEmailRequest
         {
@@ -500,7 +500,7 @@ public class AuthServiceTests
     public async Task VerifyEmailAsync_SessionUserMismatch_ReturnsInvalidSession()
     {
         // Arrange
-        var sessionUser = CreateValidUser();
+        var sessionUser = TestDataFactory.CreateValidUser();
         var emailUser = new User { 
             Id = 2,
             Username = "otheruser",
@@ -569,14 +569,4 @@ public class AuthServiceTests
         Assert.False(isSuccess);
         Assert.Equal("INTERNAL_SERVER_ERROR", status);
     }
-
-    private User CreateValidUser() => new User {
-        Id = 1,
-        Username = "testuser",
-        FirstName = "Test",
-        LastName = "User",
-        PasswordHash = "hash",
-        PasswordSalt = "salt",
-        BirthDate = DateTime.UtcNow.AddYears(-20)
-    };
 } 
