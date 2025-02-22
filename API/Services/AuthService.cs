@@ -196,6 +196,16 @@ public class AuthService : IAuthService
                 return (false, "NOT_FOUND", "User not found.", null, null);
             }
 
+            if (user.State == UserState.Suspended)
+            {
+                return (false, "ACCOUNT_LOCKED", "Account is locked.", null, null);
+            }
+
+            if (user.State != UserState.Active)
+            {
+                return (false, "USER_INACTIVE", "User account is not active.", null, null);
+            }
+
             if (!Hasher.Compare(request.Password, user.PasswordHash, user.PasswordSalt))
             {
                 return (false, "INVALID_PASSWORD", "Invalid password.", null, null);

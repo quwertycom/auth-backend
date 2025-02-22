@@ -266,6 +266,40 @@ public class AuthServiceTests
         Assert.Null(verificationSessionID);
     }
 
+    [Fact]
+    public async Task RegisterUserAsync_InvalidEmailVariations_ReturnsErrors()
+    {
+        // Arrange
+        var invalidEmails = new[] 
+        {
+            "missing@domain",
+            "invalid@.com",
+            "@missingusername.com",
+            "spaces in@email.com"
+        };
+
+        foreach(var email in invalidEmails)
+        {
+            var request = new RegisterRequest 
+            { 
+                Username = "testuser", 
+                Email = email,
+                Password = "ValidPass123",
+                FirstName = "Test",
+                LastName = "User",
+                BirthDate = DateTime.Now.AddYears(-20),
+                Gender = UserGender.Male
+            };
+
+            // Act
+            var result = await _authService.RegisterUserAsync(request);
+
+            // Assert
+            Assert.False(result.isSuccess);
+            Assert.Equal("INVALID_EMAIL", result.status);
+        }
+    }
+
     //---------------------------------
     //--- Verify Email ----------------
     //---------------------------------
@@ -613,9 +647,10 @@ public class AuthServiceTests
     {
         // Arrange
         var validUser = TestDataFactory.CreateValidUser();
-        var (hash, salt) = Hasher.Hash("Password123"); // Pre-hash test password
+        var (hash, salt) = Hasher.Hash("Password123");
         validUser.PasswordHash = hash;
         validUser.PasswordSalt = salt;
+        validUser.State = UserState.Active;
 
         var request = new LoginRequest
         {
@@ -640,6 +675,60 @@ public class AuthServiceTests
         // Assert
         Assert.True(isSuccess);
         Assert.Equal("SUCCESS", status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_AccountLocked_ReturnsAccountLocked()
+    {
+        // Arrange
+        var validUser = TestDataFactory.CreateValidUser();
+        validUser.State = UserState.Suspended;  // Changed from Locked
+        var (hash, salt) = Hasher.Hash("Password123");
+        validUser.PasswordHash = hash;
+        validUser.PasswordSalt = salt;
+
+        var request = new LoginRequest
+        {
+            Username = "suspendeduser",
+            Password = "Password123"
+        };
+
+        _userRepository.GetUserByUsername(request.Username)
+            .Returns(Task.FromResult<User?>(validUser));
+
+        // Act
+        var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("ACCOUNT_LOCKED", status);
+    }
+
+    [Fact]
+    public async Task LoginAsync_UserInactive_ReturnsUserInactive()
+    {
+        // Arrange
+        var validUser = TestDataFactory.CreateValidUser();
+        validUser.State = UserState.PendingVerification;  // Changed from Inactive
+        var (hash, salt) = Hasher.Hash("Password123");
+        validUser.PasswordHash = hash;
+        validUser.PasswordSalt = salt;
+
+        var request = new LoginRequest
+        {
+            Username = "pendinguser",
+            Password = "Password123"
+        };
+
+        _userRepository.GetUserByUsername(request.Username)
+            .Returns(Task.FromResult<User?>(validUser));
+
+        // Act
+        var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("USER_INACTIVE", status);
     }
 
     //---------------------------------
