@@ -3,7 +3,7 @@ using API.Repositories.Interfaces;
 using NSubstitute;
 using Xunit;
 using API.Contracts.Requests.Auth;
-using API.Common.Helpers; // Make sure to include this
+using API.Common.Helpers;
 using API.Models;
 using API.Common.Enums;
 using Microsoft.Extensions.Configuration;
