@@ -9,6 +9,7 @@ using Polly;
 using API.Repositories.Interfaces;
 using API.Services.Interfaces;
 using API.Common.Utilities.Interfaces;
+using System.Threading;
 
 namespace API.Services;
 
@@ -18,6 +19,8 @@ public class AuthService : IAuthService
     private readonly ISessionRepository _sessionRepository;
     private readonly IVerificationRepository _verificationRepository;
     private readonly IEmailSender _emailSender;
+    private readonly SemaphoreSlim _verificationLock = new SemaphoreSlim(1, 1);
+
     public AuthService(IUserRepository userRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository, IEmailSender emailSender)
     {
         _userRepository = userRepository;
@@ -126,6 +129,7 @@ public class AuthService : IAuthService
     {
         try
         {
+            await _verificationLock.WaitAsync();
             var verificationSession = await _verificationRepository.GetVerificationSessionById(request.VerificationSessionID);
 
             Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
@@ -171,9 +175,13 @@ public class AuthService : IAuthService
 
             return (true, "SUCCESS", "Email verified successfully.", verificationSession.Id);
         }
-        catch
+        catch (Exception ex)
         {
-            return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
+            return (false, "INTERNAL_SERVER_ERROR", ex.Message, null);
+        }
+        finally
+        {
+            _verificationLock.Release();
         }
     }
 
