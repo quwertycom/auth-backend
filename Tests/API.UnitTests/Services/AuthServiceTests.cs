@@ -306,29 +306,31 @@ public class AuthServiceVerifyEmailTests
     public async Task VerifyEmailAsync_ValidSession_ReturnsSuccess()
     {
         // Arrange
-        var validUser = TestDataFactory.CreateValidUser();
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1; // Explicitly set user ID
+
         var session = new VerificationSession
         {
             Id = 123,
-            UserId = 1,
+            UserId = testUser.Id, // Match email's user ID
             Code = "12345678",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow.AddMinutes(-5),
             ExpiryMinutes = 10,
-            User = validUser,
+            User = testUser,
             Email = new EmailAddress {
                 Id = 1,
-                UserId = 1,
+                UserId = testUser.Id, // Set to same user ID
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Created,
-                User = validUser
+                User = testUser
             }
         };
 
         _verificationRepository.GetVerificationSessionById(123).Returns(session);
         _userRepository.GetEmailModelByEmail("test@example.com").Returns(session.Email);
-        _userRepository.GetUserById(1).Returns(validUser);
+        _userRepository.GetUserById(1).Returns(testUser);
         _verificationRepository.UpdateVerificationSession(Arg.Any<VerificationSession>()).Returns(Task.CompletedTask);
         _userRepository.ChangeEmailState(1, EmailState.Verified).Returns(Task.CompletedTask);
 
@@ -373,17 +375,20 @@ public class AuthServiceVerifyEmailTests
     public async Task VerifyEmailAsync_InvalidOtp_ReturnsInvalidOtp()
     {
         // Arrange
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1; // Explicitly set user ID
+
         var session = new VerificationSession
         {
             Code = "87654321",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow,
-            User = TestDataFactory.CreateValidUser(),
+            User = testUser,
             Email = new EmailAddress {
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = TestDataFactory.CreateValidUser()
+                User = testUser
             }
         };
         
@@ -408,12 +413,15 @@ public class AuthServiceVerifyEmailTests
     public async Task VerifyEmailAsync_AlreadyUsedOtp_ReturnsAlreadyUsed()
     {
         // Arrange
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1; // Explicitly set user ID
+
         var session = new VerificationSession
         {
             Code = "12345678",
             IsUsed = true,
             CreatedAt = DateTime.UtcNow,
-            User = TestDataFactory.CreateValidUser()
+            User = testUser
         };
         
         _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
@@ -437,13 +445,16 @@ public class AuthServiceVerifyEmailTests
     public async Task VerifyEmailAsync_ExpiredOtp_ReturnsExpired()
     {
         // Arrange
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1; // Explicitly set user ID
+
         var session = new VerificationSession
         {
             Code = "12345678",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow.AddMinutes(-15),
             ExpiryMinutes = 10,
-            User = TestDataFactory.CreateValidUser()
+            User = testUser
         };
         
         _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
@@ -467,12 +478,15 @@ public class AuthServiceVerifyEmailTests
     public async Task VerifyEmailAsync_EmailNotFound_ReturnsNotFound()
     {
         // Arrange
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1; // Explicitly set user ID
+
         var session = new VerificationSession
         {
             Code = "12345678",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow,
-            User = TestDataFactory.CreateValidUser()
+            User = testUser
         };
         
         _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
@@ -481,7 +495,7 @@ public class AuthServiceVerifyEmailTests
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = TestDataFactory.CreateValidUser()
+                User = testUser
             });
         
         var request = new VerifyEmailRequest
@@ -503,17 +517,20 @@ public class AuthServiceVerifyEmailTests
     public async Task VerifyEmailAsync_UserNotFound_ReturnsNotFound()
     {
         // Arrange
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1; // Explicitly set user ID
+
         var session = new VerificationSession
         {
             Code = "12345678",
             IsUsed = false,
             CreatedAt = DateTime.UtcNow,
-            User = TestDataFactory.CreateValidUser(),
+            User = testUser,
             Email = new EmailAddress {
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = TestDataFactory.CreateValidUser()
+                User = testUser
             }
         };
         
@@ -523,7 +540,7 @@ public class AuthServiceVerifyEmailTests
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
-                User = TestDataFactory.CreateValidUser()
+                User = testUser
             });
         _userRepository.GetUserById(1).Returns(TestDataFactory.CreateValidUser());
         
@@ -546,6 +563,9 @@ public class AuthServiceVerifyEmailTests
     public async Task VerifyEmailAsync_SessionUserMismatch_ReturnsInvalidSession()
     {
         // Arrange
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1; // Explicitly set user ID
+
         var sessionUser = TestDataFactory.CreateValidUser();
         var emailUser = new User { 
             Id = 2,
@@ -689,4 +709,58 @@ public class AuthServiceLoginTests : TestBase
         Assert.True(isSuccess);
         Assert.Equal("SUCCESS", status);
     }
-} 
+
+    [Fact] 
+    public async Task VerifyEmailAsync_ConcurrentRequests_HandlesLocking()
+    {
+        // Arrange
+        var testUser = TestDataFactory.CreateValidUser();
+        testUser.Id = 1;
+
+        var session = new VerificationSession
+        {
+            Code = "12345678",
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow,
+            ExpiryMinutes = 30,
+            User = testUser,
+            UserId = testUser.Id,
+            Email = new EmailAddress 
+            { 
+                Email = "test@example.com",
+                UserId = testUser.Id,
+                User = testUser,
+                Type = EmailType.Primary,
+                State = EmailState.Created
+            }
+        };
+
+        // Update mock to use same session instance
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>())
+            .Returns(x => session); // Return original session reference
+        _verificationRepository.UpdateVerificationSession(Arg.Any<VerificationSession>())
+            .Returns(Task.CompletedTask)
+            .AndDoes(x => session.IsUsed = x.Arg<VerificationSession>().IsUsed);
+
+        _userRepository.GetEmailModelByEmail(Arg.Any<string>()).Returns(session.Email);
+        _userRepository.GetUserById(Arg.Any<long>()).Returns(testUser);
+        _userRepository.ChangeEmailState(Arg.Any<long>(), Arg.Any<EmailState>())
+            .Returns(Task.CompletedTask);
+
+        var request = new VerifyEmailRequest 
+        { 
+            VerificationSessionID = 1,
+            OTP = "12345678",
+            Email = "test@example.com"
+        };
+
+        // Act
+        var task1 = _authService.VerifyEmailAsync(request);
+        var task2 = _authService.VerifyEmailAsync(request);
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        Assert.Equal(1, results.Count(r => r.isSuccess));
+        Assert.Contains(results, r => r.status == "ALREADY_USED");
+    }
+}
