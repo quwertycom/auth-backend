@@ -4,6 +4,7 @@ using API.Common.Helpers;
 using API.Configuration;
 using API.Common.Utilities.Interfaces;
 using API.Common.Utilities;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace API;
 
@@ -56,6 +57,26 @@ public class Program
         });
 
         var app = builder.Build();
+
+        // Add global error handling middleware FIRST in pipeline
+        app.UseExceptionHandler(errorApp =>
+        {
+            errorApp.Run(async context =>
+            {
+                context.Response.ContentType = "application/json";
+                var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
+                var exception = exceptionHandlerFeature?.Error;
+
+                // Log error here if needed (requires ILogger injection)
+                
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    Success = false,
+                    Status = "INTERNAL_SERVER_ERROR",
+                    Message = "An unexpected error occurred. Please try again later."
+                });
+            });
+        });
 
         // Configure the HTTP request pipeline
         if (app.Environment.IsDevelopment())

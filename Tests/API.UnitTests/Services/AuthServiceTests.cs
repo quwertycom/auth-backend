@@ -14,7 +14,7 @@ using API.Common.Utilities.Interfaces;
 using API.UnitTests.Utilities;
 namespace API.UnitTests.Services;
 
-public class AuthServiceTests
+public class AuthServiceRegisterTests
 {
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly ISessionRepository _sessionRepository = Substitute.For<ISessionRepository>();
@@ -23,7 +23,7 @@ public class AuthServiceTests
     private readonly AuthService _authService;
     private readonly IConfiguration _configuration;
 
-    public AuthServiceTests()
+    public AuthServiceRegisterTests()
     {
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -260,6 +260,46 @@ public class AuthServiceTests
         Assert.False(isSuccess);
         Assert.Equal("INTERNAL_SERVER_ERROR", status);
         Assert.Null(verificationSessionID);
+    }
+}
+
+public class AuthServiceVerifyEmailTests
+{
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly ISessionRepository _sessionRepository = Substitute.For<ISessionRepository>();
+    private readonly IVerificationRepository _verificationRepository = Substitute.For<IVerificationRepository>();
+    private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
+    private readonly AuthService _authService;
+    private readonly IConfiguration _configuration;
+
+    public AuthServiceVerifyEmailTests()
+    {
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                {"Snowflake:MachineId", "1"},
+                {"Snowflake:DatacenterId", "1"},
+                {"PasswordHasher:Iterations", "10000"},
+                {"PasswordHasher:SaltSize", "16"},
+                {"PasswordHasher:KeySize", "32"},
+                {"Email:Host", "smtp.example.com"},
+                {"Email:Port", "587"},
+                {"Email:EnableSsl", "true"},
+                {"Email:Username", "your@example.com"},
+                {"Email:Password", "password"},
+                {"Email:FromEmail", "from@example.com"},
+                {"Email:DisableSend", "true"},
+                {"Jwt:SecretKey", "this-is-a-32-character-long-secret-key!"},
+                {"Jwt:Issuer", "test-issuer"},
+                {"Jwt:Audience", "test-audience"}
+            })
+            .Build();
+        
+        Snowflake.Initialize(_configuration);
+        Hasher.Initialize(_configuration);
+        JWT.Initialize(_configuration);
+        
+        _authService = new AuthService(_userRepository, _sessionRepository, _verificationRepository, _emailSender);
     }
 
     [Fact]
@@ -574,6 +614,46 @@ public class AuthServiceTests
         // Assert
         Assert.False(isSuccess);
         Assert.Equal("INTERNAL_SERVER_ERROR", status);
+    }
+}
+
+public class AuthServiceLoginTests : TestBase
+{
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly ISessionRepository _sessionRepository = Substitute.For<ISessionRepository>();
+    private readonly IVerificationRepository _verificationRepository = Substitute.For<IVerificationRepository>();
+    private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
+    private readonly AuthService _authService;
+    private readonly IConfiguration _configuration;
+
+    public AuthServiceLoginTests()
+    {
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                {"Snowflake:MachineId", "1"},
+                {"Snowflake:DatacenterId", "1"},
+                {"PasswordHasher:Iterations", "10000"},
+                {"PasswordHasher:SaltSize", "16"},
+                {"PasswordHasher:KeySize", "32"},
+                {"Email:Host", "smtp.example.com"},
+                {"Email:Port", "587"},
+                {"Email:EnableSsl", "true"},
+                {"Email:Username", "your@example.com"},
+                {"Email:Password", "password"},
+                {"Email:FromEmail", "from@example.com"},
+                {"Email:DisableSend", "true"},
+                {"Jwt:SecretKey", "this-is-a-32-character-long-secret-key!"},
+                {"Jwt:Issuer", "test-issuer"},
+                {"Jwt:Audience", "test-audience"}
+            })
+            .Build();
+        
+        Snowflake.Initialize(_configuration);
+        Hasher.Initialize(_configuration);
+        JWT.Initialize(_configuration);
+        
+        _authService = new AuthService(_userRepository, _sessionRepository, _verificationRepository, _emailSender);
     }
 
     [Fact]

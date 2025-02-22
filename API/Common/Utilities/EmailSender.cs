@@ -6,7 +6,7 @@ using API.Common.Utilities.Interfaces;
 
 namespace API.Common.Utilities;
 
-public class EmailSender : IEmailSender
+public class EmailSender : IEmailSender, IDisposable
 {
     private readonly SmtpClient _smtpClient;
     private readonly string _fromEmail;
@@ -75,5 +75,11 @@ public class EmailSender : IEmailSender
         {
             throw new Exception("ERROR: Failed to send reset password email, " + ex.Message);
         }
+    }
+
+    public void Dispose()
+    {
+        _smtpClient?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
