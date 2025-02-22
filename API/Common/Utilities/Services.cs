@@ -25,6 +25,7 @@ public class Services : IServices
     {
         ConfigManager.AddConfiguration(_builder.Services, _builder.Configuration);
         AddDbContext(_builder);
+        addUtils(_builder);
         AddServices(_builder);
         AddRepositories(_builder);
         InitializeHelpers(_builder.Configuration);
@@ -88,6 +89,11 @@ public class Services : IServices
         {
             throw new Exception($"Failed to add db context: {ex.Message}");
         }
+    }
+
+    private static void addUtils(WebApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<IEmailSender, EmailSender>();
     }
 
     private static void InitializeHelpers(IConfiguration configuration)

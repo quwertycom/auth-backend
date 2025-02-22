@@ -21,11 +21,10 @@ public class Program
             builder.Configuration.GetSection("Jwt"));
         builder.Services.Configure<EmailSettings>(
             builder.Configuration.GetSection("Email"));
-
         // Add services via ServiceInitializer helper
-        builder.Services.AddSingleton<Common.Utilities.Interfaces.IServices, Common.Utilities.Services>(provider => new Common.Utilities.Services(builder));
-        var services = builder.Services.BuildServiceProvider().GetRequiredService<Common.Utilities.Interfaces.IServices>();
+        var services = new Common.Utilities.Services(builder);
         services.Initialize();
+        
 
         // Add services to the container
         builder.Services.AddControllers();
