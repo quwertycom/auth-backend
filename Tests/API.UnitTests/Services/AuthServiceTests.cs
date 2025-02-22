@@ -257,12 +257,326 @@ public class AuthServiceTests
         Assert.Null(verificationSessionID);
     }
 
+    [Fact]
+    public async Task VerifyEmailAsync_ValidSession_ReturnsSuccess()
+    {
+        // Arrange
+        var validUser = CreateValidUser();
+        var session = new VerificationSession
+        {
+            Id = 123,
+            UserId = 1,
+            Code = "12345678",
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-5),
+            ExpiryMinutes = 10,
+            User = validUser,
+            Email = new EmailAddress {
+                Id = 1,
+                UserId = 1,
+                Email = "test@example.com",
+                Type = EmailType.Primary,
+                State = EmailState.Created,
+                User = validUser
+            }
+        };
+
+        _verificationRepository.GetVerificationSessionById(123).Returns(session);
+        _userRepository.GetEmailModelByEmail("test@example.com").Returns(session.Email);
+        _userRepository.GetUserById(1).Returns(validUser);
+        _verificationRepository.UpdateVerificationSession(Arg.Any<VerificationSession>()).Returns(Task.CompletedTask);
+        _userRepository.ChangeEmailState(1, EmailState.Verified).Returns(Task.CompletedTask);
+
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.True(isSuccess);
+        Assert.Equal("SUCCESS", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_InvalidSessionId_ReturnsNotFound()
+    {
+        // Arrange
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns((VerificationSession?)null);
+        
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 999,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("NOT_FOUND", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_InvalidOtp_ReturnsInvalidOtp()
+    {
+        // Arrange
+        var session = new VerificationSession
+        {
+            Code = "87654321",
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow,
+            User = CreateValidUser(),
+            Email = new EmailAddress {
+                Email = "test@example.com",
+                Type = EmailType.Primary,
+                State = EmailState.Verified,
+                User = CreateValidUser()
+            }
+        };
+        
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "wrongotp"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("INVALID_OTP", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_AlreadyUsedOtp_ReturnsAlreadyUsed()
+    {
+        // Arrange
+        var session = new VerificationSession
+        {
+            Code = "12345678",
+            IsUsed = true,
+            CreatedAt = DateTime.UtcNow,
+            User = CreateValidUser()
+        };
+        
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("ALREADY_USED", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_ExpiredOtp_ReturnsExpired()
+    {
+        // Arrange
+        var session = new VerificationSession
+        {
+            Code = "12345678",
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-15),
+            ExpiryMinutes = 10,
+            User = CreateValidUser()
+        };
+        
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("EXPIRED", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_EmailNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var session = new VerificationSession
+        {
+            Code = "12345678",
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow,
+            User = CreateValidUser()
+        };
+        
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        _userRepository.GetEmailModelByEmail(Arg.Any<string>())
+            .Returns(new EmailAddress {
+                Email = "test@example.com",
+                Type = EmailType.Primary,
+                State = EmailState.Verified,
+                User = CreateValidUser()
+            });
+        
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("NOT_FOUND", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_UserNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var session = new VerificationSession
+        {
+            Code = "12345678",
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow,
+            User = CreateValidUser(),
+            Email = new EmailAddress {
+                Email = "test@example.com",
+                Type = EmailType.Primary,
+                State = EmailState.Verified,
+                User = CreateValidUser()
+            }
+        };
+        
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        _userRepository.GetEmailModelByEmail(Arg.Any<string>())
+            .Returns(new EmailAddress {
+                Email = "test@example.com",
+                Type = EmailType.Primary,
+                State = EmailState.Verified,
+                User = CreateValidUser()
+            });
+        _userRepository.GetUserById(1).Returns(CreateValidUser());
+        
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("NOT_FOUND", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_SessionUserMismatch_ReturnsInvalidSession()
+    {
+        // Arrange
+        var sessionUser = CreateValidUser();
+        var emailUser = new User { 
+            Id = 2,
+            Username = "otheruser",
+            FirstName = "Other",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.UtcNow.AddYears(-25)
+        };
+
+        var session = new VerificationSession
+        {
+            Id = 123,
+            UserId = 1,
+            Code = "12345678",
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow,
+            User = sessionUser,
+            Email = new EmailAddress {
+                Id = 1,
+                UserId = 2,
+                Email = "test@example.com",
+                Type = EmailType.Primary,
+                State = EmailState.Created,
+                User = emailUser
+            }
+        };
+
+        _verificationRepository.GetVerificationSessionById(123).Returns(session);
+        _userRepository.GetEmailModelByEmail("test@example.com").Returns(session.Email);
+        _userRepository.GetUserById(1).Returns(sessionUser);
+
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("INVALID_SESSION", status);
+    }
+
+    [Fact]
+    public async Task VerifyEmailAsync_InternalError_ReturnsInternalError()
+    {
+        // Arrange
+        _verificationRepository.GetVerificationSessionById(Arg.Any<long>())
+            .ThrowsAsync(new Exception("Database error"));
+        
+        var request = new VerifyEmailRequest
+        {
+            VerificationSessionID = 123,
+            Email = "test@example.com",
+            OTP = "12345678"
+        };
+
+        // Act
+        var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
+
+        // Assert
+        Assert.False(isSuccess);
+        Assert.Equal("INTERNAL_SERVER_ERROR", status);
+    }
+
     private User CreateValidUser() => new User {
+        Id = 1,
         Username = "testuser",
         FirstName = "Test",
         LastName = "User",
-        PasswordHash = Convert.ToBase64String(new byte[64]),
-        PasswordSalt = Convert.ToBase64String(new byte[128]),
-        BirthDate = DateTime.Now.AddYears(-20)
+        PasswordHash = "hash",
+        PasswordSalt = "salt",
+        BirthDate = DateTime.UtcNow.AddYears(-20)
     };
 } 
