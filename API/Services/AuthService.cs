@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Polly;
 using API.Repositories.Interfaces;
 using API.Services.Interfaces;
+using API.Common.Utilities.Interfaces;
 
 namespace API.Services;
 
@@ -16,11 +17,13 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly ISessionRepository _sessionRepository;
     private readonly IVerificationRepository _verificationRepository;
-    public AuthService(IUserRepository userRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository)
+    private readonly IEmailSender _emailSender;
+    public AuthService(IUserRepository userRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository, IEmailSender emailSender)
     {
         _userRepository = userRepository;
         _sessionRepository = sessionRepository;
         _verificationRepository = verificationRepository;
+        _emailSender = emailSender;
     }
 
     public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
@@ -109,13 +112,13 @@ public class AuthService : IAuthService
             await _userRepository.AddEmail(newEmail);
             await _verificationRepository.AddVerificationSession(otpSession);
 
-            await EmailSender.SendOtpEmailAsync(newEmail.Email, otp);
+            await _emailSender.SendOtpEmailAsync(newEmail.Email, otp);
 
             return (true, "OTP_SENT", "8 Digits code has been sent to your email. Please verify your email and login.", otpSession.Id);
         }
-        catch
+        catch (Exception ex)
         {
-            return (false, "INTERNAL_SERVER_ERROR", "Internal server error, please try again later or contact support if the issue persists.", null);
+            return (false, "INTERNAL_SERVER_ERROR", ex.Message ?? "Internal server error, please try again later or contact support if the issue persists.", null);
         }
     }
 

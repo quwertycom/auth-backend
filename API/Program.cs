@@ -2,6 +2,8 @@ using Microsoft.OpenApi.Models;
 using API.Data;
 using API.Common.Helpers;
 using API.Configuration;
+using API.Common.Utilities.Interfaces;
+using API.Common.Utilities;
 
 namespace API;
 
@@ -20,8 +22,10 @@ public class Program
         builder.Services.Configure<EmailSettings>(
             builder.Configuration.GetSection("Email"));
 
-        // Initialize services via Services helper
-        Common.Helpers.Services.Initialize(builder);
+        // Add services via ServiceInitializer helper
+        builder.Services.AddSingleton<Common.Utilities.Interfaces.IServices, Common.Utilities.Services>(provider => new Common.Utilities.Services(builder));
+        var services = builder.Services.BuildServiceProvider().GetRequiredService<Common.Utilities.Interfaces.IServices>();
+        services.Initialize();
 
         // Add services to the container
         builder.Services.AddControllers();

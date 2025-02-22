@@ -2,19 +2,18 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 using API.Configuration;
+using API.Common.Utilities.Interfaces;
 
-namespace API.Common.Helpers;
+namespace API.Common.Utilities;
 
-public static class EmailSender
+public class EmailSender : IEmailSender
 {
-    private static SmtpClient? _smtpClient;
-    private static string? _fromEmail;
-    private static bool _isInitialized = false;
-    private static string? _frontendUrl;
-    public static void Initialize(IConfiguration configuration)
-    {
-        if (_isInitialized) return;
+    private readonly SmtpClient _smtpClient;
+    private readonly string _fromEmail;
+    private readonly string _frontendUrl;
 
+    public EmailSender(IConfiguration configuration)
+    {
         var settings = configuration.GetSection("Email").Get<EmailSettings>()
             ?? throw new InvalidOperationException("Email settings are not configured");
 
@@ -29,20 +28,14 @@ public static class EmailSender
         };
 
         _fromEmail = settings.FromEmail;
-        _isInitialized = true;
         _frontendUrl = configuration.GetSection("Frontend").GetSection("BaseUrl").Value ?? "http://localhost:3000";
     }
 
-    public static async Task<bool> SendOtpEmailAsync(string toEmail, string otp)
+    public async Task<bool> SendOtpEmailAsync(string toEmail, string otp)
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("EmailSender is not initialized. Call Initialize() first.");
-        }
-
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(_fromEmail ?? throw new InvalidOperationException("FromEmail is not configured")),
+            From = new MailAddress(_fromEmail),
             Subject = "Your OTP Code",
             Body = $"Your OTP code is: {otp}",
             IsBodyHtml = true,
@@ -52,7 +45,6 @@ public static class EmailSender
 
         try
         {
-            if (_smtpClient is null) throw new InvalidOperationException("SMTP client is not initialized.");
             await _smtpClient.SendMailAsync(mailMessage).ConfigureAwait(true);
             return true;
         }
@@ -62,16 +54,11 @@ public static class EmailSender
         }
     }
 
-    public static async Task<bool> SendResetPasswordEmailAsync(string toEmail, string codeHash)
+    public async Task<bool> SendResetPasswordEmailAsync(string toEmail, string codeHash)
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("EmailSender is not initialized. Call Initialize() first.");
-        }
-
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(_fromEmail ?? throw new InvalidOperationException("FromEmail is not configured")),
+            From = new MailAddress(_fromEmail),
             Subject = "Reset Password",
             Body = $"Your reset password link is: {_frontendUrl}/app/auth/reset-password?code={codeHash}",
             IsBodyHtml = true,
@@ -81,7 +68,6 @@ public static class EmailSender
 
         try
         {
-            if (_smtpClient is null) throw new InvalidOperationException("SMTP client is not initialized.");
             await _smtpClient.SendMailAsync(mailMessage).ConfigureAwait(true);
             return true;
         }

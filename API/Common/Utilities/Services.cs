@@ -7,18 +7,27 @@ using Microsoft.Extensions.Options;
 using API.Repositories.Interfaces;
 using API.Repositories;
 using API.Services.Interfaces;
+using API.Common.Utilities.Interfaces;
+using API.Common.Helpers;
 
-namespace API.Common.Helpers;
+namespace API.Common.Utilities;
 
-public static class Services
+public class Services : IServices
 {
-    public static void Initialize(WebApplicationBuilder builder)
+    private readonly WebApplicationBuilder _builder;
+
+    public Services(WebApplicationBuilder builder)
     {
-        ConfigManager.AddConfiguration(builder.Services, builder.Configuration);
-        AddDbContext(builder);
-        AddServices(builder);
-        AddRepositories(builder);
-        InitializeHelpers(builder.Configuration);
+        _builder = builder;
+    }
+
+    public void Initialize()
+    {
+        ConfigManager.AddConfiguration(_builder.Services, _builder.Configuration);
+        AddDbContext(_builder);
+        AddServices(_builder);
+        AddRepositories(_builder);
+        InitializeHelpers(_builder.Configuration);
     }
 
     private static void AddServices(WebApplicationBuilder builder)
@@ -85,25 +94,9 @@ public static class Services
     {
         try
         {
-            var initializationTasks = new Dictionary<string, Action>
-            {
-                { "JWT", () => JWT.Initialize(configuration) },
-                { "Hasher", () => Hasher.Initialize(configuration) },
-                { "Snowflake", () => Snowflake.Initialize(configuration) },
-                { "EmailSender", () => EmailSender.Initialize(configuration) }
-            };
-
-            foreach (var task in initializationTasks)
-            {
-                try
-                {
-                    task.Value();
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Failed to initialize {task.Key} helper: {ex.Message}");
-                }
-            }
+            JWT.Initialize(configuration);
+            Hasher.Initialize(configuration);
+            Snowflake.Initialize(configuration);
         }
         catch (Exception ex)
         {
