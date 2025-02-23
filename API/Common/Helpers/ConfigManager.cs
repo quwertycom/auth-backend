@@ -48,16 +48,22 @@ public static class ConfigManager
 
     private static void ValidateConfiguration(IConfiguration configuration)
     {
-        // Database settings validation
-        var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
-        var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
-        var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
-        var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        bool isTestEnvironment = environment == "Test" || environment == "Testing" || environment == "IntegrationTests";
 
-        if (string.IsNullOrEmpty(dbHost)) throw new InvalidOperationException("POSTGRES_HOST not configured");
-        if (string.IsNullOrEmpty(dbName)) throw new InvalidOperationException("POSTGRES_DB not configured");
-        if (string.IsNullOrEmpty(dbUser)) throw new InvalidOperationException("POSTGRES_USER not configured");
-        if (string.IsNullOrEmpty(dbPassword)) throw new InvalidOperationException("POSTGRES_PASSWORD not configured");
+        if (!isTestEnvironment)
+        {
+            // Database settings validation
+            var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
+            var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
+            var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
+            var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+
+            if (string.IsNullOrEmpty(dbHost)) throw new InvalidOperationException("POSTGRES_HOST not configured");
+            if (string.IsNullOrEmpty(dbName)) throw new InvalidOperationException("POSTGRES_DB not configured");
+            if (string.IsNullOrEmpty(dbUser)) throw new InvalidOperationException("POSTGRES_USER not configured");
+            if (string.IsNullOrEmpty(dbPassword)) throw new InvalidOperationException("POSTGRES_PASSWORD not configured");
+        }
 
         // JWT settings validation
         var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>();
@@ -83,13 +89,5 @@ public static class ConfigManager
 
         if (string.IsNullOrEmpty(emailSettings.FromEmail))
             throw new InvalidOperationException("Email from address is not configured");
-
-        // Log configuration status (but not sensitive values)
-        Console.WriteLine("\nConfiguration validated successfully:");
-        Console.WriteLine($"Database Host: {dbHost}");
-        Console.WriteLine($"Database Name: {dbName}");
-        Console.WriteLine($"JWT Issuer: {jwtSettings.Issuer}");
-        Console.WriteLine($"JWT Audience: {jwtSettings.Audience}");
-        Console.WriteLine($"Email Host: {emailSettings.Host}\n");
     }
 }
