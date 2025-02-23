@@ -23,7 +23,7 @@ public class RegisterWorkflowTests : TestBase
             Username = "testuser",
             FirstName = "Test",
             LastName = "User",
-            Password = "password",
+            Password = "Password123!",
             BirthDate = DateTime.UtcNow.AddYears(-20),
             Gender = UserGender.Male,
             Email = "testuser@example.com",

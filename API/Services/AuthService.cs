@@ -76,9 +76,9 @@ public class AuthService : IAuthService
                 return (false, "PHONE_NUMBER_TAKEN", "Phone number already exists, please try a different phone number.", null);
             }
 
-            if (request.Password.Length < 8)
+            if (request.Password.Length < 8 || !request.Password.Any(char.IsUpper) || !request.Password.Any(char.IsLower) || !request.Password.Any(char.IsDigit))
             {
-                return (false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters long.", null);
+                return (false, "INVALID_PASSWORD", "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.", null);
             }
 
             var hashedPassword = Hasher.Hash(request.Password);
