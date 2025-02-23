@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
 
         return response.status switch
         {
-            "INVALID_USERNAME" or "PASSWORD_TOO_SHORT" or "EMAIL_TAKEN" or "INVALID_EMAIL" or "INVALID_PHONE_NUMBER" or "PHONE_NUMBER_TAKEN" => BadRequest(new ErrorResponse
+            "INVALID_USERNAME" or "INVALID_PASSWORD" or "EMAIL_TAKEN" or "INVALID_EMAIL" or "INVALID_PHONE_NUMBER" or "PHONE_NUMBER_TAKEN" => BadRequest(new ErrorResponse
             {
                 Status = response.status,
                 Message = response.message
