@@ -21,8 +21,8 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    // [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    // [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterUserAsync([FromBody] RegisterRequest request)
     {
         if (request is null)

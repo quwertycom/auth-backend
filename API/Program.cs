@@ -5,6 +5,7 @@ using API.Configuration;
 using API.Common.Utilities.Interfaces;
 using API.Common.Utilities;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API;
 
@@ -54,6 +55,26 @@ public class Program
                 Version = "v1",
                 Description = "An ASP.NET Core Web API"
             });
+        });
+
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.InvalidModelStateResponseFactory = context =>
+            {
+                var errors = context.ModelState
+                    .Where(e => e.Value != null && e.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value?.Errors?.Select(e => e.ErrorMessage ?? "").ToArray() ?? Array.Empty<string>()
+                    );
+
+                return new BadRequestObjectResult(new
+                {
+                    Status = 400,
+                    Message = "Invalid request format",
+                    Errors = errors
+                });
+            };
         });
 
         var app = builder.Build();

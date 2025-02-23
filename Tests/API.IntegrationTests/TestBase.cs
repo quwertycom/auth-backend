@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using API.Common.Helpers;
 using Microsoft.AspNetCore.Hosting;
+using API.Services.Interfaces;
+using API.IntegrationTests.Mocks;
 
 namespace API.IntegrationTests;
 
@@ -56,6 +58,9 @@ public abstract class TestBase : IDisposable
         // Add in-memory database
         services.AddDbContext<AuthDbContext>(options => 
             options.UseInMemoryDatabase("IntegrationTestDb"));
+
+        // Reference the separated mock class
+        services.AddSingleton<IAuthService, MockAuthService>();
     }
 
     protected T GetRequiredService<T>() where T : notnull
@@ -81,6 +86,13 @@ public abstract class TestBase : IDisposable
     protected async Task<HttpResponseMessage> DeleteAsync(string endpoint)
     {
         return await _client.DeleteAsync(endpoint);
+    }
+
+    protected async Task ResetDatabase()
+    {
+        var context = GetRequiredService<AuthDbContext>();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
     }
 
     public void Dispose()
