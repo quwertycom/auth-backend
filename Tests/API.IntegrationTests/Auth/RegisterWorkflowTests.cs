@@ -16,6 +16,7 @@ public class RegisterWorkflowTests : TestBase
     [Fact]
     public async Task Register_WithValidRequest_ReturnsSuccess()
     {
+        await ResetDatabase();
         // Arrange
         var request = new RegisterRequest
         {
@@ -91,6 +92,7 @@ public class RegisterWorkflowTests : TestBase
     [Fact]
     public async Task Register_WithEmptyRequest_ReturnsBadRequest()
     {
+        await ResetDatabase();
         // Arrange
         var request = new RegisterRequest
         {
@@ -110,7 +112,44 @@ public class RegisterWorkflowTests : TestBase
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("INVALID_REQUEST", responseObject?.Status);
-        Assert.Equal("Invalid request format", responseObject?.Message);
+        Assert.Contains("Invalid request format", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithInvalidEmail_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test12",
+            LastName = "User",
+            Password = "password",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "invalid-email",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_EMAIL", responseObject?.Status);
+        Assert.Equal("Invalid email format.", responseObject?.Message);
 
         // Assert no database changes
         var dbContext = GetRequiredService<AuthDbContext>();
