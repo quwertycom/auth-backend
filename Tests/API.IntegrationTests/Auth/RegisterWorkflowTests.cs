@@ -8,6 +8,7 @@ using System.Text.Json;
 using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.TypeMapping;
+using API.Contracts.Responses.Common;
 namespace API.IntegrationTests.Auth;
 
 public class RegisterWorkflowTests : TestBase
@@ -76,5 +77,41 @@ public class RegisterWorkflowTests : TestBase
         Assert.NotNull(session.Code);
         Assert.InRange(session.Code.Length, 8, 8);
         Assert.NotEqual(default(DateTime), session.CreatedAt);
+    }
+
+    [Fact]
+    public async Task Register_WithEmptyRequest_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "",
+            FirstName = "",
+            LastName = "",
+            Password = "",
+            BirthDate = DateTime.UtcNow,
+            Email = "",
+            Gender = UserGender.Male,
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_REQUEST", responseObject?.Status);
+        Assert.Equal("Invalid request format", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
     }
 }

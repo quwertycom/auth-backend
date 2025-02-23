@@ -70,7 +70,7 @@ public class Program
 
                 return new BadRequestObjectResult(new
                 {
-                    Status = "BAD_REQUEST",
+                    Status = "INVALID_REQUEST",
                     Message = "Invalid request format",
                     Errors = errors
                 });
