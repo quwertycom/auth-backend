@@ -71,7 +71,7 @@ public class Program
                 return new BadRequestObjectResult(new
                 {
                     Status = "INVALID_REQUEST",
-                    Message = "Invalid request format",
+                    Message = "Invalid request format: " + string.Join(", ", errors.Values.SelectMany(v => v)),
                     Errors = errors
                 });
             };

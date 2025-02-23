@@ -18,10 +18,8 @@ public class RegisterRequest
     public required string LastName { get; set; }
 
     [Required(ErrorMessage = "Email is required")]
-    [EmailAddress(ErrorMessage = "Invalid email address")]
     public required string Email { get; set; }
 
-    [Phone(ErrorMessage = "Invalid phone number")]
     public string? PhoneNumber { get; set; }
 
     [Required(ErrorMessage = "BirthDate is required")]
