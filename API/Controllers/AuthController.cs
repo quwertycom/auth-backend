@@ -51,7 +51,7 @@ public class AuthController : ControllerBase
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = response.message ?? "Something went wrong, please try again later." });
             }
         }
     }
@@ -89,7 +89,7 @@ public class AuthController : ControllerBase
             }
             else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = response.message ?? "Something went wrong, please try again later." });
             }
         }
     }

@@ -8,6 +8,11 @@ using API.Common.Helpers;
 using Microsoft.AspNetCore.Hosting;
 using API.Services.Interfaces;
 using API.IntegrationTests.Mocks;
+using API.Services;
+using API.Repositories.Interfaces;
+using API.Repositories;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using API.Common.Utilities.Interfaces;
 
 namespace API.IntegrationTests;
 
@@ -51,16 +56,30 @@ public abstract class TestBase : IDisposable
 
     protected virtual void ConfigureTestServices(IServiceCollection services)
     {
-        // Remove the existing DbContext registration
-        var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AuthDbContext>));
-        if (descriptor != null) services.Remove(descriptor);
+        // 1. Configure test environment variables (Keep these)
+        Environment.SetEnvironmentVariable("POSTGRES_DB", "test_db");
+        Environment.SetEnvironmentVariable("POSTGRES_USER", "test_user");
 
-        // Add in-memory database
-        services.AddDbContext<AuthDbContext>(options => 
+        ConfigManager.AddConfiguration(services); // Keep this line to load other configurations
+
+        // 2. Override database context configuration to use InMemoryDatabase
+        services.RemoveAll<AuthDbContext>(); // Use RemoveAll<AuthDbContext>() instead
+        services.AddDbContext<AuthDbContext>(options =>
             options.UseInMemoryDatabase("IntegrationTestDb"));
 
-        // Reference the separated mock class
-        services.AddSingleton<IAuthService, MockAuthService>();
+        // Add controller services (Keep these)
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IPasswordService, PasswordService>();
+        services.AddScoped<ISessionService, SessionService>();
+
+        // Add repositories (Keep these)
+        services.AddScoped<ISessionRepository, SessionRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IVerificationRepository, VerificationRepository>();
+
+        // Mock services
+        services.AddScoped<IEmailSender, MockEmailSender>();
     }
 
     protected T GetRequiredService<T>() where T : notnull

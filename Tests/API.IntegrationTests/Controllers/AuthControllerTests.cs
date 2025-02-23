@@ -22,11 +22,10 @@ namespace API.IntegrationTests.Controllers
             // Act
             var response = await _client.PostAsync("/api/auth/register", content);
 
-            // Assert: Verify 400 BadRequest status
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
             var responseJson = await response.Content.ReadAsStringAsync();
-            Assert.Contains("\"status\":400", responseJson);  // Verify numeric status
+            Assert.Contains("\"status\":\"BAD_REQUEST\"", responseJson);  // Verify numeric status
             Assert.Contains("Invalid request format", responseJson);
         }
 
@@ -53,7 +52,7 @@ namespace API.IntegrationTests.Controllers
             
             var responseJson = await response.Content.ReadAsStringAsync();
             Assert.Contains("\"status\":\"INVALID_EMAIL\"", responseJson);
-            Assert.Contains("\"message\":\"Invalid email format\"", responseJson);
+            Assert.Contains("\"message\":\"Invalid email format.\"", responseJson);
         }
     }
 

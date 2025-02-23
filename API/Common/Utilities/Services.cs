@@ -62,6 +62,9 @@ public class Services : IServices
 
     private static void AddDbContext(WebApplicationBuilder builder)
     {
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+        if (environment == "Testing") return;
         try
         {
             builder.Services.AddDbContext<AuthDbContext>((serviceProvider, options) =>

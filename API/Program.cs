@@ -70,7 +70,7 @@ public class Program
 
                 return new BadRequestObjectResult(new
                 {
-                    Status = 400,
+                    Status = "BAD_REQUEST",
                     Message = "Invalid request format",
                     Errors = errors
                 });
@@ -94,7 +94,7 @@ public class Program
                 {
                     Success = false,
                     Status = "INTERNAL_SERVER_ERROR",
-                    Message = "An unexpected error occurred. Please try again later."
+                    Message = "An unexpected error occurred. Please try again later. " + exception?.Message
                 });
             });
         });
