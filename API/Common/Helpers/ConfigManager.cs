@@ -1,31 +1,45 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using API.Configuration;
+using System.Text.Json;
 
 namespace API.Common.Helpers;
 
 public static class ConfigManager
 {
-    private static IConfiguration? _configuration;
-
-    public static IConfiguration GetConfiguration(bool isDevelopment)
+    private static readonly string envName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "not-found";
+    public static IConfiguration GetConfiguration()
     {
-        if (_configuration != null)
-            return _configuration;
-
         var builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{(isDevelopment ? "Development" : "Production")}.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables()
-            .AddUserSecrets<Program>(optional: true);
+            .AddJsonFile("appsettings.json", optional: false);
 
-        _configuration = builder.Build();
-        return _configuration;
+        if (envName != "not-found")
+        {
+            switch (envName)
+            {
+                case "Testing":
+                    builder.AddJsonFile("appsettings.Testing.json", optional: false);
+                    break;
+                case "Development":
+                    builder.AddJsonFile("appsettings.Development.json", optional: false);
+                    builder.AddEnvironmentVariables();
+                    break;
+                case "Production":
+                    builder.AddJsonFile("appsettings.Production.json", optional: false);
+                    builder.AddEnvironmentVariables();
+                    break;
+            }
+        }
+        
+        return builder.Build();
     }
 
-    public static void AddConfiguration(IServiceCollection services, IConfiguration configuration)
+    public static void AddConfiguration(IServiceCollection services, IConfiguration? configuration = null)
     {
+        // If no configuration is provided, get the default one
+        configuration ??= GetConfiguration();
+
         // Register configuration sections as strongly-typed options
         services.Configure<DatabaseSettings>(
             configuration.GetSection("Database"));
@@ -48,10 +62,10 @@ public static class ConfigManager
 
     private static void ValidateConfiguration(IConfiguration configuration)
     {
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-        bool isTestEnvironment = environment == "Test" || environment == "Testing" || environment == "IntegrationTests";
+        var fullConfig = configuration.AsEnumerable().ToDictionary(k => k.Key, v => v.Value);
+        string configString = System.Text.Json.JsonSerializer.Serialize(fullConfig);
 
-        if (!isTestEnvironment)
+        if (envName != "Testing")
         {
             // Database settings validation
             var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
@@ -59,35 +73,37 @@ public static class ConfigManager
             var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
             var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
 
-            if (string.IsNullOrEmpty(dbHost)) throw new InvalidOperationException("POSTGRES_HOST not configured");
-            if (string.IsNullOrEmpty(dbName)) throw new InvalidOperationException("POSTGRES_DB not configured");
-            if (string.IsNullOrEmpty(dbUser)) throw new InvalidOperationException("POSTGRES_USER not configured");
-            if (string.IsNullOrEmpty(dbPassword)) throw new InvalidOperationException("POSTGRES_PASSWORD not configured");
+            if (string.IsNullOrEmpty(dbHost)) throw new InvalidOperationException($"POSTGRES_HOST not configured. Full configuration: {configString}");
+            if (string.IsNullOrEmpty(dbName)) throw new InvalidOperationException($"POSTGRES_DB not configured. Full configuration: {configString}");
+            if (string.IsNullOrEmpty(dbUser)) throw new InvalidOperationException($"POSTGRES_USER not configured. Full configuration: {configString}");
+            if (string.IsNullOrEmpty(dbPassword)) throw new InvalidOperationException($"POSTGRES_PASSWORD not configured. Full configuration: {configString}");
         }
 
         // JWT settings validation
         var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>();
         if (jwtSettings == null)
-            throw new InvalidOperationException("JWT configuration is missing");
+        {
+            throw new InvalidOperationException($"JWT configuration is missing. env: {envName}. Full configuration: {configString}");
+        }
 
         if (string.IsNullOrEmpty(jwtSettings.SecretKey))
-            throw new InvalidOperationException("JWT secret key is not configured");
+            throw new InvalidOperationException($"JWT secret key is not configured. Full configuration: {configString}");
 
         if (jwtSettings.SecretKey.Length < 32)
-            throw new InvalidOperationException("JWT secret key must be at least 32 characters long");
+            throw new InvalidOperationException($"JWT secret key must be at least 32 characters long. Full configuration: {configString}");
 
         // Email settings validation
         var emailSettings = configuration.GetSection("Email").Get<EmailSettings>();
         if (emailSettings == null)
-            throw new InvalidOperationException("Email configuration is missing");
+            throw new InvalidOperationException($"Email configuration is missing. Full configuration: {configString}");
 
         if (string.IsNullOrEmpty(emailSettings.Username))
-            throw new InvalidOperationException("Email username is not configured");
+            throw new InvalidOperationException($"Email username is not configured. Full configuration: {configString}");
 
         if (string.IsNullOrEmpty(emailSettings.Password))
-            throw new InvalidOperationException("Email password is not configured");
+            throw new InvalidOperationException($"Email password is not configured. Full configuration: {configString}");
 
         if (string.IsNullOrEmpty(emailSettings.FromEmail))
-            throw new InvalidOperationException("Email from address is not configured");
+            throw new InvalidOperationException($"Email from address is not configured. Full configuration: {configString}");
     }
 }

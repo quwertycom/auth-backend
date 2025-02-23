@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net.Http;
 using System.Net.Http.Json;
-using API;
+using API.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using API.Common.Helpers;
+using Microsoft.AspNetCore.Hosting;
 
 namespace API.IntegrationTests;
 
@@ -14,13 +17,23 @@ public abstract class TestBase : IDisposable
 
     protected TestBase()
     {
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+        Environment.SetEnvironmentVariable("DOCKER_RUNNING", "false");
+        
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
+                builder.UseEnvironment("Testing");
+                builder.ConfigureAppConfiguration((context, config) => 
+                {
+                    config.AddInMemoryCollection([
+                        new KeyValuePair<string, string?>("ASPNETCORE_ENVIRONMENT", "Testing"),
+                        new KeyValuePair<string, string?>("DOCKER_RUNNING", "false")
+                    ]);
+                });
                 builder.ConfigureServices(services =>
                 {
-                    // Configure services for integration testing
-                    // This will use the real database from test settings
+                    ConfigManager.AddConfiguration(services);
                     ConfigureTestServices(services);
                 });
             });
@@ -36,7 +49,13 @@ public abstract class TestBase : IDisposable
 
     protected virtual void ConfigureTestServices(IServiceCollection services)
     {
-        // Override this in derived classes to configure specific test services
+        // Remove the existing DbContext registration
+        var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AuthDbContext>));
+        if (descriptor != null) services.Remove(descriptor);
+
+        // Add in-memory database
+        services.AddDbContext<AuthDbContext>(options => 
+            options.UseInMemoryDatabase("IntegrationTestDb"));
     }
 
     protected T GetRequiredService<T>() where T : notnull
@@ -66,6 +85,9 @@ public abstract class TestBase : IDisposable
 
     public void Dispose()
     {
+        // Clean up environment variables
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
+        Environment.SetEnvironmentVariable("DOCKER_RUNNING", null);
         _scope.Dispose();
         _client.Dispose();
         _factory.Dispose();
