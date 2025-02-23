@@ -192,9 +192,6 @@
         {
             "label": "🧪 Run Integration Tests",
             "dependsOrder": "sequence",
-            "dependsOn": [
-                "🛢️ Start Database"
-            ],
             "command": "dotnet",
             "type": "process",
             "args": [
