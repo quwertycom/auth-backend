@@ -32,28 +32,29 @@ public class AuthController : ControllerBase
 
         var response = await _authService.RegisterUserAsync(request);
 
-        if (response.isSuccess)
+        if (response.isSuccess && response.status == "OTP_SENT" && response.verificationSessionID != null)
         {
-            if (response.status == "OTP_SENT" && response.verificationSessionID != null)
+            return Ok(new RegisterResponse
             {
-                return Ok(new RegisterResponse { Status = "SUCCESS", Message = "OTP has been sent to your email. Please verify your email and login.", VerificationSessionID = response.verificationSessionID.Value });
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
-            }
+                Status = "SUCCESS",
+                Message = "OTP has been sent to your email. Please verify your email and login.",
+                VerificationSessionID = response.verificationSessionID.Value
+            });
         }
-        else
+
+        return response.status switch
         {
-            if (response.status == "USERNAME_INVALID" || response.status == "PASSWORD_TOO_SHORT" || response.status == "EMAIL_TAKEN" || response.status == "INVALID_EMAIL" || response.status == "PHONE_NUMBER_TAKEN")
+            "INVALID_USERNAME" or "PASSWORD_TOO_SHORT" or "EMAIL_TAKEN" or "INVALID_EMAIL" or "INVALID_PHONE_NUMBER" or "PHONE_NUMBER_TAKEN" => BadRequest(new ErrorResponse
             {
-                return BadRequest(new ErrorResponse { Status = response.status, Message = response.message });
-            }
-            else
+                Status = response.status,
+                Message = response.message
+            }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse { Status = "INTERNAL_SERVER_ERROR", Message = response.message ?? "Something went wrong, please try again later." });
-            }
-        }
+                Status = "INTERNAL_SERVER_ERROR",
+                Message = response.message ?? "Something went wrong, please try again later."
+            })
+        };
     }
 
     [HttpPost("register/verify-email")]

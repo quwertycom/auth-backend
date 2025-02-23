@@ -162,4 +162,42 @@ public class RegisterWorkflowTests : TestBase
         Assert.Empty(emails);
         Assert.Empty(phoneNumbers);
     }
+
+    [Fact]
+    public async Task Register_WithInvalidUsername_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser@123",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "password",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_USERNAME", responseObject?.Status);
+        Assert.Equal("Invalid username format.", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
 }
