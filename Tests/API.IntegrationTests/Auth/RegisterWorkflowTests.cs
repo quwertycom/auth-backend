@@ -26,6 +26,7 @@ public class RegisterWorkflowTests : TestBase
             BirthDate = DateTime.UtcNow.AddYears(-20),
             Gender = UserGender.Male,
             Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
         };
 
         // Act
@@ -44,6 +45,7 @@ public class RegisterWorkflowTests : TestBase
         var users = await dbContext.Users
             .Where(u => u.Username == request.Username)
             .Include(u => u.EmailAddresses)
+            .Include(u => u.PhoneNumbers)
             .ToListAsync();
 
         // Assert Response
@@ -68,6 +70,13 @@ public class RegisterWorkflowTests : TestBase
         var emailAddress = user.EmailAddresses.Single();
         Assert.Equal(request.Email, emailAddress.Email);
         Assert.Contains(user.EmailAddresses, e => e.Type == EmailType.Primary);
+
+        // Assert phone number
+        // Assert.Single(user.PhoneNumbers);
+        // var phoneNumber = user.PhoneNumbers.Single();
+        // Assert.Equal(request.PhoneNumber, phoneNumber.Phone);
+        // Assert.Contains(user.PhoneNumbers, p => p.Type == PhoneType.Primary);
+        // TODO: Add phone number assertion, currently not implemented in the database
         
         // Assert verification session
         Assert.Single(verificationSessions);
