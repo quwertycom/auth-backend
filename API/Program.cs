@@ -80,16 +80,9 @@ public class Program
 
         var app = builder.Build();
 
-        // Consolidated middleware pipeline
         app.ConfigurePipeline();
 
-        // Environment-specific configuration remains here
-        if (!app.Environment.IsDevelopment())
-        {
-            app.UseHsts();
-            app.UseHttpsRedirection();
-        }
-
+        // Removed environment check here - now handled in pipeline
         app.Urls.Add("http://0.0.0.0:8000");
         app.Run();
     }
