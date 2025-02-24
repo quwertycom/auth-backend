@@ -19,11 +19,6 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
-        // Configure strongly-typed settings
-        builder.Services.Configure<JwtSettings>(
-            builder.Configuration.GetSection("Jwt"));
-        builder.Services.Configure<EmailSettings>(
-            builder.Configuration.GetSection("Email"));
         // Add services via ServiceInitializer helper
         var services = new Common.Utilities.Services(builder);
         services.Initialize();
