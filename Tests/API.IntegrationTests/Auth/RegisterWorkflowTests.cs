@@ -90,6 +90,82 @@ public class RegisterWorkflowTests : TestBase
     }
 
     [Fact]
+    public async Task Register_WithBirthDateInFuture_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "Password123!",
+            BirthDate = DateTime.UtcNow.AddDays(1),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_BIRTHDATE", responseObject?.Status);
+        Assert.Equal("BirthDate must be in the past", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithTooYoungBirthDate_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "Password123!",
+            BirthDate = DateTime.UtcNow.AddYears(-5),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_BIRTHDATE", responseObject?.Status);
+        Assert.Contains("User must be at least 16 years old", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
     public async Task Register_WithEmptyRequest_ReturnsBadRequest()
     {
         await ResetDatabase();
@@ -239,4 +315,345 @@ public class RegisterWorkflowTests : TestBase
         Assert.Empty(phoneNumbers);
     }
 
+    [Fact]
+    public async Task Register_WithTooShortPassword_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "Pass1!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_PASSWORD", responseObject?.Status);
+        Assert.Equal("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithPasswordWithoutCapitalLetter_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "password123!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_PASSWORD", responseObject?.Status);
+        Assert.Equal("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithPasswordWithoutSmallLetter_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "PASSWORD123!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_PASSWORD", responseObject?.Status);
+        Assert.Equal("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithPasswordWithoutNumber_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "Password!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_PASSWORD", responseObject?.Status);
+        Assert.Equal("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithMissingUsername_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "Password123!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_REQUEST", responseObject?.Status);
+        Assert.Contains("Username is required", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithMissingFirstName_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "",
+            LastName = "User",
+            Password = "Password123!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_REQUEST", responseObject?.Status);
+        Assert.Contains("FirstName is required", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithMissingLastName_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "",
+            Password = "Password123!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_REQUEST", responseObject?.Status);
+        Assert.Contains("LastName is required", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithMissingPassword_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "testuser@example.com",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_REQUEST", responseObject?.Status);
+        Assert.Contains("Password is required", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
+
+    [Fact]
+    public async Task Register_WithMissingEmail_ReturnsBadRequest()
+    {
+        await ResetDatabase();
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            Password = "Password123!",
+            BirthDate = DateTime.UtcNow.AddYears(-20),
+            Gender = UserGender.Male,
+            Email = "",
+            PhoneNumber = "+1234567890",
+        };
+
+        // Act
+        var response = await PostAsync("/api/auth/register", request);
+        var responseObject = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_REQUEST", responseObject?.Status);
+        Assert.Contains("Email is required", responseObject?.Message);
+
+        // Assert no database changes
+        var dbContext = GetRequiredService<AuthDbContext>();
+        var users = await dbContext.Users.Where(u => u.Username == request.Username).ToListAsync();
+        var verificationSessions = await dbContext.VerificationSessions.Where(vs => vs.Email != null && vs.Email.Email == request.Email).ToListAsync();
+        var emails = await dbContext.UserEmails.Where(e => e.Email == request.Email).ToListAsync();
+        var phoneNumbers = await dbContext.UserPhoneNumbers.Where(p => p.Phone == request.PhoneNumber).ToListAsync();
+        Assert.Empty(users);
+        Assert.Empty(verificationSessions);
+        Assert.Empty(emails);
+        Assert.Empty(phoneNumbers);
+    }
 }
