@@ -41,6 +41,58 @@
             "problemMatcher": []
         },
         {
+            "label": "🛠️ Build (Docker)",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml build",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "🛠️ Build (Local)",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Auth.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "🛠️ Build API (Docker)",
+            "type": "shell",
+            "command": "docker compose -f docker-compose.dev.yml build api",
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "🛠️ Build API (Local)",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/API/API.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            }
+        },
+        {
             "label": "🛢️ Start Database",
             "type": "shell",
             "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up db; else docker compose -f docker-compose.dev.yml up db; fi",
@@ -385,4 +437,4 @@
             "default": "NewMigration"
         }
     ]
-} 
+}
