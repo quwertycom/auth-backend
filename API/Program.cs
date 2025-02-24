@@ -6,6 +6,7 @@ using API.Common.Utilities.Interfaces;
 using API.Common.Utilities;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using API.Middleware;
 
 namespace API;
 
@@ -79,51 +80,17 @@ public class Program
 
         var app = builder.Build();
 
-        // Add global error handling middleware FIRST in pipeline
-        app.UseExceptionHandler(errorApp =>
-        {
-            errorApp.Run(async context =>
-            {
-                context.Response.ContentType = "application/json";
-                var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
-                var exception = exceptionHandlerFeature?.Error;
-
-                // Log error here if needed (requires ILogger injection)
-                
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    Success = false,
-                    Status = "INTERNAL_SERVER_ERROR",
-                    Message = "An unexpected error occurred. Please try again later. " + exception?.Message
-                });
-            });
-        });
-
-        // Configure the HTTP request pipeline
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-        }
-
-        // Use CORS and other middleware in correct order
+        // Middleware pipeline configuration
+        app.ConfigureGlobalErrorHandler();
         app.UseRouting();
         app.UseCors();
-
-        // Configure Swagger
-        app.UseSwagger(c =>
-        {
-            c.RouteTemplate = "api/docs/{documentName}/swagger.json";
-        });
-
-        app.UseSwaggerUI(c =>
-        {
-            c.SwaggerEndpoint("/api/docs/v1/swagger.json", "qAuth API V1");
-            c.RoutePrefix = "api/docs";
-        });
-
-        // Add authentication and authorization
+        app.ConfigureSwagger();
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Map endpoints
+        app.MapControllers();
+        app.ConfigureHealthChecks();
 
         // Configure HTTPS redirection conditionally
         if (!app.Environment.IsDevelopment())
@@ -131,10 +98,6 @@ public class Program
             app.UseHsts();
             app.UseHttpsRedirection();
         }
-
-        // Map endpoints
-        app.MapControllers();
-        app.MapHealthChecks("/health");
 
         // Explicitly bind to all interfaces
         app.Urls.Add("http://0.0.0.0:8000");
