@@ -28,24 +28,13 @@ public class Program
         var services = new Common.Utilities.Services(builder);
         services.Initialize();
         
+        builder.Services.ConfigureCors();
 
         // Add services to the container
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddHealthChecks();
         builder.Services.AddProblemDetails();
-
-        // Configure CORS - Update with specific origins in production
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.SetIsOriginAllowed(_ => true) // Be careful with this in production
-                      .AllowAnyMethod()
-                      .AllowAnyHeader()
-                      .AllowCredentials();
-            });
-        });
 
         // Configure Swagger
         builder.Services.AddSwaggerGen(c =>
