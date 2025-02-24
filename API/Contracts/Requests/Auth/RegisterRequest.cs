@@ -6,15 +6,12 @@ namespace API.Contracts.Requests.Auth;
 public class RegisterRequest
 {
     [Required(ErrorMessage = "Username is required")]
-    [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters")]
     public required string Username { get; set; }
 
     [Required(ErrorMessage = "FirstName is required")]
-    [StringLength(50, MinimumLength = 2, ErrorMessage = "FirstName must be between 2 and 50 characters")]
     public required string FirstName { get; set; }
 
     [Required(ErrorMessage = "LastName is required")]
-    [StringLength(50, MinimumLength = 2, ErrorMessage = "LastName must be between 2 and 50 characters")]
     public required string LastName { get; set; }
 
     [Required(ErrorMessage = "Email is required")]
@@ -29,6 +26,5 @@ public class RegisterRequest
     public required UserGender Gender { get; set; }
 
     [Required(ErrorMessage = "Password is required")]
-    [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
     public required string Password { get; set; }
 }
