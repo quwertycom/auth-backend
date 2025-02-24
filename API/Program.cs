@@ -80,28 +80,17 @@ public class Program
 
         var app = builder.Build();
 
-        // Middleware pipeline configuration
-        app.ConfigureGlobalErrorHandler();
-        app.UseRouting();
-        app.UseCors();
-        app.ConfigureSwagger();
-        app.UseAuthentication();
-        app.UseAuthorization();
+        // Consolidated middleware pipeline
+        app.ConfigurePipeline();
 
-        // Map endpoints
-        app.MapControllers();
-        app.ConfigureHealthChecks();
-
-        // Configure HTTPS redirection conditionally
+        // Environment-specific configuration remains here
         if (!app.Environment.IsDevelopment())
         {
             app.UseHsts();
             app.UseHttpsRedirection();
         }
 
-        // Explicitly bind to all interfaces
         app.Urls.Add("http://0.0.0.0:8000");
-
         app.Run();
     }
 }
