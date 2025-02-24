@@ -11,6 +11,10 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace API;
 
@@ -18,6 +22,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        // Log "Hello World" to the console
+        Console.WriteLine("Hello World");
+
         // Enable legacy timestamp behavior for Npgsql
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -29,17 +36,23 @@ public class Program
         
         builder.Services.ConfigureCors();
 
-        // Add services to the container
+        // Environment-specific service configuration
+        if (builder.Environment.IsDevelopment())
+        {
+            ConfigureDevelopmentServices(builder.Services);
+        }
+        else
+        {
+            ConfigureProductionServices(builder.Services);
+        }
+
+        // Common services
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddHealthChecks();
+        builder.Services.AddSingleton<IEnvironmentVariableProvider, EnvironmentVariableProvider>();
+        builder.Services.AddHealthChecks()
+            .AddCheck("Environment", () => ConfigManager.ValidateEnvironmentVariables(builder.Configuration));
         builder.Services.AddProblemDetails();
-        builder.Services.AddHsts(options => 
-        {
-            options.MaxAge = TimeSpan.FromDays(365);
-            options.IncludeSubDomains = true;
-            options.Preload = true;
-        });
         builder.Services.AddRateLimiter(options => 
         {
             options.RejectionStatusCode = 429;
@@ -85,25 +98,53 @@ public class Program
             };
         });
 
+        // Replace manual environment checks with ASP.NET Core conventions
+        if (!builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddHsts(options => 
+            {
+                options.MaxAge = TimeSpan.FromDays(365);
+                options.IncludeSubDomains = true;
+                options.Preload = true;
+            });
+        }
+
+        // Environment-specific service configuration
+        builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddSingleton<IDeveloperTools, DeveloperTools>();
+        }
+        else if (builder.Environment.IsEnvironment("Testing"))
+        {
+            builder.Services.AddScoped<IMockServices, TestingMockServices>();
+        }
+
         var app = builder.Build();
 
-        app.ConfigurePipeline();
-
-        app.UseExceptionHandler(exceptionHandlerApp =>
+        // Configure pipeline based on environment
+        if (app.Environment.IsDevelopment())
         {
-            exceptionHandlerApp.Run(async context =>
+            app.UseDeveloperExceptionPage();
+        }
+        else 
+        {
+            app.UseExceptionHandler(exceptionHandlerApp => 
             {
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                context.Response.ContentType = "application/problem+json";
-                await context.Response.WriteAsJsonAsync(new ProblemDetails {
-                    Title = "An error occurred",
-                    Detail = "See logs for details",
-                    Status = 500
+                exceptionHandlerApp.Run(async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsJsonAsync(new ProblemDetails {
+                        Title = "An error occurred",
+                        Detail = "See logs for details",
+                        Status = 500
+                    });
                 });
             });
-        });
-
-        app.UseHsts();
+            app.UseHsts();
+        }
 
         app.UseHttpsRedirection();
 
@@ -134,5 +175,17 @@ public class Program
         // Removed environment check here - now handled in pipeline
         app.Urls.Add("http://0.0.0.0:8000");
         app.Run();
+    }
+
+    private static void ConfigureDevelopmentServices(IServiceCollection services)
+    {
+        services.AddDatabaseDeveloperPageExceptionFilter();
+        services.AddSingleton<IDeveloperEmailService, LocalEmailService>();
+    }
+
+    private static void ConfigureProductionServices(IServiceCollection services)
+    {
+        services.AddApplicationInsightsTelemetry();
+        services.AddScoped<IEmailService, SendGridEmailService>();
     }
 }

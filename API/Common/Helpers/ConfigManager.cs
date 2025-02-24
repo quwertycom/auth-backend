@@ -2,42 +2,59 @@ using API.Configuration;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace API.Common.Helpers;
 
 public static class ConfigManager
 {
     private static readonly string envName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "not-found";
+    
+    private static bool IsProductionLikeEnvironment => envName != "Development" && envName != "Testing";
+
     public static IConfiguration GetConfiguration()
     {
         var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false);
+            .SetBasePath(Directory.GetCurrentDirectory());
 
-        if (envName != "not-found")
+        // In non-Development environments, prioritize environment variables
+        if (envName != "Development")
         {
-            switch (envName)
-            {
-                case "Testing":
-                    builder.AddJsonFile("appsettings.Testing.json", optional: false);
-                    break;
-                case "Development":
-                    builder.AddJsonFile("appsettings.Development.json", optional: false);
-                    builder.AddEnvironmentVariables();
-                    break;
-                case "Production":
-                    builder.AddJsonFile("appsettings.Production.json", optional: false);
-                    builder.AddEnvironmentVariables();
-                    break;
-            }
+            builder.AddEnvironmentVariables();
         }
-        
+
+        builder
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile($"appsettings.{envName}.json", optional: true);
+
+        // In Development, load environment variables last to allow overriding in appsettings.Development.json if needed for local testing.
+        if (envName == "Development")
+        {
+            builder.AddEnvironmentVariables();
+        }
+
         return builder.Build();
     }
 
     public static void AddConfiguration(IServiceCollection services, IConfiguration? configuration = null)
     {
         configuration ??= GetConfiguration();
+
+        // Add required environment variables validation first
+        if (IsProductionLikeEnvironment)
+        {
+            services.AddOptions<RequiredEnvironmentSettings>()
+                .Configure(settings =>
+                {
+                    settings.PostgresHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? string.Empty;
+                    settings.PostgresDb = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? string.Empty;
+                    settings.PostgresUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? string.Empty;
+                    settings.PostgresPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? string.Empty;
+                    settings.JwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? string.Empty;
+                })
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+        }
         
         // Proper options registration with validation
         services.AddOptions<DatabaseSettings>()
@@ -50,72 +67,55 @@ public static class ConfigManager
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        services.Configure<EmailSettings>(
-            configuration.GetSection("Email"));
+        services.AddOptions<EmailSettings>()
+            .Bind(configuration.GetSection("Email"))
+            .Validate(settings => 
+                !string.IsNullOrEmpty(settings.Username) && 
+                !string.IsNullOrEmpty(settings.Password) && 
+                !string.IsNullOrEmpty(settings.FromEmail),
+                "Email settings are incomplete")
+            .ValidateOnStart();
 
         services.Configure<PasswordHasherSettings>(
             configuration.GetSection("PasswordHasher"));
 
         services.Configure<SnowflakeSettings>(
             configuration.GetSection("Snowflake"));
-
-        // Validate required configuration
-        ValidateConfiguration(configuration);
     }
 
-    private static void ValidateConfiguration(IConfiguration configuration)
+    public static HealthCheckResult ValidateEnvironmentVariables(IConfiguration configuration)
     {
-        var fullConfig = configuration.AsEnumerable().ToDictionary(k => k.Key, v => v.Value);
-        string configString = System.Text.Json.JsonSerializer.Serialize(fullConfig);
-
-        if (envName != "Testing")
+        if (!IsProductionLikeEnvironment)
         {
-            // Database settings validation
-            var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
-            var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
-            var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
-            var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
-
-            if (string.IsNullOrEmpty(dbHost)) throw new InvalidOperationException($"POSTGRES_HOST not configured. Full configuration: {configString}");
-            if (string.IsNullOrEmpty(dbName)) throw new InvalidOperationException($"POSTGRES_DB not configured. Full configuration: {configString}");
-            if (string.IsNullOrEmpty(dbUser)) throw new InvalidOperationException($"POSTGRES_USER not configured. Full configuration: {configString}");
-            if (string.IsNullOrEmpty(dbPassword)) throw new InvalidOperationException($"POSTGRES_PASSWORD not configured. Full configuration: {configString}");
+            return HealthCheckResult.Healthy("Environment variable validation skipped in non-production environments");
         }
 
-        // JWT settings validation
-        var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>();
-        if (jwtSettings == null)
+        try
         {
-            throw new InvalidOperationException($"JWT configuration is missing. env: {envName}. Full configuration: {configString}");
+            var settings = new RequiredEnvironmentSettings
+            {
+                PostgresHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? string.Empty,
+                PostgresDb = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? string.Empty,
+                PostgresUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? string.Empty,
+                PostgresPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? string.Empty,
+                JwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? string.Empty
+            };
+
+            var context = new ValidationContext(settings);
+            var results = new List<ValidationResult>();
+            
+            if (!Validator.TryValidateObject(settings, context, results, true))
+            {
+                var errors = string.Join(", ", results.Select(r => r.ErrorMessage));
+                return HealthCheckResult.Unhealthy($"Missing or invalid environment variables: {errors}");
+            }
+
+            return HealthCheckResult.Healthy();
         }
-
-        if (string.IsNullOrEmpty(jwtSettings.SecretKey))
-            throw new InvalidOperationException($"JWT secret key is not configured. Full configuration: {configString}");
-
-        if (jwtSettings.SecretKey.Length < 32)
-            throw new InvalidOperationException($"JWT secret key must be at least 32 characters long. Full configuration: {configString}");
-
-        // Email settings validation
-        var emailSettings = configuration.GetSection("Email").Get<EmailSettings>();
-        if (emailSettings == null)
-            throw new InvalidOperationException($"Email configuration is missing. Full configuration: {configString}");
-
-        if (string.IsNullOrEmpty(emailSettings.Username))
-            throw new InvalidOperationException($"Email username is not configured. Full configuration: {configString}");
-
-        if (string.IsNullOrEmpty(emailSettings.Password))
-            throw new InvalidOperationException($"Email password is not configured. Full configuration: {configString}");
-
-        if (string.IsNullOrEmpty(emailSettings.FromEmail))
-            throw new InvalidOperationException($"Email from address is not configured. Full configuration: {configString}");
-    }
-
-    private static void ValidateJwtSettings(JwtSettings settings)
-    {
-        if (Encoding.UTF8.GetByteCount(settings.SecretKey) < 32)
-            throw new OptionsValidationException("Jwt:SecretKey", 
-                typeof(JwtSettings), 
-                new[] { "Secret key must be at least 32 bytes (256 bits)" });
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy($"Error validating environment variables: {ex.Message}");
+        }
     }
 }
 
