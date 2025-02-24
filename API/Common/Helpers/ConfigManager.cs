@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using API.Configuration;
-using System.Text.Json;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace API.Common.Helpers;
 
@@ -37,15 +37,18 @@ public static class ConfigManager
 
     public static void AddConfiguration(IServiceCollection services, IConfiguration? configuration = null)
     {
-        // If no configuration is provided, get the default one
         configuration ??= GetConfiguration();
+        
+        // Proper options registration with validation
+        services.AddOptions<DatabaseSettings>()
+            .Bind(configuration.GetSection("Database"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
-        // Register configuration sections as strongly-typed options
-        services.Configure<DatabaseSettings>(
-            configuration.GetSection("Database"));
-
-        services.Configure<JwtSettings>(
-            configuration.GetSection("Jwt"));
+        services.AddOptions<JwtSettings>()
+            .Bind(configuration.GetSection("Jwt"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.Configure<EmailSettings>(
             configuration.GetSection("Email"));
@@ -106,4 +109,26 @@ public static class ConfigManager
         if (string.IsNullOrEmpty(emailSettings.FromEmail))
             throw new InvalidOperationException($"Email from address is not configured. Full configuration: {configString}");
     }
+
+    private static void ValidateJwtSettings(JwtSettings settings)
+    {
+        if (Encoding.UTF8.GetByteCount(settings.SecretKey) < 32)
+            throw new OptionsValidationException("Jwt:SecretKey", 
+                typeof(JwtSettings), 
+                new[] { "Secret key must be at least 32 bytes (256 bits)" });
+    }
+}
+
+// Add validation attributes to settings classes
+public class JwtSettings
+{
+    [Required]
+    [MinLength(32)]
+    public string SecretKey { get; set; } = null!;
+    
+    [Required]
+    public string Issuer { get; set; } = null!;
+    
+    [Required]
+    public string Audience { get; set; } = null!;
 }

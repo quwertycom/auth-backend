@@ -20,13 +20,15 @@ public class AuthService : IAuthService
     private readonly IVerificationRepository _verificationRepository;
     private readonly IEmailSender _emailSender;
     private readonly SemaphoreSlim _verificationLock = new SemaphoreSlim(1, 1);
+    private readonly JwtService _jwtService;
 
-    public AuthService(IUserRepository userRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository, IEmailSender emailSender)
+    public AuthService(IUserRepository userRepository, ISessionRepository sessionRepository, IVerificationRepository verificationRepository, IEmailSender emailSender, JwtService jwtService)
     {
         _userRepository = userRepository;
         _sessionRepository = sessionRepository;
         _verificationRepository = verificationRepository;
         _emailSender = emailSender;
+        _jwtService = jwtService;
     }
 
     public async Task<(bool isSuccess, string status, string message, long? verificationSessionID)> RegisterUserAsync(RegisterRequest request)
@@ -234,13 +236,13 @@ public class AuthService : IAuthService
             string accessTokenString;
             string refreshTokenString;
 
-            var refreshTokenResponse = JWT.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null));
+            var refreshTokenResponse = _jwtService.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null));
 
             if (refreshTokenResponse.isSuccess && refreshTokenResponse.token != null)
             {
                 refreshTokenString = refreshTokenResponse.token;
 
-                var accessTokenResponse = JWT.GenerateAccessToken(refreshTokenString);
+                var accessTokenResponse = _jwtService.GenerateAccessToken(refreshTokenString);
 
                 if (accessTokenResponse.isSuccess && accessTokenResponse.token != null)
                 {

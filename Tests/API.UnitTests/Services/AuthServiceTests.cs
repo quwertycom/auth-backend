@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System;
 using API.Common.Utilities.Interfaces;
 using API.UnitTests.Utilities;
+using Moq;
+using Microsoft.Extensions.Options;
 namespace API.UnitTests.Services;
 
 public class AuthServiceTests
@@ -48,9 +50,19 @@ public class AuthServiceTests
         
         Snowflake.Initialize(_configuration);
         Hasher.Initialize(_configuration);
-        JWT.Initialize(_configuration);
         
-        _authService = new AuthService(_userRepository, _sessionRepository, _verificationRepository, _emailSender);
+        // Add mock for JwtService
+        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettings>>());
+        mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
+            .Returns((true, "SUCCESS", "", "mock_token"));
+        
+        _authService = new AuthService(
+            _userRepository, 
+            _sessionRepository, 
+            _verificationRepository, 
+            _emailSender,
+            mockJwtService.Object
+        );
     }
 
     //---------------------------------
@@ -89,9 +101,9 @@ public class AuthServiceTests
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Assert.True(isSuccess);
-        Assert.Equal("OTP_SENT", status);
-        Assert.NotNull(verificationSessionID);
+        Xunit.Assert.True(isSuccess);
+        Xunit.Assert.Equal("OTP_SENT", status);
+        Xunit.Assert.NotNull(verificationSessionID);
         await _emailSender.Received(1).SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -114,9 +126,9 @@ public class AuthServiceTests
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INVALID_EMAIL", status);
-        Assert.Null(verificationSessionID);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INVALID_EMAIL", status);
+        Xunit.Assert.Null(verificationSessionID);
     }
 
     [Fact]
@@ -141,9 +153,9 @@ public class AuthServiceTests
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("USERNAME_TAKEN", status);
-        Assert.Null(verificationSessionID);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("USERNAME_TAKEN", status);
+        Xunit.Assert.Null(verificationSessionID);
     }
 
     [Fact]
@@ -174,9 +186,9 @@ public class AuthServiceTests
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("EMAIL_TAKEN", status);
-        Assert.Null(verificationSessionID);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("EMAIL_TAKEN", status);
+        Xunit.Assert.Null(verificationSessionID);
     }
 
     [Fact]
@@ -210,9 +222,9 @@ public class AuthServiceTests
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("PHONE_NUMBER_TAKEN", status);
-        Assert.Null(verificationSessionID);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("PHONE_NUMBER_TAKEN", status);
+        Xunit.Assert.Null(verificationSessionID);
     }
 
     [Fact]
@@ -234,9 +246,9 @@ public class AuthServiceTests
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("PASSWORD_TOO_SHORT", status);
-        Assert.Null(verificationSessionID);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("PASSWORD_TOO_SHORT", status);
+        Xunit.Assert.Null(verificationSessionID);
     }
 
     [Fact]
@@ -261,9 +273,9 @@ public class AuthServiceTests
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INTERNAL_SERVER_ERROR", status);
-        Assert.Null(verificationSessionID);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INTERNAL_SERVER_ERROR", status);
+        Xunit.Assert.Null(verificationSessionID);
     }
 
     [Fact]
@@ -295,8 +307,8 @@ public class AuthServiceTests
             var result = await _authService.RegisterUserAsync(request);
 
             // Assert
-            Assert.False(result.isSuccess);
-            Assert.Equal("INVALID_EMAIL", result.status);
+            Xunit.Assert.False(result.isSuccess);
+            Xunit.Assert.Equal("INVALID_EMAIL", result.status);
         }
     }
 
@@ -347,8 +359,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.True(isSuccess);
-        Assert.Equal("SUCCESS", status);
+        Xunit.Assert.True(isSuccess);
+        Xunit.Assert.Equal("SUCCESS", status);
     }
 
     [Fact]
@@ -369,8 +381,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("NOT_FOUND", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("NOT_FOUND", status);
     }
 
     [Fact]
@@ -407,8 +419,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INVALID_OTP", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INVALID_OTP", status);
     }
 
     [Fact]
@@ -439,8 +451,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("ALREADY_USED", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("ALREADY_USED", status);
     }
 
     [Fact]
@@ -472,8 +484,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("EXPIRED", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("EXPIRED", status);
     }
 
     [Fact]
@@ -511,8 +523,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("NOT_FOUND", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("NOT_FOUND", status);
     }
 
     [Fact]
@@ -557,8 +569,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("NOT_FOUND", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("NOT_FOUND", status);
     }
 
     [Fact]
@@ -612,8 +624,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INVALID_SESSION", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INVALID_SESSION", status);
     }
 
     [Fact]
@@ -634,8 +646,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _) = await _authService.VerifyEmailAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INTERNAL_SERVER_ERROR", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INTERNAL_SERVER_ERROR", status);
     }
 
     //---------------------------------
@@ -663,18 +675,24 @@ public class AuthServiceTests
         _sessionRepository.AddSession(Arg.Any<Session>()).Returns(Task.CompletedTask);
         _sessionRepository.AddToken(Arg.Any<Token>()).Returns(Task.CompletedTask);
         
+        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettings>>());
+        mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
+            .Returns((true, "SUCCESS", "", "mock_token"));
+        
         var authService = new AuthService(
             _userRepository, 
             _sessionRepository, 
             _verificationRepository, 
-            _emailSender);
+            _emailSender,
+            mockJwtService.Object
+        );
 
         // Act
         var (isSuccess, status, _, accessToken, refreshToken) = await authService.LoginAsync(request);
 
         // Assert
-        Assert.True(isSuccess);
-        Assert.Equal("SUCCESS", status);
+        Xunit.Assert.True(isSuccess);
+        Xunit.Assert.Equal("SUCCESS", status);
     }
 
     [Fact]
@@ -700,8 +718,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("ACCOUNT_LOCKED", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("ACCOUNT_LOCKED", status);
     }
 
     [Fact]
@@ -727,8 +745,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("USER_INACTIVE", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("USER_INACTIVE", status);
     }
 
     [Fact]
@@ -745,8 +763,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INVALID_REQUEST", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INVALID_REQUEST", status);
     }
 
     [Fact]
@@ -763,8 +781,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INVALID_REQUEST", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INVALID_REQUEST", status);
     }
 
     [Fact]
@@ -790,8 +808,8 @@ public class AuthServiceTests
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("ACCOUNT_DELETED", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("ACCOUNT_DELETED", status);
     }
 
     [Fact]
@@ -813,16 +831,30 @@ public class AuthServiceTests
         _userRepository.GetUserByUsername(request.Username)
             .Returns(Task.FromResult<User?>(validUser));
         
+        // Add mock JwtService
+        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettings>>());
+        mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
+            .Returns((true, "SUCCESS", "", "mock_token"));
+
+        // Create AuthService with all dependencies
+        var authService = new AuthService(
+            _userRepository, 
+            _sessionRepository, 
+            _verificationRepository, 
+            _emailSender,
+            mockJwtService.Object
+        );
+        
         // Force token generation failure
         _sessionRepository.AddToken(Arg.Any<Token>())
             .ThrowsAsync(new Exception("Token storage failed"));
 
         // Act
-        var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
+        var (isSuccess, status, _, _, _) = await authService.LoginAsync(request);
 
         // Assert
-        Assert.False(isSuccess);
-        Assert.Equal("INTERNAL_SERVER_ERROR", status);
+        Xunit.Assert.False(isSuccess);
+        Xunit.Assert.Equal("INTERNAL_SERVER_ERROR", status);
     }
 
     //---------------------------------
@@ -879,7 +911,7 @@ public class AuthServiceTests
         var results = await Task.WhenAll(task1, task2);
 
         // Assert
-        Assert.Equal(1, results.Count(r => r.isSuccess));
-        Assert.Contains(results, r => r.status == "ALREADY_USED");
+        Xunit.Assert.Equal(1, results.Count(r => r.isSuccess));
+        Xunit.Assert.Contains(results, r => r.status == "ALREADY_USED");
     }
 }

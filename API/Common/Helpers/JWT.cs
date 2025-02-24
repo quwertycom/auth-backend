@@ -11,39 +11,24 @@ using API.Configuration;
 
 namespace API.Common.Helpers;
 
-public static class JWT
+public class JwtService
 {
-    private static string _secretKey = string.Empty;
-    private static string _issuer = string.Empty;
-    private static string _audience = string.Empty;
-    private static bool _isInitialized = false;
+    private readonly JwtSettings _settings;
 
-    public static void Initialize(IConfiguration configuration)
+    public JwtService(IOptions<JwtSettings> options)
     {
-        if (_isInitialized) return;
-
-        var settings = configuration.GetSection("Jwt").Get<JwtSettings>()
-            ?? throw new InvalidOperationException("JWT settings are not configured");
-
-        _secretKey = settings.SecretKey;
-        _issuer = settings.Issuer;
-        _audience = settings.Audience;
-
-        if (Encoding.UTF8.GetBytes(_secretKey).Length < 32)
-        {
-            throw new InvalidOperationException("JWT secret key must be at least 32 bytes (256 bits) long");
-        }
-
-        _isInitialized = true;
+        _settings = options.Value;
+        ValidateSettings();
     }
 
-    public static (bool isSuccess, string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
+    private void ValidateSettings()
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("JWT helper is not initialized. Call Initialize() first.");
-        }
+        if (Encoding.UTF8.GetBytes(_settings.SecretKey).Length < 32)
+            throw new InvalidOperationException("JWT secret key must be at least 32 bytes");
+    }
 
+    public (bool isSuccess, string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
+    {
         try
         {
             // Validate required IDs based on target
@@ -60,7 +45,7 @@ public static class JWT
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_secretKey);
+            var key = Encoding.UTF8.GetBytes(_settings.SecretKey);
 
             // Generate a random value for jti (JWT ID)
             var randomBytes = new byte[32];
@@ -103,8 +88,8 @@ public static class JWT
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(30),
-                Issuer = _issuer,
-                Audience = _audience,
+                Issuer = _settings.Issuer,
+                Audience = _settings.Audience,
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature
@@ -120,13 +105,8 @@ public static class JWT
         }
     }
 
-    public static (bool isSuccess, string status, string message, string? token) GenerateAccessToken(string refreshToken)
+    public (bool isSuccess, string status, string message, string? token) GenerateAccessToken(string refreshToken)
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("JWT helper is not initialized. Call Initialize() first.");
-        }
-
         try
         {
             var claims = GetTokenClaims(refreshToken);
@@ -149,7 +129,7 @@ public static class JWT
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_secretKey);
+            var key = Encoding.UTF8.GetBytes(_settings.SecretKey);
 
             // Generate a random value for jti (JWT ID)
             var randomBytes = new byte[32];
@@ -190,8 +170,8 @@ public static class JWT
             {
                 Subject = new ClaimsIdentity(accessClaims),
                 Expires = DateTime.UtcNow.AddMinutes(15), // Access tokens have shorter lifetime
-                Issuer = _issuer,
-                Audience = _audience,
+                Issuer = _settings.Issuer,
+                Audience = _settings.Audience,
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature
@@ -207,28 +187,23 @@ public static class JWT
         }
     }
 
-    public static bool ValidateToken(string token, out ClaimsPrincipal? claimsPrincipal)
+    public bool ValidateToken(string token, out ClaimsPrincipal? claimsPrincipal)
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("JWT helper is not initialized. Call Initialize() first.");
-        }
-
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_secretKey);
+            var key = Encoding.UTF8.GetBytes(_settings.SecretKey);
 
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _issuer,
+                ValidIssuer = _settings.Issuer,
                 ValidateAudience = true,
-                ValidAudience = _audience,
+                ValidAudience = _settings.Audience,
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.FromMinutes(1)
             };
 
             claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out _);
@@ -241,7 +216,7 @@ public static class JWT
         }
     }
 
-    private static IDictionary<string, string>? GetTokenClaims(string token)
+    private IDictionary<string, string>? GetTokenClaims(string token)
     {
         try
         {

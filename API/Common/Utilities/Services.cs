@@ -29,6 +29,7 @@ public class Services : IServices
         AddServices(_builder);
         AddRepositories(_builder);
         InitializeHelpers(_builder.Configuration);
+        _builder.Services.AddScoped<JwtService>();
     }
 
     private static void AddServices(WebApplicationBuilder builder)
@@ -103,7 +104,6 @@ public class Services : IServices
     {
         try
         {
-            JWT.Initialize(configuration);
             Hasher.Initialize(configuration);
             Snowflake.Initialize(configuration);
         }

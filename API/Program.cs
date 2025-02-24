@@ -7,6 +7,10 @@ using API.Common.Utilities;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using API.Middleware;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthChecks.UI.Client;
 
 namespace API;
 
@@ -30,6 +34,25 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddHealthChecks();
         builder.Services.AddProblemDetails();
+        builder.Services.AddHsts(options => 
+        {
+            options.MaxAge = TimeSpan.FromDays(365);
+            options.IncludeSubDomains = true;
+            options.Preload = true;
+        });
+        builder.Services.AddRateLimiter(options => 
+        {
+            options.RejectionStatusCode = 429;
+            options.AddPolicy("jwt-auth", context =>
+                RateLimitPartition.GetSlidingWindowLimiter(
+                    context.User.Identity?.Name ?? "anonymous",
+                    _ => new SlidingWindowRateLimiterOptions
+                    {
+                        Window = TimeSpan.FromMinutes(1),
+                        PermitLimit = 20,
+                        SegmentsPerWindow = 4
+                    }));
+        });
 
         // Configure Swagger
         builder.Services.AddSwaggerGen(c =>
@@ -65,6 +88,48 @@ public class Program
         var app = builder.Build();
 
         app.ConfigurePipeline();
+
+        app.UseExceptionHandler(exceptionHandlerApp =>
+        {
+            exceptionHandlerApp.Run(async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                context.Response.ContentType = "application/problem+json";
+                await context.Response.WriteAsJsonAsync(new ProblemDetails {
+                    Title = "An error occurred",
+                    Detail = "See logs for details",
+                    Status = 500
+                });
+            });
+        });
+
+        app.UseHsts();
+
+        app.UseHttpsRedirection();
+
+        app.UseStaticFiles();
+
+        app.UseRouting();
+
+        app.UseAuthentication();
+
+        app.UseAuthorization();
+
+        app.UseRateLimiter();
+
+        app.Use((context, next) => 
+        {
+            context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+            context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+            return next();
+        });
+
+        app.MapControllers();
+
+        app.MapHealthChecks("/health", new HealthCheckOptions {
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
 
         // Removed environment check here - now handled in pipeline
         app.Urls.Add("http://0.0.0.0:8000");
