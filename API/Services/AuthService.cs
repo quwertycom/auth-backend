@@ -81,6 +81,16 @@ public class AuthService : IAuthService
                 return (false, "INVALID_PASSWORD", "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.", null);
             }
 
+            if (request.BirthDate > DateTime.UtcNow)
+            {
+                return (false, "INVALID_BIRTHDATE", "BirthDate must be in the past", null);
+            }
+
+            if (request.BirthDate > DateTime.UtcNow.AddYears(-16))
+            {
+                return (false, "INVALID_BIRTHDATE", "User must be at least 16 years old", null);
+            }
+
             var hashedPassword = Hasher.Hash(request.Password);
 
             var newUser = new User
