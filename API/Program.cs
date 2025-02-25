@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using API.Extensions;
 
 namespace API;
 
@@ -27,12 +28,8 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
-        // Register configuration first with consistent pattern
-        ConfigManager.AddConfiguration(builder.Services, builder.Configuration);
-
-        // Add services via ServiceInitializer helper
-        var services = new Common.Utilities.Services(builder);
-        services.Initialize();
+        // Add all application services using extension methods
+        builder.Services.AddApplicationServices(builder.Configuration);
         
         builder.Services.ConfigureCors();
 

@@ -12,10 +12,9 @@ public class EmailSender : IEmailSender, IDisposable
     private readonly string _fromEmail;
     private readonly string _frontendUrl;
 
-    public EmailSender(IConfiguration configuration)
+    public EmailSender(IOptions<EmailSettings> emailOptions, IOptions<ApiSettings> apiOptions)
     {
-        var settings = configuration.GetSection("Email").Get<EmailSettings>()
-            ?? throw new InvalidOperationException("Email settings are not configured");
+        var settings = emailOptions.Value;
 
         _smtpClient = new SmtpClient
         {
@@ -28,7 +27,7 @@ public class EmailSender : IEmailSender, IDisposable
         };
 
         _fromEmail = settings.FromEmail;
-        _frontendUrl = configuration.GetSection("Frontend").GetSection("BaseUrl").Value ?? "http://localhost:3000";
+        _frontendUrl = apiOptions.Value.FrontendBaseUrl ?? "http://localhost:3000";
     }
 
     public async Task<bool> SendOtpEmailAsync(string toEmail, string otp)

@@ -13,6 +13,8 @@ using API.Repositories.Interfaces;
 using API.Repositories;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using API.Common.Utilities.Interfaces;
+using Microsoft.Extensions.Options;
+using API.Configuration;
 
 namespace API.IntegrationTests;
 
@@ -56,14 +58,77 @@ public abstract class TestBase : IDisposable
 
     protected virtual void ConfigureTestServices(IServiceCollection services)
     {
-        // 1. Configure test environment variables (Keep these)
-        Environment.SetEnvironmentVariable("POSTGRES_DB", "test_db");
-        Environment.SetEnvironmentVariable("POSTGRES_USER", "test_user");
+        // 1. Remove existing options registrations
+        services.RemoveAll<IOptions<DatabaseSettings>>();
+        services.RemoveAll<IOptionsMonitor<DatabaseSettings>>();
+        services.RemoveAll<IOptionsSnapshot<DatabaseSettings>>();
+        services.RemoveAll<IOptionsFactory<DatabaseSettings>>();
 
-        ConfigManager.AddConfiguration(services); // Keep this line to load other configurations
+        // 2. Configure all required settings
+        // Database settings
+        services.AddOptions<DatabaseSettings>()
+            .Configure(settings => {
+                settings.Host = "test-host";
+                settings.Database = "test-db";
+                settings.Username = "test-user";
+                settings.Password = "test-password";
+            })
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
-        // 2. Override database context configuration to use InMemoryDatabase
-        services.RemoveAll<AuthDbContext>(); // Use RemoveAll<AuthDbContext>() instead
+        // JWT settings
+        services.AddOptions<API.Configuration.JwtSettings>()
+            .Configure(settings => {
+                settings.SecretKey = "testing-secret-key-that-is-at-least-32-chars-long";
+                settings.Issuer = "test-issuer";
+                settings.Audience = "test-audience";
+            })
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // Email settings
+        services.AddOptions<EmailSettings>()
+            .Configure(settings => {
+                settings.Host = "test-smtp";
+                settings.Port = 25;
+                settings.Username = "test@example.com";
+                settings.Password = "test-password";
+                settings.FromEmail = "test@example.com";
+            })
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+            
+        // API settings
+        services.AddOptions<ApiSettings>()
+            .Configure(settings => {
+                settings.Port = "5000";
+                settings.FrontendBaseUrl = "http://localhost:3000";
+            })
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+            
+        // PasswordHasher settings
+        services.AddOptions<PasswordHasherSettings>()
+            .Configure(settings => {
+                settings.Iterations = 1000; // Lower for tests
+                settings.SaltSize = 16;
+                settings.KeySize = 32;
+            })
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+            
+        // Snowflake settings
+        services.AddOptions<SnowflakeSettings>()
+            .Configure(settings => {
+                settings.DatacenterId = 1;
+                settings.WorkerId = 1;
+                settings.Epoch = "2024-01-01T00:00:00Z";
+            })
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // 3. Override database context configuration to use InMemoryDatabase
+        services.RemoveAll<AuthDbContext>();
         services.AddDbContext<AuthDbContext>(options =>
             options.UseInMemoryDatabase("IntegrationTestDb"));
 

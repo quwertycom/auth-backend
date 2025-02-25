@@ -19,6 +19,19 @@ public static class Hasher
         var settings = configuration.GetSection("PasswordHasher").Get<PasswordHasherSettings>()
             ?? throw new InvalidOperationException("PasswordHasher settings are not configured");
 
+        InitializeWithSettings(settings);
+    }
+
+    public static void Initialize(IOptions<PasswordHasherSettings> options)
+    {
+        if (_isInitialized) return;
+        
+        var settings = options.Value;
+        InitializeWithSettings(settings);
+    }
+    
+    private static void InitializeWithSettings(PasswordHasherSettings settings)
+    {
         _iterations = settings.Iterations;
         _saltSize = settings.SaltSize;
         _keySize = settings.KeySize;

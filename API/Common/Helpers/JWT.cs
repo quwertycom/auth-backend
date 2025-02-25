@@ -27,7 +27,7 @@ public class JwtService
             throw new InvalidOperationException("JWT secret key must be at least 32 bytes");
     }
 
-    public (bool isSuccess, string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
+    public virtual (bool isSuccess, string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
     {
         try
         {
@@ -105,7 +105,7 @@ public class JwtService
         }
     }
 
-    public (bool isSuccess, string status, string message, string? token) GenerateAccessToken(string refreshToken)
+    public virtual (bool isSuccess, string status, string message, string? token) GenerateAccessToken(string refreshToken)
     {
         try
         {
@@ -187,7 +187,7 @@ public class JwtService
         }
     }
 
-    public bool ValidateToken(string token, out ClaimsPrincipal? claimsPrincipal)
+    public virtual bool ValidateToken(string token, out ClaimsPrincipal? claimsPrincipal)
     {
         try
         {

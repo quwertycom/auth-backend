@@ -15,12 +15,12 @@ public static class Snowflake
     private static long _lastTimestamp = -1L;
     private static long _sequence;
 
-    // Configurable parameters
+    // Component values
     private static long _datacenterId;
     private static long _workerId;
     private static DateTimeOffset _epoch;
 
-    // Bit lengths for each component
+    // Bit size allocation
     private const int SequenceBits = 12;
     private const int WorkerIdBits = 5;
     private const int DatacenterIdBits = 5;
@@ -40,6 +40,19 @@ public static class Snowflake
         var settings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>()
             ?? throw new InvalidOperationException("Snowflake settings are not configured");
 
+        InitializeWithSettings(settings);
+    }
+    
+    public static void Initialize(IOptions<SnowflakeSettings> options)
+    {
+        if (_isInitialized) return;
+        
+        var settings = options.Value;
+        InitializeWithSettings(settings);
+    }
+    
+    private static void InitializeWithSettings(SnowflakeSettings settings)
+    {
         _datacenterId = settings.DatacenterId;
         _workerId = settings.WorkerId;
         _epoch = DateTimeOffset.Parse(settings.Epoch);
