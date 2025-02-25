@@ -56,7 +56,7 @@ public static class ConfigManager
                 .ValidateOnStart();
         }
         
-        // Proper options registration with validation
+        // Using consistent IOptions pattern for all configuration sections
         services.AddOptions<DatabaseSettings>()
             .Bind(configuration.GetSection("Database"))
             .ValidateDataAnnotations()
@@ -76,11 +76,24 @@ public static class ConfigManager
                 "Email settings are incomplete")
             .ValidateOnStart();
 
-        services.Configure<PasswordHasherSettings>(
-            configuration.GetSection("PasswordHasher"));
+        services.AddOptions<PasswordHasherSettings>()
+            .Bind(configuration.GetSection("PasswordHasher"))
+            .ValidateOnStart();
 
-        services.Configure<SnowflakeSettings>(
-            configuration.GetSection("Snowflake"));
+        services.AddOptions<SnowflakeSettings>()
+            .Bind(configuration.GetSection("Snowflake"))
+            .ValidateOnStart();
+            
+        // Register new strongly-typed configuration classes
+        services.AddOptions<ApiSettings>()
+            .Bind(configuration.GetSection("ApiSettings"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+            
+        services.AddOptions<RateLimitingSettings>()
+            .Bind(configuration.GetSection("RateLimiting"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
     }
 
     public static HealthCheckResult ValidateEnvironmentVariables(IConfiguration configuration)

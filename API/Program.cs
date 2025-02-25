@@ -22,13 +22,13 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // Log "Hello World" to the console
-        Console.WriteLine("Hello World");
-
         // Enable legacy timestamp behavior for Npgsql
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         var builder = WebApplication.CreateBuilder(args);
+
+        // Register configuration first with consistent pattern
+        ConfigManager.AddConfiguration(builder.Services, builder.Configuration);
 
         // Add services via ServiceInitializer helper
         var services = new Common.Utilities.Services(builder);
@@ -53,19 +53,9 @@ public class Program
         builder.Services.AddHealthChecks()
             .AddCheck("Environment", () => ConfigManager.ValidateEnvironmentVariables(builder.Configuration));
         builder.Services.AddProblemDetails();
-        builder.Services.AddRateLimiter(options => 
-        {
-            options.RejectionStatusCode = 429;
-            options.AddPolicy("jwt-auth", context =>
-                RateLimitPartition.GetSlidingWindowLimiter(
-                    context.User.Identity?.Name ?? "anonymous",
-                    _ => new SlidingWindowRateLimiterOptions
-                    {
-                        Window = TimeSpan.FromMinutes(1),
-                        PermitLimit = 20,
-                        SegmentsPerWindow = 4
-                    }));
-        });
+        
+        // Configure rate limiting with settings from config
+        ConfigureRateLimiting(builder.Services);
 
         // Configure Swagger
         builder.Services.AddSwaggerGen(c =>
@@ -127,6 +117,8 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "qAuth API v1"));
         }
         else 
         {
@@ -172,8 +164,10 @@ public class Program
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
         });
 
-        // Removed environment check here - now handled in pipeline
-        app.Urls.Add("http://0.0.0.0:8000");
+        // Get API port from configuration using IOptions pattern
+        var apiSettings = app.Services.GetRequiredService<IOptions<ApiSettings>>().Value;
+        app.Urls.Add($"http://0.0.0.0:{apiSettings.Port}");
+        
         app.Run();
     }
 
@@ -187,5 +181,29 @@ public class Program
     {
         services.AddApplicationInsightsTelemetry();
         services.AddScoped<IEmailService, SendGridEmailService>();
+    }
+    
+    private static void ConfigureRateLimiting(IServiceCollection services)
+    {
+        // Use a factory pattern to inject IOptions in a service collection compatible way
+        services.AddRateLimiter(options => 
+        {
+            options.RejectionStatusCode = 429;
+            
+            // Get rate limiting settings once at startup
+            using var serviceProvider = services.BuildServiceProvider();
+            var rateLimitingSettings = serviceProvider.GetRequiredService<IOptions<RateLimitingSettings>>().Value;
+            
+            options.AddPolicy("jwt-auth", context =>
+                RateLimitPartition.GetSlidingWindowLimiter(
+                    context.User.Identity?.Name ?? "anonymous",
+                    _ => new SlidingWindowRateLimiterOptions
+                    {
+                        Window = TimeSpan.FromMinutes(rateLimitingSettings.WindowInMinutes),
+                        PermitLimit = rateLimitingSettings.PermitLimit,
+                        SegmentsPerWindow = rateLimitingSettings.SegmentsPerWindow
+                    })
+            );
+        });
     }
 }
