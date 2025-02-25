@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Routing;
+using HealthChecks.UI.Client;
 
 namespace API.Middleware;
 
@@ -7,7 +9,9 @@ public static class HealthCheckExtensions
 {
     public static IEndpointRouteBuilder ConfigureHealthChecks(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapHealthChecks("/health");
+        endpoints.MapHealthChecks("/health", new HealthCheckOptions {
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
         return endpoints;
     }
 } 

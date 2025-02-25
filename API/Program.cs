@@ -54,7 +54,7 @@ public class Program
         // Configure rate limiting with settings from config
         ConfigureRateLimiting(builder.Services);
 
-        // Configure Swagger
+        // Configure Swagger using extension method
         builder.Services.AddSwaggerServices();
 
         builder.Services.Configure<ApiBehaviorOptions>(options =>
@@ -99,55 +99,8 @@ public class Program
 
         var app = builder.Build();
 
-        // Configure pipeline based on environment
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-            app.UseSwaggerServices();
-        }
-        else 
-        {
-            app.UseExceptionHandler(exceptionHandlerApp => 
-            {
-                exceptionHandlerApp.Run(async context =>
-                {
-                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                    context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsJsonAsync(new ProblemDetails {
-                        Title = "An error occurred",
-                        Detail = "See logs for details",
-                        Status = 500
-                    });
-                });
-            });
-            app.UseHsts();
-        }
-
-        app.UseHttpsRedirection();
-
-        app.UseStaticFiles();
-
-        app.UseRouting();
-
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.UseRateLimiter();
-
-        app.Use((context, next) => 
-        {
-            context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
-            context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-            context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
-            return next();
-        });
-
-        app.MapControllers();
-
-        app.MapHealthChecks("/health", new HealthCheckOptions {
-            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-        });
+        // Configure the middleware pipeline using the extension method
+        app = app.ConfigurePipeline();
 
         // Get API port from configuration using IOptions pattern
         var apiSettings = app.Services.GetRequiredService<IOptions<ApiSettings>>().Value;

@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Middleware;
 
@@ -6,10 +8,27 @@ public static class PipelineExtensions
 {
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        app.ConfigureGlobalErrorHandler();
-        
-        if (!app.Environment.IsDevelopment())
+        // Configure error handling based on environment
+        if (app.Environment.IsDevelopment())
         {
+            app.UseDeveloperExceptionPage();
+            app.UseSwaggerServices();
+        }
+        else
+        {
+            app.UseExceptionHandler(exceptionHandlerApp => 
+            {
+                exceptionHandlerApp.Run(async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsJsonAsync(new ProblemDetails {
+                        Title = "An error occurred",
+                        Detail = "See logs for details",
+                        Status = 500
+                    });
+                });
+            });
             app.UseHsts();
         }
         
@@ -21,11 +40,17 @@ public static class PipelineExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         
-        // Development-only components
-        if (app.Environment.IsDevelopment())
+        // Add rate limiting middleware
+        app.UseRateLimiter();
+        
+        // Add security headers
+        app.Use((context, next) => 
         {
-            app.UseSwaggerServices();
-        }
+            context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
+            context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+            return next();
+        });
         
         app.MapControllers();
         app.ConfigureHealthChecks();
