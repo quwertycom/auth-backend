@@ -55,15 +55,7 @@ public class Program
         ConfigureRateLimiting(builder.Services);
 
         // Configure Swagger
-        builder.Services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1", new OpenApiInfo
-            {
-                Title = "qAuth API",
-                Version = "v1",
-                Description = "An ASP.NET Core Web API"
-            });
-        });
+        builder.Services.AddSwaggerServices();
 
         builder.Services.Configure<ApiBehaviorOptions>(options =>
         {
@@ -96,9 +88,6 @@ public class Program
             });
         }
 
-        // Environment-specific service configuration
-        builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
-
         if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddSingleton<IDeveloperTools, DeveloperTools>();
@@ -114,8 +103,7 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
-            app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "qAuth API v1"));
+            app.UseSwaggerServices();
         }
         else 
         {

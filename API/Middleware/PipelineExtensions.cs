@@ -24,7 +24,7 @@ public static class PipelineExtensions
         // Development-only components
         if (app.Environment.IsDevelopment())
         {
-            app.ConfigureSwagger();
+            app.UseSwaggerServices();
         }
         
         app.MapControllers();
