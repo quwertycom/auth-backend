@@ -1,12 +1,12 @@
 using API.Common.Helpers;
-using API.Configuration;
 using API.Common.Utilities.Interfaces;
 using API.Common.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using API.Middleware;
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.Options;
-using API.Extensions;
+using API.Infrastructure.Extensions;
+using API.Web.Middleware;
+using API.Web.Configuration;
 
 namespace API;
 

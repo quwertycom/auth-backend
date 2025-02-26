@@ -1,4 +1,4 @@
-namespace API.Contracts.Responses.Common;
+namespace API.Core.Contracts.Responses.Common;
 
 public class ErrorResponse : ResponseBase
 {

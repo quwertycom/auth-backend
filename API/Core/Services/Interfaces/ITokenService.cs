@@ -1,5 +1,5 @@
-using API.Common.Enums;
-namespace API.Services.Interfaces;
+using API.Core.Enums;
+namespace API.Core.Services.Interfaces;
 
 public interface ITokenService
 {

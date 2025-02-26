@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace API.Contracts.Requests.Password;
+namespace API.Core.Contracts.Requests.Password;
 
 public class ResetPasswordRequest
 {

@@ -1,5 +1,5 @@
 
-namespace API.Contracts.Responses.Auth;
+namespace API.Core.Contracts.Responses.Auth;
 
 public class VerifyEmailResponse : ResponseBase
 {

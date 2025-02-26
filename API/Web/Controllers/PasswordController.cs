@@ -1,10 +1,11 @@
-﻿using API.Models;
-using API.Services;
+﻿using API.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using API.Contracts;
-using API.Services.Interfaces;
-namespace API.Controllers
+using API.Core.Contracts.Responses.Password;
+using API.Core.Contracts.Responses.Common;
+using API.Core.Contracts.Requests.Password;
+
+namespace API.Web.Controllers
 {
     [ApiController]
     [Route("api/password")]
@@ -17,10 +18,10 @@ namespace API.Controllers
         }
 
         [HttpPost("request-reset")]
-        [ProducesResponseType(typeof(Contracts.Responses.Password.RequestResetResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RequestReset([FromBody] Contracts.Requests.Password.RequestResetRequest request)
+        [ProducesResponseType(typeof(RequestResetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RequestReset([FromBody] RequestResetRequest request)
         {
             if (request.Email != null && request.Email != "")
             {
@@ -29,7 +30,7 @@ namespace API.Controllers
                 Console.WriteLine("Response: " + response.message);
                 if (response.isSuccess)
                 {
-                    return Ok(new Contracts.Responses.Password.RequestResetResponse
+                    return Ok(new RequestResetResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -37,7 +38,7 @@ namespace API.Controllers
                 }
                 else
                 {
-                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                    return BadRequest(new ErrorResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -49,7 +50,7 @@ namespace API.Controllers
                 var response = await _passwordService.RequestResetViaUsername(request.Username);
                 if (response.isSuccess)
                 {
-                    return Ok(new Contracts.Responses.Password.RequestResetResponse
+                    return Ok(new RequestResetResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -57,7 +58,7 @@ namespace API.Controllers
                 }
                 else
                 {
-                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                    return BadRequest(new ErrorResponse
                     {
                         Status = response.status,
                         Message = response.message
@@ -66,7 +67,7 @@ namespace API.Controllers
             }
             else
             {
-                return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                return BadRequest(new ErrorResponse
                 {
                     Status = "error",
                     Message = "Email or username is required"
@@ -76,14 +77,14 @@ namespace API.Controllers
 
 
         [HttpPost("validate-reset-code")]
-        [ProducesResponseType(typeof(Contracts.Responses.Password.ValidateResetCodeResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ValidateResetCode([FromBody] Contracts.Requests.Password.ValidateResetCodeRequest request)
+        [ProducesResponseType(typeof(ValidateResetCodeResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ValidateResetCode([FromBody] ValidateResetCodeRequest request)
         {
             if (request.Code.Length != 32)
             {
-                return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                return BadRequest(new ErrorResponse
                 {
                     Status = "error",
                     Message = "Invalid reset code"
@@ -94,7 +95,7 @@ namespace API.Controllers
                 var response = await _passwordService.ValidateResetCode(request.Code);
                 if (response.isSuccess)
                 {
-                    return Ok(new Contracts.Responses.Password.ValidateResetCodeResponse
+                    return Ok(new ValidateResetCodeResponse
                     {
                         Status = response.status,
                         Message = response.message,
@@ -105,7 +106,7 @@ namespace API.Controllers
                 {
                     if (response.status == "INTERNAL_ERROR")
                     {
-                        return StatusCode(StatusCodes.Status500InternalServerError, new Contracts.Responses.Common.ErrorResponse
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                         {
                             Status = response.status,
                             Message = response.message ?? "Internal server error, please try again later, if issue persists contact support."
@@ -113,7 +114,7 @@ namespace API.Controllers
                     }
                     else
                     {
-                        return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                        return BadRequest(new ErrorResponse
                         {
                             Status = response.status,
                             Message = response.message
@@ -124,15 +125,15 @@ namespace API.Controllers
         }
 
         [HttpPost("reset")]
-        [ProducesResponseType(typeof(Contracts.Responses.Password.ResetPasswordResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ResetPassword([FromBody] Contracts.Requests.Password.ResetPasswordRequest request)
+        [ProducesResponseType(typeof(ResetPasswordResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ResetPassword([FromBody] API.Core.Contracts.Requests.Password.ResetPasswordRequest request)
         {
             var response = await _passwordService.ChangePassword(request.Code, request.NewPassword);
             if (response.isSuccess)
             {
-                return Ok(new Contracts.Responses.Password.ResetPasswordResponse
+                return Ok(new ResetPasswordResponse
                 {
                     Status = response.status,
                     Message = response.message
@@ -142,7 +143,7 @@ namespace API.Controllers
             {
                 if (response.status == "INTERNAL_ERROR")
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new Contracts.Responses.Common.ErrorResponse
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                     {
                         Status = response.status,
                         Message = response.message ?? "Internal server error, please try again later, if issue persists contact support."
@@ -150,7 +151,7 @@ namespace API.Controllers
                 }
                 else
                 {
-                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                    return BadRequest(new ErrorResponse
                     {
                         Status = response.status,
                         Message = response.message

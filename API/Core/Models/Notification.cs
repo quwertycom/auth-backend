@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using API.Common.Enums;
+using API.Core.Enums;
 using API.Common.Helpers;
 
-namespace API.Models;
+namespace API.Core.Models;
 
 public class Notification
 {

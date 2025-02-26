@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using API.Common.Enums;
+using API.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 using API.Common.Helpers;
 
-namespace API.Models;
+namespace API.Core.Models;
 
 [Index(nameof(UserId), nameof(IsPersonal), IsUnique = true, Name = "IX_OnePersonalAccountPerUser")]
 public class Account

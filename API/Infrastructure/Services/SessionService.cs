@@ -1,7 +1,7 @@
-using API.Repositories.Interfaces;
-using API.Services.Interfaces;
+using API.Infrastructure.Repositories.Interfaces;
+using API.Core.Services.Interfaces;
 
-namespace API.Services;
+namespace API.Infrastructure.Services;
 
 public class SessionService : ISessionService
 {

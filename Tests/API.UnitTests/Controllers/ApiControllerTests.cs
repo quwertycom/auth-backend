@@ -1,5 +1,5 @@
 using FluentAssertions;
-using API.Controllers;
+using API.Web.Controllers;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;

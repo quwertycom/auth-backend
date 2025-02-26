@@ -1,7 +1,9 @@
-using API.Services.Interfaces;
+using API.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using API.Core.Contracts.Responses.Common;
+using Contracts = API.Core.Contracts;
 
-namespace API.Controllers;
+namespace API.Web.Controllers;
 
 [ApiController]
 [Route("api/session")]
@@ -16,10 +18,10 @@ public class SessionController : ControllerBase
     }
 
     [HttpPost("revoke")]
-    [ProducesResponseType(typeof(Contracts.Responses.Common.SuccessResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RevokeSessionByToken([FromHeader(Name = "Authorization")] string authHeader)
     {
         var token = authHeader.Split(" ")[1];

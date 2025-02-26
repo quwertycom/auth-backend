@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace API.Middleware;
+namespace API.Web.Middleware;
 
 public static class ErrorHandlingExtensions
 {

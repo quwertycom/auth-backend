@@ -1,14 +1,14 @@
-using API.Models;
-using API.Common.Enums;
-using API.Contracts.Requests.Auth;
+using API.Core.Models;
+using API.Core.Enums;
+using API.Core.Contracts.Requests.Auth;
 using System.Net;
 using System.Net.Http.Json;
-using API.Contracts.Responses.Auth;
+using API.Core.Contracts.Responses.Auth;
 using System.Text.Json;
-using API.Data;
+using API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.TypeMapping;
-using API.Contracts.Responses.Common;
+using API.Core.Contracts.Responses.Common;
 using Xunit.Abstractions;
 namespace API.IntegrationTests.Auth;
 

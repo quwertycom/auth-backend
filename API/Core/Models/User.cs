@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using API.Common.Enums;
+using API.Core.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.Common.Helpers;
 using System.Text.Json.Serialization;
 
-namespace API.Models;
+namespace API.Core.Models;
 
 public class User
 {

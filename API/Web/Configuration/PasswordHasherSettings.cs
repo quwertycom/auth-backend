@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace API.Configuration;
+namespace API.Web.Configuration;
 
 public class PasswordHasherSettings
 {

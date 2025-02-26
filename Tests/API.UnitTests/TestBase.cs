@@ -3,8 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using FluentAssertions;
 using API.Common.Helpers;
-using API.Configuration;
-using API.HostedServices;
+using API.Web.Configuration;
+using API.Infrastructure.Services.HostedServices;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 

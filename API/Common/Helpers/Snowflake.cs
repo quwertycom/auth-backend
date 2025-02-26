@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
-using API.Configuration;
+using API.Web.Configuration;
 
 namespace API.Common.Helpers;
 

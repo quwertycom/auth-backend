@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using API.Services;
-using API.Contracts.Responses.Auth;
-using API.Contracts.Responses.Common;
-using API.Contracts.Requests.Auth;
-using API.Services.Interfaces;
+using API.Core.Services.Interfaces;
+using API.Core.Contracts.Responses.Auth;
+using API.Core.Contracts.Responses.Common;
+using API.Core.Contracts.Requests.Auth;
 
-namespace API.Controllers;
+namespace API.Web.Controllers;
 
 [ApiController]
 [Route("api/auth")]

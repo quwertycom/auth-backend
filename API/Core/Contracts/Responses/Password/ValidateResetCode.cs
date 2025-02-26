@@ -1,6 +1,6 @@
-using API.Contracts.Responses.Common;
+using API.Core.Contracts.Responses.Common;
 
-namespace API.Contracts.Responses.Password;
+namespace API.Core.Contracts.Responses.Password;
 
 public class ValidateResetCodeResponse : ResponseBase
 {

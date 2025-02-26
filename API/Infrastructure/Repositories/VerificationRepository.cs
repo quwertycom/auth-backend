@@ -1,9 +1,9 @@
-using API.Data;
-using API.Models;
-using API.Repositories.Interfaces;
+using API.Infrastructure.Data;
+using API.Core.Models;
+using API.Infrastructure.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace API.Repositories;
+namespace API.Infrastructure.Repositories;
 
 public class VerificationRepository : IVerificationRepository
 {

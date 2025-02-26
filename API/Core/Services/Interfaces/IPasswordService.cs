@@ -1,4 +1,4 @@
-namespace API.Services.Interfaces;
+namespace API.Core.Services.Interfaces;
 
 public interface IPasswordService
 {

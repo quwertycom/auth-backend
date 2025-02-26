@@ -1,7 +1,7 @@
-using API.Common.Enums;
+using API.Core.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace API.Contracts.Requests.Auth;
+namespace API.Core.Contracts.Requests.Auth;
 
 public class RegisterRequest
 {

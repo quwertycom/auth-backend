@@ -1,8 +1,8 @@
-using API.Services.Interfaces;
-using API.Repositories.Interfaces;
-using API.Common.Enums;
+using API.Core.Services.Interfaces;
+using API.Infrastructure.Repositories.Interfaces;
+using API.Core.Enums;
 
-namespace API.Services;
+namespace API.Infrastructure.Services;
 
 public class TokenService : ITokenService
 {

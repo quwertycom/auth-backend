@@ -1,6 +1,6 @@
-using API.Models;
+using API.Core.Models;
 
-namespace API.Repositories.Interfaces;
+namespace API.Infrastructure.Repositories.Interfaces;
 
 public interface IVerificationRepository
 {

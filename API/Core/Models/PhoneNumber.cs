@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using API.Common.Helpers;
-using API.Common.Enums;
-namespace API.Models;
+using API.Core.Enums;
+namespace API.Core.Models;
 
 public class PhoneNumber
 {

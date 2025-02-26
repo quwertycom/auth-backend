@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Cors.Infrastructure;
 
-namespace API.Middleware;
+namespace API.Web.Middleware;
 
 public static class CorsExtensions
 {

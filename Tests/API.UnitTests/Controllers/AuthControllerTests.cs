@@ -1,12 +1,12 @@
-using API.Controllers;
-using API.Services.Interfaces;
+using API.Web.Controllers;
+using API.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Xunit;
-using API.Contracts.Requests.Auth;
-using API.Contracts.Responses.Auth;
-using API.Contracts.Responses.Common;
-using API.Common.Enums;
+using API.Core.Contracts.Requests.Auth;
+using API.Core.Contracts.Responses.Auth;
+using API.Core.Contracts.Responses.Common;
+using API.Core.Enums;
 using Microsoft.AspNetCore.Http;
 
 namespace API.UnitTests.Controllers;

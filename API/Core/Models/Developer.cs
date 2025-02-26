@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using API.Common.Enums;
+using API.Core.Enums;
 using API.Common.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-namespace API.Models;
+namespace API.Core.Models;
 
 [Index(nameof(Type), IsUnique = true, Name = "IX_OnePersonalDeveloperPerAccount")]
 public class Developer

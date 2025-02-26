@@ -1,4 +1,4 @@
-namespace API.Contracts.Responses;
+namespace API.Core.Contracts.Responses;
 
 public class ResponseBase
 {

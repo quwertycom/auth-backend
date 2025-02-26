@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace API.Contracts.Requests.Auth;
+namespace API.Core.Contracts.Requests.Auth;
 
 public class VerifyEmailRequest
 {

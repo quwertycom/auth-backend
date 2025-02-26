@@ -1,8 +1,7 @@
-using API.Repositories;
-using API.Repositories.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+using API.Infrastructure.Repositories;
+using API.Infrastructure.Repositories.Interfaces;
 
-namespace API.Extensions;
+namespace API.Web.Extensions;
 
 /// <summary>
 /// Extension methods for repository registration

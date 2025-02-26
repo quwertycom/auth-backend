@@ -1,20 +1,20 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Json;
-using API.Data;
+using API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using API.Common.Helpers;
 using Microsoft.AspNetCore.Hosting;
-using API.Services.Interfaces;
+using API.Core.Services.Interfaces;
 using API.IntegrationTests.Mocks;
-using API.Services;
-using API.Repositories.Interfaces;
-using API.Repositories;
+using API.Infrastructure.Services;
+using API.Infrastructure.Repositories.Interfaces;
+using API.Infrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using API.Common.Utilities.Interfaces;
 using Microsoft.Extensions.Options;
-using API.Configuration;
+using API.Web.Configuration;
 
 namespace API.IntegrationTests;
 
@@ -77,7 +77,7 @@ public abstract class TestBase : IDisposable
             .ValidateOnStart();
 
         // JWT settings
-        services.AddOptions<API.Configuration.JwtSettings>()
+        services.AddOptions<API.Web.Configuration.JwtSettings>()
             .Configure(settings => {
                 settings.SecretKey = "testing-secret-key-that-is-at-least-32-chars-long";
                 settings.Issuer = "test-issuer";

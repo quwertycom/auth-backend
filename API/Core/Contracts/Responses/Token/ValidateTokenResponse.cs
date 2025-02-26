@@ -1,6 +1,6 @@
-using API.Contracts.Responses;
+using API.Core.Contracts.Responses;
 
-namespace API.Contracts.Responses.Token;
+namespace API.Core.Contracts.Responses.Token;
 
 public class ValidateTokenResponse : ResponseBase
 {

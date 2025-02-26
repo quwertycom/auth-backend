@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Routing;
 using HealthChecks.UI.Client;
 
-namespace API.Middleware;
+namespace API.Web.Middleware;
 
 public static class HealthCheckExtensions
 {

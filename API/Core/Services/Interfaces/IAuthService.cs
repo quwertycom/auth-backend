@@ -1,6 +1,6 @@
-using API.Contracts.Requests.Auth;
+using API.Core.Contracts.Requests.Auth;
 
-namespace API.Services.Interfaces;
+namespace API.Core.Services.Interfaces;
 
 public interface IAuthService
 {

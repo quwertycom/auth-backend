@@ -1,4 +1,6 @@
-using API.Common.Enums;
+using API.Core.Enums;
+
+namespace API.Core.Models.DTOs;
 
 public class UserEmailDto
 {

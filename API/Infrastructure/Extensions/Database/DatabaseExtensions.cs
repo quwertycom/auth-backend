@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace API.Extensions;
+namespace API.Infrastructure.Extensions;
 
 /// <summary>
 /// Extension methods for database-related service registration

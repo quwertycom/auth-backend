@@ -1,11 +1,9 @@
 using API.Common.Helpers;
-using API.Configuration;
-using API.HostedServices;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using API.Infrastructure.Extensions;
+using API.Infrastructure.Services.HostedServices;
+using API.Web.Extensions;
 
-namespace API.Extensions;
+namespace API.Infrastructure.Extensions;
 
 /// <summary>
 /// Main extension methods for configuring the application's services

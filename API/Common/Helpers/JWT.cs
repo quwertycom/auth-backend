@@ -3,11 +3,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using API.Common.Enums;
-using Microsoft.Extensions.Configuration;
+using API.Core.Enums;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
-using API.Configuration;
 
 namespace API.Common.Helpers;
 

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using API.Services.Interfaces;
-namespace API.Controllers;
+using API.Core.Services.Interfaces;
+using API.Core.Contracts.Responses.Token;
+using API.Core.Contracts.Responses.Common;
+namespace API.Web.Controllers;
 
 [ApiController]
 [Route("api/token")]
@@ -15,9 +17,9 @@ public class TokenController : ControllerBase
     }
 
     [HttpPost("validate")]
-    [ProducesResponseType(typeof(Contracts.Responses.Token.ValidateTokenResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(Contracts.Responses.Common.ErrorResponse), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ValidateTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ValidateTokenAsync([FromHeader(Name = "Authorization")] string authHeader)
     {
         if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
@@ -26,7 +28,7 @@ public class TokenController : ControllerBase
         var token = authHeader.Substring("Bearer ".Length).Trim();
         if (token == null || token == "")
         {
-            return BadRequest(new Contracts.Responses.Common.ErrorResponse
+            return BadRequest(new ErrorResponse
             {
                 Status = "error",
                 Message = "Token is required"
@@ -39,7 +41,7 @@ public class TokenController : ControllerBase
             {
                 if (result.isValid)
                 {
-                    return Ok(new Contracts.Responses.Token.ValidateTokenResponse
+                    return Ok(new ValidateTokenResponse
                     {
                         Status = result.status ?? "SUCCESS",
                         Message = result.message ?? "Token is valid",
@@ -48,7 +50,7 @@ public class TokenController : ControllerBase
                 }
                 else
                 {
-                    return Ok(new Contracts.Responses.Token.ValidateTokenResponse
+                    return Ok(new ValidateTokenResponse
                     {
                         Status = result.status ?? "SUCCESS",
                         Message = result.message ?? "Token is not valid",
@@ -60,7 +62,7 @@ public class TokenController : ControllerBase
             {
                 if (result.status == "INTERNAL_ERROR")
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new Contracts.Responses.Common.ErrorResponse
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                     {
                         Status = result.status ?? "INTERNAL_ERROR",
                         Message = result.message ?? "Internal server error, please try again later, if issue persists contact support."
@@ -68,7 +70,7 @@ public class TokenController : ControllerBase
                 }
                 else
                 {
-                    return BadRequest(new Contracts.Responses.Common.ErrorResponse
+                    return BadRequest(new ErrorResponse
                     {
                         Status = result.status ?? "ERROR",
                         Message = result.message ?? "Failed to validate token."

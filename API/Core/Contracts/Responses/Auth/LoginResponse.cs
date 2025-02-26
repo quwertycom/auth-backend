@@ -1,6 +1,6 @@
-using API.Contracts.Responses;
+using API.Core.Contracts.Responses;
 
-namespace API.Contracts.Responses.Auth;
+namespace API.Core.Contracts.Responses.Auth;
 
 public class LoginResponse : ResponseBase
 {

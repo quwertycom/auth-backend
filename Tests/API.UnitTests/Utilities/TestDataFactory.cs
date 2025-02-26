@@ -1,6 +1,5 @@
 
-using API.Models;
-
+using API.Core.Models;
 
 namespace API.UnitTests.Utilities;
 

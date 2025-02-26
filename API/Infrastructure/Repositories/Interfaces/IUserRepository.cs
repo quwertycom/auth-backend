@@ -1,7 +1,7 @@
-using API.Models;
-using API.Common.Enums;
+using API.Core.Models;
+using API.Core.Enums;
 
-namespace API.Repositories.Interfaces;
+namespace API.Infrastructure.Repositories.Interfaces;
 
 public interface IUserRepository
 {

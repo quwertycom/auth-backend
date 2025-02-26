@@ -1,10 +1,10 @@
-using API.Data;
-using API.Configuration;
+using API.Infrastructure.Data;
+using API.Web.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace API.Extensions;
+namespace API.Infrastructure.Extensions;
 
 /// <summary>
 /// Extension methods for database context registration

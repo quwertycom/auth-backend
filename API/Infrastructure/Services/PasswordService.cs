@@ -1,14 +1,12 @@
-﻿using System.Text.Json;
-using API.Common.Enums;
+﻿using API.Core.Enums;
 using API.Common.Helpers;
-using API.Data;
-using API.Models;
-using API.Repositories.Interfaces;
-using API.Services.Interfaces;
+using API.Infrastructure.Data;
+using API.Core.Models;
+using API.Infrastructure.Repositories.Interfaces;
+using API.Core.Services.Interfaces;
 using API.Common.Utilities.Interfaces;
-using API.Common.Utilities;
 
-namespace API.Services;
+namespace API.Infrastructure.Services;
 
 public class PasswordService : IPasswordService
 {

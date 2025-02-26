@@ -1,4 +1,4 @@
 
-namespace API.Contracts.Responses.Password;
+namespace API.Core.Contracts.Responses.Password;
 
 public class ResetPasswordResponse : ResponseBase { }

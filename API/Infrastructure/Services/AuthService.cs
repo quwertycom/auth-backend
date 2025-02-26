@@ -1,17 +1,13 @@
 using System.Text.RegularExpressions;
-using API.Common.Enums;
+using API.Core.Enums;
 using API.Common.Helpers;
-using API.Contracts.Requests.Auth;
-using API.Data;
-using API.Models;
-using Microsoft.EntityFrameworkCore;
-using Polly;
-using API.Repositories.Interfaces;
-using API.Services.Interfaces;
+using API.Core.Contracts.Requests.Auth;
+using API.Core.Models;
+using API.Infrastructure.Repositories.Interfaces;
+using API.Core.Services.Interfaces;
 using API.Common.Utilities.Interfaces;
-using System.Threading;
 
-namespace API.Services;
+namespace API.Infrastructure.Services;
 
 public class AuthService : IAuthService
 {

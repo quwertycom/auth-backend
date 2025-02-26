@@ -1,10 +1,9 @@
-using API.Models;
+using API.Core.Models;
 using Microsoft.EntityFrameworkCore;
-using API.Common.Enums;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace API.Data;
+namespace API.Infrastructure.Data;
 
 public class AuthDbContext : DbContext
 {

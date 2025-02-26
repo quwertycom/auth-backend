@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
-using API.Configuration;
+using API.Web.Configuration;
 using API.Common.Utilities.Interfaces;
 
 namespace API.Common.Utilities;

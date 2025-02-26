@@ -1,20 +1,20 @@
-using System;
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using API.Common.Enums;
+using API.Core.Enums;
 using API.Common.Helpers;
-using API.Configuration;
-using API.Contracts.Requests.Auth;
-using API.Models;
-using API.Repositories.Interfaces;
-using API.Services;
+using API.Web.Configuration;
+using API.Core.Contracts.Requests.Auth;
+using API.Core.Models;
+using API.Infrastructure.Repositories.Interfaces;
+using API.Infrastructure.Services;
 using API.Common.Utilities.Interfaces;
 using API.UnitTests.Utilities;
 using Moq;
 using Xunit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using JwtSettingsConfig = API.Configuration.JwtSettings;
+using JwtSettingsConfig = API.Web.Configuration.JwtSettings;
 
 namespace API.UnitTests.Services;
 
@@ -78,7 +78,7 @@ public class AuthServiceTests
         Snowflake.Initialize(_snowflakeOptions);
         
         // Add mock for JwtService - use fully qualified name to avoid ambiguity
-        var jwtOptions = Options.Create(new API.Configuration.JwtSettings
+        var jwtOptions = Options.Create(new JwtSettingsConfig
         {
             SecretKey = "this-is-a-32-character-long-secret-key!",
             Issuer = "test-issuer",
@@ -731,7 +731,7 @@ public class AuthServiceTests
         _sessionRepository.Setup(repo => repo.AddToken(It.IsAny<Token>()))
             .Returns(Task.CompletedTask);
         
-        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<API.Configuration.JwtSettings>>());
+        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettingsConfig>>());
         mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
             .Returns((true, "SUCCESS", "", "mock_token"));
         
@@ -888,7 +888,7 @@ public class AuthServiceTests
             .ReturnsAsync(validUser);
         
         // Add mock JwtService
-        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<API.Configuration.JwtSettings>>());
+        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettingsConfig>>());
         mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
             .Returns((true, "SUCCESS", "", "mock_token"));
 

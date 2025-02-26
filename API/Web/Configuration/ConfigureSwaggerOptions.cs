@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace API.Configuration;
+namespace API.Web.Configuration;
 
 public class ConfigureSwaggerOptions_DEPRECATED : IConfigureOptions<SwaggerGenOptions>
 {

@@ -2,7 +2,7 @@ using API.Common.Utilities.Interfaces;
 using API.Common.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace API.Extensions;
+namespace API.Web.Extensions;
 
 /// <summary>
 /// Extension methods for utility service registration

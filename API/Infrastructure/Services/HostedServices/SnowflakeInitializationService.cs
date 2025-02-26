@@ -1,9 +1,8 @@
 using API.Common.Helpers;
-using API.Configuration;
-using Microsoft.Extensions.Hosting;
+using API.Web.Configuration;
 using Microsoft.Extensions.Options;
 
-namespace API.HostedServices;
+namespace API.Infrastructure.Services.HostedServices;
 
 public class SnowflakeInitializationService : IHostedService
 {

@@ -1,9 +1,8 @@
 using API.Common.Helpers;
-using API.Services;
-using API.Services.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
+using API.Core.Services.Interfaces;
+using API.Infrastructure.Services;
 
-namespace API.Extensions;
+namespace API.Web.Extensions;
 
 /// <summary>
 /// Extension methods for business service registration

@@ -1,4 +1,4 @@
-namespace API.Common.Enums;
+namespace API.Core.Enums;
 
 public enum TokenTarget
 {

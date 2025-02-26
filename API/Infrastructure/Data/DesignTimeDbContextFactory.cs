@@ -1,9 +1,9 @@
-using API.Configuration;
+using API.Web.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace API.Data;
+namespace API.Infrastructure.Data;
 
 /// <summary>
 /// Design-time factory for EF Core migrations
