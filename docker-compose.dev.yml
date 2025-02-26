@@ -25,10 +25,10 @@ services:
       - ASPNETCORE_DETAILED_ERRORS=1
       
       # Database settings
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - Database__Host=db
+      - Database__Database=${POSTGRES_DB}
+      - Database__Username=${POSTGRES_USER}
+      - Database__Password=${POSTGRES_PASSWORD}
       
       # JWT settings
       - Jwt__SecretKey=${JWT_SECRET_KEY}
@@ -48,12 +48,17 @@ services:
       # Snowflake settings
       - Snowflake__DatacenterId=1
       - Snowflake__WorkerId=1
+      - Snowflake__Epoch=2024-01-01T00:00:00Z
       
       # PasswordHasher settings
       - PasswordHasher__Iterations=10000
       - PasswordHasher__SaltSize=16
       - PasswordHasher__KeySize=32
       
+      # API settings
+      - ApiSettings__Port=8000
+      
+      # Docker indicator
       - DOCKER_RUNNING=true
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]

@@ -24,10 +24,10 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=YourSecurePassword123!
       
       # Database settings
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - Database__Host=${POSTGRES_HOST}
+      - Database__Database=${POSTGRES_DB}
+      - Database__Username=${POSTGRES_USER}
+      - Database__Password=${POSTGRES_PASSWORD}
       
       # JWT settings
       - Jwt__SecretKey=${JWT_SECRET_KEY}
@@ -47,11 +47,18 @@ services:
       # Snowflake settings
       - Snowflake__DatacenterId=1
       - Snowflake__WorkerId=1
+      - Snowflake__Epoch=2024-01-01T00:00:00Z
       
       # PasswordHasher settings
       - PasswordHasher__Iterations=10000
       - PasswordHasher__SaltSize=16
       - PasswordHasher__KeySize=32
+      
+      # API settings
+      - ApiSettings__Port=80
+      
+      # Docker indicator
+      - DOCKER_RUNNING=true
     depends_on:
       - db
 
