@@ -1,7 +1,6 @@
 using API.Data;
 using API.Configuration;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -16,9 +15,8 @@ public static class DbContextExtensions
     /// Adds and configures the AuthDbContext to the service collection
     /// </summary>
     /// <param name="services">The service collection</param>
-    /// <param name="configuration">The configuration</param>
     /// <returns>The service collection for method chaining</returns>
-    public static IServiceCollection AddAuthDbContext(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAuthDbContext(this IServiceCollection services)
     {
         try
         {

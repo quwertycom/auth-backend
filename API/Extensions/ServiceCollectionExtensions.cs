@@ -24,7 +24,7 @@ public static class ServiceCollectionExtensions
         
         // Add various service groups using proper extension methods
         services
-            .AddDatabaseServices(configuration)
+            .AddDatabaseServices()
             .AddUtilityServices()
             .AddBusinessServices()
             .AddRepositoryServices();

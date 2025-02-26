@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using FluentAssertions;
 using API.Common.Helpers;
+using API.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace API.UnitTests;
 
@@ -26,22 +28,28 @@ public abstract class TestBase
         // Add test configuration to services
         _services.AddSingleton(_configuration);
         
-        // Initialize required helpers
-        InitializeHelpers();
+        // Register configuration using ConfigManager
+        ConfigManager.AddConfiguration(_services, _configuration);
         
         // Configure additional test services
         ConfigureTestServices(_services);
         
         _serviceProvider = _services.BuildServiceProvider();
+        
+        // Initialize helpers
+        InitializeHelpers();
     }
     
     private void InitializeHelpers()
     {
         try
         {
-            // Initialize helpers with configuration
-            Hasher.Initialize(_configuration);
-            Snowflake.Initialize(_configuration);
+            // Initialize helpers with IOptions
+            var passwordHasherOptions = _serviceProvider.GetRequiredService<IOptions<PasswordHasherSettings>>();
+            var snowflakeOptions = _serviceProvider.GetRequiredService<IOptions<SnowflakeSettings>>();
+            
+            Hasher.Initialize(passwordHasherOptions);
+            Snowflake.Initialize(snowflakeOptions);
         }
         catch (Exception ex)
         {
