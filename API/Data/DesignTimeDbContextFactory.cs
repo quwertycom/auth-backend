@@ -1,49 +1,50 @@
+using API.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
 namespace API.Data;
 
+/// <summary>
+/// Design-time factory for EF Core migrations
+/// This class is only used by EF Core tools for migrations
+/// </summary>
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AuthDbContext>
 {
     public AuthDbContext CreateDbContext(string[] args)
     {
-        // Build configuration from appsettings.json and environment variables
-        var configuration = new ConfigurationBuilder()
+        // Set up configuration
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)
-            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 
-        // Try to load .env file if it exists (for development)
-        var envFile = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
-        if (File.Exists(envFile))
-        {
-            foreach (var line in File.ReadAllLines(envFile))
-            {
-                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
-                var parts = line.Split('=', 2);
-                if (parts.Length != 2) continue;
-                Environment.SetEnvironmentVariable(parts[0], parts[1]);
-            }
-        }
-
-        // Get database configuration
-        var host = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
-        var port = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
-        var database = Environment.GetEnvironmentVariable("POSTGRES_DB") ??
-                      throw new InvalidOperationException("POSTGRES_DB not configured");
-        var username = Environment.GetEnvironmentVariable("POSTGRES_USER") ??
-                      throw new InvalidOperationException("POSTGRES_USER not configured");
-        var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ??
-                      throw new InvalidOperationException("POSTGRES_PASSWORD not configured");
-
+        // Determine if running in Docker
+        bool isDocker = Environment.GetEnvironmentVariable("DOCKER_RUNNING")?.ToLower() == "true";
+            
+        // Create DB context options
         var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();
-        var connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+            
+        // Get database settings
+        var dbSettings = configuration.GetSection("Database").Get<DatabaseSettings>();
+            
+        if (dbSettings == null)
+        {
+            // Fallback connection string if configuration is missing
+            optionsBuilder.UseNpgsql("Host=localhost;Database=qauth_db;Username=qauth_user;Password=qauth_password");
+        }
+        else
+        {
+            // Use host from environment or config
+            string host = isDocker ? "db" : dbSettings.Host ?? "localhost";
 
-        optionsBuilder.UseNpgsql(connectionString);
-
+            // Build connection string with settings from configuration
+            var connectionString = $"Host={host};Database={dbSettings.Database};Username={dbSettings.Username};Password={dbSettings.Password}";
+            optionsBuilder.UseNpgsql(connectionString);
+        }
+            
         return new AuthDbContext(optionsBuilder.Options);
     }
 }
