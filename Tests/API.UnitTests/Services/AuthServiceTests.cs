@@ -1,20 +1,20 @@
-using API.Services;
-using API.Repositories.Interfaces;
-using NSubstitute;
-using Xunit;
-using API.Contracts.Requests.Auth;
-using API.Common.Helpers;
-using API.Models;
-using API.Common.Enums;
-using Microsoft.Extensions.Configuration;
-using NSubstitute.ExceptionExtensions;
-using System.Threading.Tasks;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using API.Common.Enums;
+using API.Common.Helpers;
+using API.Configuration;
+using API.Contracts.Requests.Auth;
+using API.Models;
+using API.Repositories.Interfaces;
+using API.Services;
 using API.Common.Utilities.Interfaces;
 using API.UnitTests.Utilities;
 using Moq;
+using Xunit;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using API.Configuration;
+using JwtSettingsConfig = API.Configuration.JwtSettings;
 
 namespace API.UnitTests.Services;
 
@@ -27,6 +27,7 @@ public class AuthServiceTests
     private readonly IConfiguration _configuration;
     private readonly IOptions<PasswordHasherSettings> _passwordHasherOptions;
     private readonly IOptions<SnowflakeSettings> _snowflakeOptions;
+    private readonly Mock<JwtService> _jwtService;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
@@ -76,17 +77,24 @@ public class AuthServiceTests
         Hasher.Initialize(_passwordHasherOptions);
         Snowflake.Initialize(_snowflakeOptions);
         
-        // Add mock for JwtService
-        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettings>>());
-        mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
+        // Add mock for JwtService - use fully qualified name to avoid ambiguity
+        var jwtOptions = Options.Create(new API.Configuration.JwtSettings
+        {
+            SecretKey = "this-is-a-32-character-long-secret-key!",
+            Issuer = "test-issuer",
+            Audience = "test-audience"
+        });
+        
+        _jwtService = new Mock<JwtService>(jwtOptions);
+        _jwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
             .Returns((true, "SUCCESS", "", "mock_token"));
         
         _authService = new AuthService(
-            _userRepository, 
-            _sessionRepository, 
-            _verificationRepository, 
-            _emailSender,
-            mockJwtService.Object
+            _userRepository.Object,  // Use .Object to get the actual mock instance
+            _sessionRepository.Object, 
+            _verificationRepository.Object, 
+            _emailSender.Object,
+            _jwtService.Object
         );
     }
 
@@ -100,9 +108,9 @@ public class AuthServiceTests
         // Arrange
         var request = new RegisterRequest
         {
-            Username = "testuser",
             Email = "test@example.com",
-            Password = "Password123",
+            Password = "Password123!",
+            Username = "testuser",
             FirstName = "Test",
             LastName = "User",
             BirthDate = DateTime.Now.AddYears(-20),
@@ -110,26 +118,31 @@ public class AuthServiceTests
             PhoneNumber = null
         };
 
-        _userRepository.GetUserByUsername(request.Username).Returns(Task.FromResult<User?>(null));
-        _userRepository.GetEmailModelByEmail(request.Email)
-            .Returns(Task.FromResult<EmailAddress?>(null));
-        _userRepository.GetPhoneNumberModelByPhoneNumber(Arg.Is<string>(s => s == null))
-            .Returns(Task.FromResult<PhoneNumber?>(null));
-        _userRepository.AddUser(Arg.Any<User>()).Returns(Task.CompletedTask);
-        _userRepository.AddEmail(Arg.Any<EmailAddress>()).Returns(Task.CompletedTask);
-        _verificationRepository.AddVerificationSession(Arg.Any<VerificationSession>()).Returns(Task.CompletedTask);
-
-        // Arrange mocking EmailSender
-        _emailSender.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(true));
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync((User?)null);
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail(request.Email))
+            .ReturnsAsync((EmailAddress?)null);
+        _userRepository.Setup(repo => repo.GetPhoneNumberModelByPhoneNumber(It.IsAny<string>()))
+            .ReturnsAsync((PhoneNumber?)null);
+        _userRepository.Setup(repo => repo.AddUser(It.IsAny<User>()))
+            .Returns(Task.CompletedTask);
+        _userRepository.Setup(repo => repo.AddEmail(It.IsAny<EmailAddress>()))
+            .Returns(Task.CompletedTask);
+        _verificationRepository.Setup(repo => repo.AddVerificationSession(It.IsAny<VerificationSession>()))
+            .Returns(Task.CompletedTask);
+        
+        // Arrange mocking EmailSender - use Moq syntax
+        _emailSender.Setup(sender => sender.SendOtpEmailAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
 
         // Assert
-        Xunit.Assert.True(isSuccess);
-        Xunit.Assert.Equal("OTP_SENT", status);
-        Xunit.Assert.NotNull(verificationSessionID);
-        await _emailSender.Received(1).SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>());
+        Assert.True(isSuccess);
+        Assert.Equal("OTP_SENT", status);
+        Assert.NotNull(verificationSessionID);
+        _emailSender.Verify(sender => sender.SendOtpEmailAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -171,8 +184,8 @@ public class AuthServiceTests
             Gender = UserGender.Male
         };
 
-        _userRepository.GetUserByUsername(request.Username)
-            .Returns(Task.FromResult<User?>(TestDataFactory.CreateValidUser()));
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync(TestDataFactory.CreateValidUser());
 
         // Act
         var (isSuccess, status, message, verificationSessionID) = await _authService.RegisterUserAsync(request);
@@ -198,9 +211,10 @@ public class AuthServiceTests
             Gender = UserGender.Male
         };
 
-        _userRepository.GetUserByUsername(request.Username).Returns(Task.FromResult<User?>(null));
-        _userRepository.GetEmailModelByEmail(request.Email)
-            .Returns(new EmailAddress { 
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync((User?)null);
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail(request.Email))
+            .ReturnsAsync(new EmailAddress { 
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 User = TestDataFactory.CreateValidUser(),
@@ -232,11 +246,12 @@ public class AuthServiceTests
             PhoneNumber = "+15551234567"
         };
 
-        _userRepository.GetUserByUsername(request.Username).Returns(Task.FromResult<User?>(null));
-        _userRepository.GetEmailModelByEmail(request.Email)
-            .Returns(Task.FromResult<EmailAddress?>(null));
-        _userRepository.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber)
-            .Returns(new PhoneNumber { 
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync((User?)null);
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail(request.Email))
+            .ReturnsAsync((EmailAddress?)null);
+        _userRepository.Setup(repo => repo.GetPhoneNumberModelByPhoneNumber(request.PhoneNumber))
+            .ReturnsAsync(new PhoneNumber { 
                 Phone = "+15551234567",
                 User = TestDataFactory.CreateValidUser(),
                 State = PhoneState.Verified,
@@ -291,7 +306,7 @@ public class AuthServiceTests
             Gender = UserGender.Male
         };
 
-        _userRepository.GetUserByUsername(request.Username)
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
             .ThrowsAsync(new Exception("Simulated error"));
 
         // Act
@@ -367,11 +382,16 @@ public class AuthServiceTests
             }
         };
 
-        _verificationRepository.GetVerificationSessionById(123).Returns(session);
-        _userRepository.GetEmailModelByEmail("test@example.com").Returns(session.Email);
-        _userRepository.GetUserById(1).Returns(testUser);
-        _verificationRepository.UpdateVerificationSession(Arg.Any<VerificationSession>()).Returns(Task.CompletedTask);
-        _userRepository.ChangeEmailState(1, EmailState.Verified).Returns(Task.CompletedTask);
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(123))
+            .ReturnsAsync(session);
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail("test@example.com"))
+            .ReturnsAsync(session.Email);
+        _userRepository.Setup(repo => repo.GetUserById(1))
+            .ReturnsAsync(testUser);
+        _verificationRepository.Setup(repo => repo.UpdateVerificationSession(It.IsAny<VerificationSession>()))
+            .Returns(Task.CompletedTask);
+        _userRepository.Setup(repo => repo.ChangeEmailState(1, EmailState.Verified))
+            .Returns(Task.CompletedTask);
 
         var request = new VerifyEmailRequest
         {
@@ -392,8 +412,8 @@ public class AuthServiceTests
     public async Task VerifyEmailAsync_InvalidSessionId_ReturnsNotFound()
     {
         // Arrange
-        _verificationRepository.GetVerificationSessionById(999)
-            .Returns((VerificationSession?)null);
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(999))
+            .ReturnsAsync((VerificationSession?)null);
         
         var request = new VerifyEmailRequest
         {
@@ -431,7 +451,8 @@ public class AuthServiceTests
             }
         };
         
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(It.IsAny<long>()))
+            .ReturnsAsync(session);
         
         var request = new VerifyEmailRequest
         {
@@ -463,7 +484,8 @@ public class AuthServiceTests
             User = testUser
         };
         
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(It.IsAny<long>()))
+            .ReturnsAsync(session);
         
         var request = new VerifyEmailRequest
         {
@@ -496,7 +518,8 @@ public class AuthServiceTests
             User = testUser
         };
         
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(It.IsAny<long>()))
+            .ReturnsAsync(session);
         
         var request = new VerifyEmailRequest
         {
@@ -528,9 +551,10 @@ public class AuthServiceTests
             User = testUser
         };
         
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
-        _userRepository.GetEmailModelByEmail(Arg.Any<string>())
-            .Returns(new EmailAddress {
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(It.IsAny<long>()))
+            .ReturnsAsync(session);
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new EmailAddress {
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
@@ -573,15 +597,17 @@ public class AuthServiceTests
             }
         };
         
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>()).Returns(session);
-        _userRepository.GetEmailModelByEmail(Arg.Any<string>())
-            .Returns(new EmailAddress {
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(It.IsAny<long>()))
+            .ReturnsAsync(session);
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new EmailAddress {
                 Email = "test@example.com",
                 Type = EmailType.Primary,
                 State = EmailState.Verified,
                 User = testUser
             });
-        _userRepository.GetUserById(1).Returns(TestDataFactory.CreateValidUser());
+        _userRepository.Setup(repo => repo.GetUserById(1))
+            .ReturnsAsync(TestDataFactory.CreateValidUser());
         
         var request = new VerifyEmailRequest
         {
@@ -634,9 +660,12 @@ public class AuthServiceTests
             }
         };
 
-        _verificationRepository.GetVerificationSessionById(123).Returns(session);
-        _userRepository.GetEmailModelByEmail("test@example.com").Returns(session.Email);
-        _userRepository.GetUserById(1).Returns(sessionUser);
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(123))
+            .ReturnsAsync(session);
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail("test@example.com"))
+            .ReturnsAsync(session.Email);
+        _userRepository.Setup(repo => repo.GetUserById(1))
+            .ReturnsAsync(sessionUser);
 
         var request = new VerifyEmailRequest
         {
@@ -657,7 +686,7 @@ public class AuthServiceTests
     public async Task VerifyEmailAsync_InternalError_ReturnsInternalError()
     {
         // Arrange
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>())
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(It.IsAny<long>()))
             .ThrowsAsync(new Exception("Database error"));
         
         var request = new VerifyEmailRequest
@@ -695,20 +724,22 @@ public class AuthServiceTests
             Password = "Password123"
         };
 
-        _userRepository.GetUserByUsername(request.Username)
-            .Returns(Task.FromResult<User?>(validUser));
-        _sessionRepository.AddSession(Arg.Any<Session>()).Returns(Task.CompletedTask);
-        _sessionRepository.AddToken(Arg.Any<Token>()).Returns(Task.CompletedTask);
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync(validUser);
+        _sessionRepository.Setup(repo => repo.AddSession(It.IsAny<Session>()))
+            .Returns(Task.CompletedTask);
+        _sessionRepository.Setup(repo => repo.AddToken(It.IsAny<Token>()))
+            .Returns(Task.CompletedTask);
         
-        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettings>>());
+        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<API.Configuration.JwtSettings>>());
         mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
             .Returns((true, "SUCCESS", "", "mock_token"));
         
         var authService = new AuthService(
-            _userRepository, 
-            _sessionRepository, 
-            _verificationRepository, 
-            _emailSender,
+            _userRepository.Object, 
+            _sessionRepository.Object, 
+            _verificationRepository.Object, 
+            _emailSender.Object,
             mockJwtService.Object
         );
 
@@ -736,8 +767,8 @@ public class AuthServiceTests
             Password = "Password123"
         };
 
-        _userRepository.GetUserByUsername(request.Username)
-            .Returns(Task.FromResult<User?>(validUser));
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync(validUser);
 
         // Act
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
@@ -763,8 +794,8 @@ public class AuthServiceTests
             Password = "Password123"
         };
 
-        _userRepository.GetUserByUsername(request.Username)
-            .Returns(Task.FromResult<User?>(validUser));
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync(validUser);
 
         // Act
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
@@ -826,8 +857,8 @@ public class AuthServiceTests
             Password = "Password123"
         };
 
-        _userRepository.GetUserByUsername(request.Username)
-            .Returns(Task.FromResult<User?>(validUser));
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync(validUser);
 
         // Act
         var (isSuccess, status, _, _, _) = await _authService.LoginAsync(request);
@@ -853,25 +884,25 @@ public class AuthServiceTests
             Password = "Password123"
         };
 
-        _userRepository.GetUserByUsername(request.Username)
-            .Returns(Task.FromResult<User?>(validUser));
+        _userRepository.Setup(repo => repo.GetUserByUsername(request.Username))
+            .ReturnsAsync(validUser);
         
         // Add mock JwtService
-        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettings>>());
+        var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<API.Configuration.JwtSettings>>());
         mockJwtService.Setup(x => x.GenerateRefreshToken(It.IsAny<TokenTarget>(), It.IsAny<(long, long?, long?)>()))
             .Returns((true, "SUCCESS", "", "mock_token"));
 
         // Create AuthService with all dependencies
         var authService = new AuthService(
-            _userRepository, 
-            _sessionRepository, 
-            _verificationRepository, 
-            _emailSender,
+            _userRepository.Object, 
+            _sessionRepository.Object, 
+            _verificationRepository.Object, 
+            _emailSender.Object,
             mockJwtService.Object
         );
         
         // Force token generation failure
-        _sessionRepository.AddToken(Arg.Any<Token>())
+        _sessionRepository.Setup(repo => repo.AddToken(It.IsAny<Token>()))
             .ThrowsAsync(new Exception("Token storage failed"));
 
         // Act
@@ -912,15 +943,17 @@ public class AuthServiceTests
         };
 
         // Update mock to use same session instance
-        _verificationRepository.GetVerificationSessionById(Arg.Any<long>())
-            .Returns(x => session); // Return original session reference
-        _verificationRepository.UpdateVerificationSession(Arg.Any<VerificationSession>())
+        _verificationRepository.Setup(repo => repo.GetVerificationSessionById(It.IsAny<long>()))
+            .ReturnsAsync(session); // Use ReturnsAsync instead of Returns
+        _verificationRepository.Setup(repo => repo.UpdateVerificationSession(It.IsAny<VerificationSession>()))
             .Returns(Task.CompletedTask)
-            .AndDoes(x => session.IsUsed = x.Arg<VerificationSession>().IsUsed);
+            .Callback<VerificationSession>(vs => session.IsUsed = vs.IsUsed); // Use Callback instead of AndDoes
 
-        _userRepository.GetEmailModelByEmail(Arg.Any<string>()).Returns(session.Email);
-        _userRepository.GetUserById(Arg.Any<long>()).Returns(testUser);
-        _userRepository.ChangeEmailState(Arg.Any<long>(), Arg.Any<EmailState>())
+        _userRepository.Setup(repo => repo.GetEmailModelByEmail(It.IsAny<string>()))
+            .ReturnsAsync(session.Email);
+        _userRepository.Setup(repo => repo.GetUserById(It.IsAny<long>()))
+            .ReturnsAsync(testUser);
+        _userRepository.Setup(repo => repo.ChangeEmailState(It.IsAny<long>(), It.IsAny<EmailState>()))
             .Returns(Task.CompletedTask);
 
         var request = new VerifyEmailRequest 
