@@ -4,6 +4,8 @@ using NSubstitute;
 using FluentAssertions;
 using API.Common.Helpers;
 using API.Configuration;
+using API.HostedServices;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace API.UnitTests;
@@ -31,29 +33,33 @@ public abstract class TestBase
         // Register configuration using ConfigManager
         ConfigManager.AddConfiguration(_services, _configuration);
         
+        // Add helper initialization hosted services
+        _services.AddHostedService<HasherInitializationService>();
+        _services.AddHostedService<SnowflakeInitializationService>();
+        
         // Configure additional test services
         ConfigureTestServices(_services);
         
         _serviceProvider = _services.BuildServiceProvider();
         
-        // Initialize helpers
-        InitializeHelpers();
+        // Start the hosted services to initialize helpers
+        InitializeHostedServices().GetAwaiter().GetResult();
     }
     
-    private void InitializeHelpers()
+    private async Task InitializeHostedServices()
     {
         try
         {
-            // Initialize helpers with IOptions
-            var passwordHasherOptions = _serviceProvider.GetRequiredService<IOptions<PasswordHasherSettings>>();
-            var snowflakeOptions = _serviceProvider.GetRequiredService<IOptions<SnowflakeSettings>>();
-            
-            Hasher.Initialize(passwordHasherOptions);
-            Snowflake.Initialize(snowflakeOptions);
+            // Get and start all hosted services
+            var hostedServices = _serviceProvider.GetServices<IHostedService>();
+            foreach (var service in hostedServices)
+            {
+                await service.StartAsync(CancellationToken.None);
+            }
         }
         catch (Exception ex)
         {
-            throw new Exception($"Failed to initialize helpers: {ex.Message}", ex);
+            throw new Exception($"Failed to initialize hosted services: {ex.Message}", ex);
         }
     }
 

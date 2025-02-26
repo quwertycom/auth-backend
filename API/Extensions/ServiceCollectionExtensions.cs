@@ -1,5 +1,6 @@
 using API.Common.Helpers;
 using API.Configuration;
+using API.HostedServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -29,29 +30,30 @@ public static class ServiceCollectionExtensions
             .AddBusinessServices()
             .AddRepositoryServices();
         
-        // Initialize helpers
-        InitializeHelpers(services);
+        // Register helper initialization hosted services
+        services.AddHostedServices();
         
         return services;
     }
     
-    private static void InitializeHelpers(IServiceCollection services)
+    /// <summary>
+    /// Adds hosted services for initializing helper classes
+    /// </summary>
+    /// <param name="services">The service collection</param>
+    /// <returns>The service collection for method chaining</returns>
+    private static IServiceCollection AddHostedServices(this IServiceCollection services)
     {
         try
         {
-            // Create service provider to resolve IOptions from the container
-            var serviceProvider = services.BuildServiceProvider();
+            // Register hosted services for helper initialization
+            services.AddHostedService<HasherInitializationService>();
+            services.AddHostedService<SnowflakeInitializationService>();
             
-            // Initialize helpers with IOptions
-            var passwordHasherOptions = serviceProvider.GetRequiredService<IOptions<PasswordHasherSettings>>();
-            var snowflakeOptions = serviceProvider.GetRequiredService<IOptions<SnowflakeSettings>>();
-            
-            Hasher.Initialize(passwordHasherOptions);
-            Snowflake.Initialize(snowflakeOptions);
+            return services;
         }
         catch (Exception ex)
         {
-            throw new Exception($"Failed to initialize helpers: {ex.Message}");
+            throw new Exception($"Failed to register helper hosted services: {ex.Message}");
         }
     }
 } 

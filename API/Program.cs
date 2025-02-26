@@ -1,20 +1,11 @@
-using Microsoft.OpenApi.Models;
-using API.Data;
 using API.Common.Helpers;
 using API.Configuration;
 using API.Common.Utilities.Interfaces;
 using API.Common.Utilities;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using API.Middleware;
-using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using HealthChecks.UI.Client;
 using Microsoft.Extensions.Options;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using API.Extensions;
 
 namespace API;
