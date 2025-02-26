@@ -50,7 +50,7 @@ public static class SwaggerExtensions
     public static IApplicationBuilder UseSwaggerServices(this IApplicationBuilder app)
     {
         app.UseSwagger();
-        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "qAuth API v1"));
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/api/docs/v1/swagger.json", "qAuth API v1"));
         
         return app;
     }
