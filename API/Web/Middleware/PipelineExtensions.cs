@@ -9,10 +9,9 @@ public static class PipelineExtensions
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         // Configure error handling based on environment
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("DockerDevelopment"))
         {
             app.UseDeveloperExceptionPage();
-            app.UseSwaggerServices();
         }
         else
         {
@@ -32,8 +31,14 @@ public static class PipelineExtensions
             app.UseHsts();
         }
         
+        // Enable Swagger in all environments
+        app.UseSwaggerServices();
+        
         app.UseHttpsRedirection();
+        
+        // Ensure static files are served (needed for health check UI CSS)
         app.UseStaticFiles();
+        
         app.UseRouting();
         app.UseCors();
         
@@ -53,6 +58,8 @@ public static class PipelineExtensions
         });
         
         app.MapControllers();
+        
+        // Configure all health check endpoints
         app.ConfigureHealthChecks();
         
         return app;

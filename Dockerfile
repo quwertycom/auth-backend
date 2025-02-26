@@ -48,8 +48,8 @@ WORKDIR /app/API
 
 # Set environment variables
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1 \
-    ASPNETCORE_ENVIRONMENT=Development \
-    ASPNETCORE_URLS=http://+:8000 \
+    ASPNETCORE_ENVIRONMENT=DockerDevelopment \
+    ASPNETCORE_URLS=http://0.0.0.0:8000 \
     ASPNETCORE_Kestrel__EndpointDefaults__Protocols=Http1
 
 ENV DOCKER_RUNNING=true
@@ -58,7 +58,7 @@ ENV DOCKER_RUNNING=true
 EXPOSE 8000
 
 # Set the entry point for development
-ENTRYPOINT ["dotnet", "watch", "run", "--no-restore", "--urls", "http://+:8000"]
+ENTRYPOINT ["dotnet", "watch", "run", "--no-restore", "--urls", "http://0.0.0.0:8000", "--environment", "DockerDevelopment"]
 
 # Production stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS production

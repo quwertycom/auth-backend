@@ -140,7 +140,6 @@ public class AuthService : IAuthService
             await _verificationLock.WaitAsync();
             var verificationSession = await _verificationRepository.GetVerificationSessionById(request.VerificationSessionID);
 
-            Console.WriteLine(verificationSession?.EmailId.ToString() ?? "No sessions found");
             switch (verificationSession)
             {
                 case null:
@@ -281,10 +280,6 @@ public class AuthService : IAuthService
                 User = user,
                 CreatedAt = DateTime.UtcNow,
             };
-            Console.WriteLine("user.Id: " + user.Id);
-            Console.WriteLine("session.Id: " + session.Id);
-            Console.WriteLine("refreshToken.Id: " + refreshToken.Id);
-            Console.WriteLine("accessToken.Id: " + accessToken.Id);
 
             await _sessionRepository.AddSession(session);
             await _sessionRepository.AddToken(refreshToken);

@@ -49,8 +49,16 @@ public static class SwaggerExtensions
 
     public static IApplicationBuilder UseSwaggerServices(this IApplicationBuilder app)
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(c => c.SwaggerEndpoint("/api/docs/v1/swagger.json", "qAuth API v1"));
+        // Configure Swagger JSON endpoint with the custom route
+        app.UseSwagger(c => {
+            c.RouteTemplate = "api/docs/{documentName}/swagger.json";
+        });
+        
+        // Configure Swagger UI
+        app.UseSwaggerUI(c => {
+            c.SwaggerEndpoint("/api/docs/v1/swagger.json", "qAuth API v1");
+            c.RoutePrefix = "api/docs"; // Set UI route prefix to /api/docs
+        });
         
         return app;
     }

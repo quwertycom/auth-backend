@@ -40,29 +40,4 @@ public class ApiController : ControllerBase
             });
         }
     }
-
-    [HttpGet("test")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult Test()
-    {
-        try
-        {
-            _logger.LogInformation("Executing GET request to /api/test endpoint");
-            return Ok(new
-            {
-                message = "Test endpoint working",
-                timestamp = DateTime.UtcNow
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while processing GET request to /api/test endpoint");
-            return StatusCode(500, new ProblemDetails
-            {
-                Status = 500,
-                Title = "An error occurred while processing your request",
-                Detail = ex.Message
-            });
-        }
-    }
 }

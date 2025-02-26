@@ -25,9 +25,7 @@ namespace API.Web.Controllers
         {
             if (request.Email != null && request.Email != "")
             {
-                Console.WriteLine("Requesting reset via email: " + request.Email);
                 var response = await _passwordService.RequestResetViaEmail(request.Email);
-                Console.WriteLine("Response: " + response.message);
                 if (response.isSuccess)
                 {
                     return Ok(new RequestResetResponse

@@ -48,12 +48,10 @@ public class PasswordService : IPasswordService
                     return (false, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters long.");
                 }
                 var (newHash, newSalt) = Hasher.Hash(Password);
-                System.Console.WriteLine("New Hash: " + newHash);
                 await _UserRepository.UpdateUserPassword(request.User, newHash, newSalt);
                 request.IsUsed = true;
                 await _VerificationRepository.UpdateResetPasswordRequest(request);
                 await _Context.SaveChangesAsync();
-                Console.WriteLine("Password changed successfully");
                 return (true, "SUCCESS", "Password changed successfully");
             }
         }

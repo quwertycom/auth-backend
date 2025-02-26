@@ -19,8 +19,8 @@ services:
       - nuget_cache:/root/.nuget/packages
     environment:
       # ASP.NET Core settings
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8000
+      - ASPNETCORE_ENVIRONMENT=DockerDevelopment
+      - ASPNETCORE_URLS=http://0.0.0.0:8000
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - ASPNETCORE_DETAILED_ERRORS=1
       
@@ -61,7 +61,7 @@ services:
       # Docker indicator
       - DOCKER_RUNNING=true
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://0.0.0.0:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
