@@ -78,10 +78,12 @@ public static class ConfigManager
 
         services.AddOptions<PasswordHasherSettings>()
             .Bind(configuration.GetSection("PasswordHasher"))
+            .ValidateDataAnnotations()
             .ValidateOnStart();
 
         services.AddOptions<SnowflakeSettings>()
             .Bind(configuration.GetSection("Snowflake"))
+            .ValidateDataAnnotations()
             .ValidateOnStart();
             
         // Register new strongly-typed configuration classes

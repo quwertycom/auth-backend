@@ -35,16 +35,8 @@ public static class Hasher
         _iterations = settings.Iterations;
         _saltSize = settings.SaltSize;
         _keySize = settings.KeySize;
-
-        if (_iterations < 10000)
-            throw new ArgumentException("Iterations must be at least 10000 for security");
-
-        if (_saltSize < 16)
-            throw new ArgumentException("Salt size must be at least 16 bytes");
-
-        if (_keySize < 32)
-            throw new ArgumentException("Key size must be at least 32 bytes");
-
+        
+        // Validation is now handled by DataAnnotations in the PasswordHasherSettings class
         _isInitialized = true;
     }
 

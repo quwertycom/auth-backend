@@ -14,19 +14,28 @@ using API.Common.Utilities.Interfaces;
 using API.UnitTests.Utilities;
 using Moq;
 using Microsoft.Extensions.Options;
+using API.Configuration;
+
 namespace API.UnitTests.Services;
 
 public class AuthServiceTests
 {
-    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
-    private readonly ISessionRepository _sessionRepository = Substitute.For<ISessionRepository>();
-    private readonly IVerificationRepository _verificationRepository = Substitute.For<IVerificationRepository>();
-    private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
-    private readonly AuthService _authService;
+    private readonly Mock<IUserRepository> _userRepository;
+    private readonly Mock<ISessionRepository> _sessionRepository;
+    private readonly Mock<IVerificationRepository> _verificationRepository;
+    private readonly Mock<IEmailSender> _emailSender;
     private readonly IConfiguration _configuration;
+    private readonly IOptions<PasswordHasherSettings> _passwordHasherOptions;
+    private readonly IOptions<SnowflakeSettings> _snowflakeOptions;
+    private readonly AuthService _authService;
 
     public AuthServiceTests()
     {
+        _userRepository = new Mock<IUserRepository>();
+        _sessionRepository = new Mock<ISessionRepository>();
+        _verificationRepository = new Mock<IVerificationRepository>();
+        _emailSender = new Mock<IEmailSender>();
+        
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -48,8 +57,24 @@ public class AuthServiceTests
             })
             .Build();
         
-        Snowflake.Initialize(_configuration);
-        Hasher.Initialize(_configuration);
+        // Set up IOptions for PasswordHasherSettings and SnowflakeSettings
+        _passwordHasherOptions = Options.Create(new PasswordHasherSettings
+        {
+            Iterations = 10000,
+            SaltSize = 16,
+            KeySize = 32
+        });
+        
+        _snowflakeOptions = Options.Create(new SnowflakeSettings
+        {
+            DatacenterId = 1,
+            WorkerId = 1,
+            Epoch = "2024-01-01T00:00:00Z"
+        });
+        
+        // Initialize helpers using IOptions
+        Hasher.Initialize(_passwordHasherOptions);
+        Snowflake.Initialize(_snowflakeOptions);
         
         // Add mock for JwtService
         var mockJwtService = new Mock<JwtService>(Mock.Of<IOptions<JwtSettings>>());

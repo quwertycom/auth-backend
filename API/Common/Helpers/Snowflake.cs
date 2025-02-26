@@ -57,12 +57,7 @@ public static class Snowflake
         _workerId = settings.WorkerId;
         _epoch = DateTimeOffset.Parse(settings.Epoch);
 
-        if (_datacenterId > MaxDatacenterId || _datacenterId < 0)
-            throw new ArgumentException($"Datacenter ID must be between 0 and {MaxDatacenterId}");
-
-        if (_workerId > MaxWorkerId || _workerId < 0)
-            throw new ArgumentException($"Worker ID must be between 0 and {MaxWorkerId}");
-
+        // Validation is now handled by DataAnnotations in the SnowflakeSettings class
         _isInitialized = true;
     }
 
