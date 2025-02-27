@@ -7,7 +7,7 @@ public class PhoneNumber
 {
     public long Id { get; set; } = Snowflake.Generate();
 
-    public required string Phone { get; set; }
+    public required string Value { get; set; }
     public long UserId { get; set; }
 
     public required PhoneType Type { get; set; }

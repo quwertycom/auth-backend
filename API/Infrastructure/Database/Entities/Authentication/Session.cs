@@ -18,6 +18,7 @@ public class Session
     public required User.User User { get; set; }
     public Account.Account? Account { get; set; }
     public Application.Application? Application { get; set; }
+    public Application.ApplicationAccount? ApplicationAccount { get; set; }
 
     public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
 

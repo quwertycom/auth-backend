@@ -7,7 +7,7 @@ public class EmailAddress
 {
     public long Id { get; set; } = Snowflake.Generate();
 
-    public required string Email { get; set; }
+    public required string Value { get; set; }
     public long UserId { get; set; }
 
     public required EmailType Type { get; set; }

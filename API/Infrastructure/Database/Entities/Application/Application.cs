@@ -9,13 +9,13 @@ public class Application
 
     public required string Name { get; set; }
     public required string Description { get; set; }
-    public required string IconUrl { get; set; }
     public required string RedirectUri { get; set; }
     public required long DeveloperId { get; set; }
+    public string? IconUrl { get; set; }
 
     public required ApplicationStatus Status { get; set; } = ApplicationStatus.Development;
 
-    public required virtual Developer.DeveloperAccount Developer { get; set; }
+    public required virtual Developer.Developer Developer { get; set; }
 
     public virtual ICollection<ApplicationAccount> Accounts { get; set; } = new List<ApplicationAccount>();
     public virtual ICollection<Authentication.Session> Sessions { get; set; } = new List<Authentication.Session>();

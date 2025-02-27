@@ -8,15 +8,14 @@ public class DeveloperAccount
     public long Id { get; set; } = Snowflake.Generate();
 
     public required string Name { get; set; }
-    public long? OrganizationId { get; set; }
+    public required long DeveloperId { get; set; }
+    public required long AccountId { get; set; }
 
     public required DeveloperStatus Status { get; set; }
     public required DeveloperType Type { get; set; }
 
-    public virtual Organization.Organization? Organization { get; set; }
-
-    public virtual ICollection<Account.Account> AuthorizedAccounts { get; set; } = new List<Account.Account>();
-    public virtual ICollection<Application.Application> Applications { get; set; } = new List<Application.Application>();
-
+    public required virtual Developer Developer { get; set; }
+    public required virtual Account.Account Account { get; set; }
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

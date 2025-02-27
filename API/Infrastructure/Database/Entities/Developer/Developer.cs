@@ -11,9 +11,12 @@ public class Developer
     public required string ContactEmail { get; set; }
     public string? WebsiteUrl { get; set; }
     public string? Description { get; set; }
+    public required long OrganizationId { get; set; }
 
     public required DeveloperType Type { get; set; }
     public required DeveloperStatus Status { get; set; }
+
+    public required virtual Organization.Organization Organization { get; set; }
 
     public virtual ICollection<DeveloperAccount> Accounts { get; set; } = new List<DeveloperAccount>();
     public virtual ICollection<Application.Application> Applications { get; set; } = new List<Application.Application>();

@@ -14,6 +14,7 @@ public class ResetPasswordRequest
     public required User.User User { get; set; }
     public required User.EmailAddress EmailAddress { get; set; }
 
-    public DateTime ExpiredAt { get; set; } = DateTime.UtcNow.AddMinutes(15);
+    public DateTime? UsedAt { get; set; }
+    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(15);
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -7,7 +7,7 @@ public class Token
 {
     public long Id { get; set; } = Snowflake.Generate();
 
-    public required string TokenString { get; set; }
+    public required string Value { get; set; }
     public bool IsRefreshed { get; set; } = false;
     public bool IsRevoked { get; set; } = false;
     public long SessionId { get; set; }

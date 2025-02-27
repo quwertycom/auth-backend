@@ -15,6 +15,6 @@ public class VerifyEmailSession
     public required User.User User { get; set; }
     public required EmailAddress Email { get; set; }
 
-    public DateTime ExpiredAt { get; set; } = DateTime.UtcNow.AddMinutes(15);
+    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(15);
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
