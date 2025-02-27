@@ -4,11 +4,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using API.Shared.Configuration;
-using API.Shared.Enums;
+using API.Shared.Enums.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
 
-namespace API.Shared.Security;
+namespace API.Shared.Utilities;
 
 public class JwtService
 {
