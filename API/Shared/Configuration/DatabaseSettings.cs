@@ -30,4 +30,12 @@ public class DatabaseSettings
     /// </summary>
     [Required]
     public string Password { get; set; } = null!;
+    
+    /// <summary>
+    /// Gets the PostgreSQL connection string based on current settings
+    /// </summary>
+    public string GetConnectionString()
+    {
+        return $"Host={Host};Database={Database};Username={Username};Password={Password}";
+    }
 }

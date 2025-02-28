@@ -19,43 +19,43 @@ services:
       # ASP.NET Core settings
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80;https://+:443
-      - ASPNETCORE_HTTPS_PORT=8800
+      - ASPNETCORE_HTTPS_PORT=${ASPNETCORE_HTTPS_PORT:-443}
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=YourSecurePassword123!
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_Kestrel__Certificates__Default__Password:-YourSecurePassword123!}
       
       # Database settings
-      - Database__Host=${POSTGRES_HOST}
-      - Database__Database=${POSTGRES_DB}
-      - Database__Username=${POSTGRES_USER}
-      - Database__Password=${POSTGRES_PASSWORD}
+      - Postgres__Host=${Postgres__Host}
+      - Postgres__Database=${Postgres__Database}
+      - Postgres__User=${Postgres__User}
+      - Postgres__Password=${Postgres__Password}
       
       # JWT settings
-      - Jwt__SecretKey=${JWT_SECRET_KEY}
-      - Jwt__Issuer=auth-backend
-      - Jwt__Audience=auth-client
+      - Jwt__SecretKey=${Jwt__SecretKey}
+      - Jwt__Issuer=${Jwt__Issuer}
+      - Jwt__Audience=${Jwt__Audience}
       
       # Email settings
-      - Email__Host=${EMAIL_HOST}
-      - Email__Port=${EMAIL_PORT}
-      - Email__EnableSsl=true
-      - Email__Username=${EMAIL_USERNAME}
-      - Email__Password=${EMAIL_PASSWORD}
-      - Email__FromEmail=${EMAIL_FROM}
-      - Email__Timeout=10000
-      - Email__UseDefaultCredentials=false
+      - Email__Host=${Email__Host}
+      - Email__Port=${Email__Port}
+      - Email__EnableSsl=${Email__EnableSsl:-true}
+      - Email__Username=${Email__Username}
+      - Email__Password=${Email__Password}
+      - Email__FromEmail=${Email__FromEmail}
+      - Email__Timeout=${Email__Timeout:-10000}
+      - Email__UseDefaultCredentials=${Email__UseDefaultCredentials:-false}
       
       # Snowflake settings
-      - Snowflake__DatacenterId=1
-      - Snowflake__WorkerId=1
-      - Snowflake__Epoch=2024-01-01T00:00:00Z
+      - Snowflake__DatacenterId=${Snowflake__DatacenterId}
+      - Snowflake__WorkerId=${Snowflake__WorkerId}
+      - Snowflake__Epoch=${Snowflake__Epoch}
       
       # PasswordHasher settings
-      - PasswordHasher__Iterations=10000
-      - PasswordHasher__SaltSize=16
-      - PasswordHasher__KeySize=32
+      - PasswordHasher__Iterations=${PasswordHasher__Iterations}
+      - PasswordHasher__SaltSize=${PasswordHasher__SaltSize}
+      - PasswordHasher__KeySize=${PasswordHasher__KeySize}
       
       # API settings
-      - ApiSettings__Port=80
+      - ApiSettings__Port=${Api__Port}
       
       # Docker indicator
       - DOCKER_RUNNING=true

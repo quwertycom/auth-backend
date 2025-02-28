@@ -1,47 +1,52 @@
 namespace API.Shared.Configuration;
 
 /// <summary>
-/// Email settings for the application
+/// Configuration settings for email services
 /// </summary>
 public class EmailSettings
 {
     /// <summary>
-    /// Host of the email server
+    /// Default From email address for outgoing emails
     /// </summary>
-    public string Host { get; set; } = null!;
-
+    public string DefaultFromEmail { get; set; } = string.Empty;
+    
     /// <summary>
-    /// Port of the email server
+    /// Default From name for outgoing emails
     /// </summary>
-    public int Port { get; set; }
-
+    public string DefaultFromName { get; set; } = string.Empty;
+    
     /// <summary>
-    /// Enable SSL for email communication
+    /// SMTP server host
     /// </summary>
-    public bool EnableSsl { get; set; }
-
+    public string Host { get; set; } = string.Empty;
+    
     /// <summary>
-    /// The username for the email server
+    /// SMTP server port
     /// </summary>
-    public string Username { get; set; } = null!;
-
+    public int Port { get; set; } = 25;
+    
     /// <summary>
-    /// The password for the email server
+    /// Whether to use SSL for SMTP connection
     /// </summary>
-    public string Password { get; set; } = null!;
-
+    public bool EnableSsl { get; set; } = true;
+    
     /// <summary>
-    /// Email address used as the sender
+    /// SMTP username
     /// </summary>
-    public string FromEmail { get; set; } = null!;
-
+    public string Username { get; set; } = string.Empty;
+    
     /// <summary>
-    /// Timeout for email operations in milliseconds (default: 30000)
+    /// SMTP password
     /// </summary>
-    public int Timeout { get; set; } = 30000;
-
+    public string Password { get; set; } = string.Empty;
+    
     /// <summary>
-    /// Use default credentials for email server authentication (default: false)
+    /// SMTP connection timeout in milliseconds
+    /// </summary>
+    public int Timeout { get; set; } = 10000;
+    
+    /// <summary>
+    /// Whether to use default credentials for SMTP authentication
     /// </summary>
     public bool UseDefaultCredentials { get; set; } = false;
 }

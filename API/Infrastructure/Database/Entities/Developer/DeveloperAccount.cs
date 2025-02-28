@@ -1,5 +1,5 @@
 using API.Shared.Utilities;
-using API.Shared.Enums.Developer;
+using API.Shared.Enums.Entities.Developer;
 
 namespace API.Infrastructure.Database.Entities.Developer;
 

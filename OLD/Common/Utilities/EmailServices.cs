@@ -8,8 +8,6 @@ public class LocalEmailService : IDeveloperEmailService
 {
     public async Task SendEmailAsync(string to, string subject, string body)
     {
-        // In development, just log the email
-        Console.WriteLine($"Email to: {to}\nSubject: {subject}\nBody: {body}");
         await Task.CompletedTask;
     }
 }

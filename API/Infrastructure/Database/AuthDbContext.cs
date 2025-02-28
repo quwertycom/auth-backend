@@ -6,9 +6,9 @@ using API.Infrastructure.Database.Entities.Developer;
 using API.Infrastructure.Database.Entities.Organization;
 using API.Infrastructure.Database.Entities.User;
 using API.Infrastructure.Database.Entities.Verification;
-using API.Shared.Enums.Application;
-using API.Shared.Enums.Account;
-using API.Shared.Enums.User;
+using API.Shared.Enums.Entities.Application;
+using API.Shared.Enums.Entities.Account;
+using API.Shared.Enums.Entities.User;
 namespace API.Infrastructure.Database;
 
 public class AuthDbContext : DbContext

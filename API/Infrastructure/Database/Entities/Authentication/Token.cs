@@ -1,5 +1,5 @@
 using API.Shared.Utilities;
-using API.Shared.Enums.Authentication;
+using API.Shared.Enums.Entities.Authentication;
 
 namespace API.Infrastructure.Database.Entities.Authentication;
 

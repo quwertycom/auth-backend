@@ -1,57 +1,86 @@
-using API.Infrastructure.Database;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using API.Shared.Extensions;
+using Microsoft.AspNetCore.Http;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace API;
 
-// Add services to the container
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-    });
-
-// Add API documentation
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Add DbContext
-builder.Services.AddDbContext<AuthDbContext>(options =>
+public class Program
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Database"), 
-        npgsqlOptions => 
+    public static void Main(string[] args)
+    {
+        // Enable legacy timestamp behavior for Npgsql
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+        // Create builder
+        var builder = WebApplication.CreateBuilder(args);
+        
+        // Configure environment variables and configuration sources with proper priority
+        builder.Configuration
+            .AddDotEnvConfiguration(builder.Environment) // Load .env file and add environment variables
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables(); // Add again to ensure environment variables have highest priority
+
+        // Configure services using extension methods
+        builder.Services.AddAppConfiguration(builder.Configuration);
+        builder.Services.AddDatabaseServices(builder.Configuration);
+        builder.Services.AddSecurityServices(builder.Configuration);
+        builder.Services.AddEmailServices(builder.Configuration);
+
+        // Add controllers
+        builder.Services.AddControllers();
+
+        // Add Swagger/OpenAPI
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerServices();
+
+        // Add health checks
+        builder.Services.AddHealthCheckServices(builder.Configuration);
+
+        builder.Services.AddProblemDetails();
+
+        // Configure CORS - (Note: This is already in SecurityServiceExtensions)
+        builder.Services.AddCors(options =>
         {
-            npgsqlOptions.MigrationsAssembly("API");
-            npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.SetIsOriginAllowed(_ => true) // Be careful with this in production
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials();
+            });
         });
-    
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableSensitiveDataLogging();
+
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.InvalidModelStateResponseFactory = context =>
+            {
+                var errors = context.ModelState
+                    .Where(e => e.Value != null && e.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value?.Errors?.Select(e => e.ErrorMessage ?? "").ToArray() ?? Array.Empty<string>()
+                    );
+
+                return new BadRequestObjectResult(new
+                {
+                    Status = "INVALID_REQUEST",
+                    Message = "Invalid request format: " + string.Join(", ", errors.Values.SelectMany(v => v)),
+                    Errors = errors
+                });
+            };
+        });
+
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline using extension methods
+        app.ConfigurePipeline();
+
+        // Explicitly bind to all interfaces
+        app.Urls.Add("http://0.0.0.0:8000");
+
+        app.Run();
     }
-});
-
-// Register services from Shared
-// Add shared services and configuration here
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseDeveloperExceptionPage();
 }
-else
-{
-    app.UseExceptionHandler("/error");
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
-
-app.Run();

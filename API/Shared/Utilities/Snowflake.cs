@@ -3,6 +3,9 @@ using API.Shared.Configuration;
 
 namespace API.Shared.Utilities;
 
+/// <summary>
+/// Static class for generating Snowflake IDs.
+/// </summary>
 public static class Snowflake
 {
     private static readonly object _lock = new();
@@ -28,6 +31,10 @@ public static class Snowflake
     private const long MaxDatacenterId = -1L ^ (-1L << DatacenterIdBits);
     private const long SequenceMask = -1L ^ (-1L << SequenceBits);
 
+    /// <summary>
+    /// Initializes the Snowflake ID generator using IConfiguration.
+    /// </summary>
+    /// <param name="configuration">The application configuration.</param>
     public static void Initialize(IConfiguration configuration)
     {
         if (_isInitialized) return;
@@ -37,15 +44,19 @@ public static class Snowflake
 
         InitializeWithSettings(settings);
     }
-    
+
+    /// <summary>
+    /// Initializes the Snowflake ID generator using SnowflakeSettings options.
+    /// </summary>
+    /// <param name="options">The Snowflake settings options.</param>
     public static void Initialize(IOptions<SnowflakeSettings> options)
     {
         if (_isInitialized) return;
-        
+
         var settings = options.Value;
         InitializeWithSettings(settings);
     }
-    
+
     private static void InitializeWithSettings(SnowflakeSettings settings)
     {
         _datacenterId = settings.DatacenterId;
@@ -56,6 +67,10 @@ public static class Snowflake
         _isInitialized = true;
     }
 
+    /// <summary>
+    /// Generates a new Snowflake ID.
+    /// </summary>
+    /// <returns>A unique Snowflake ID.</returns>
     public static long Generate()
     {
         if (!_isInitialized)
