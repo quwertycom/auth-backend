@@ -389,7 +389,7 @@
         {
             "label": "🔄 Update Database",
             "type": "shell",
-            "command": "if [ -f ${workspaceFolder}/.env ]; then export $(cat ${workspaceFolder}/.env | grep -v '^#' | xargs) && export DATABASE_HOST=localhost && cd ${workspaceFolder}/API && dotnet ef database update; else echo 'Error: .env file not found' && exit 1; fi",
+            "command": "cd ${workspaceFolder}/API && dotnet ef database update",
             "problemMatcher": "$msCompile",
             "presentation": {
                 "reveal": "always",
@@ -403,7 +403,7 @@
         {
             "label": "🔄 Add Migration",
             "type": "shell",
-            "command": "if [ -f ${workspaceFolder}/.env ]; then export $(cat ${workspaceFolder}/.env | grep -v '^#' | xargs) && cd ${workspaceFolder}/API && dotnet ef migrations add ${input:migrationName}; else echo 'Error: .env file not found' && exit 1; fi",
+            "command": "cd ${workspaceFolder}/API && dotnet ef migrations add ${input:migrationName} --output-dir Infrastructure/Database/Migrations --namespace API.Infrastructure.Database.Migrations",
             "problemMatcher": "$msCompile",
             "presentation": {
                 "reveal": "always",
@@ -417,7 +417,7 @@
         {
             "label": "🔄 Remove Last Migration",
             "type": "shell",
-            "command": "if [ -f ${workspaceFolder}/.env ]; then export $(cat ${workspaceFolder}/.env | grep -v '^#' | xargs) && export DATABASE_HOST=localhost && cd ${workspaceFolder}/API && dotnet ef migrations remove --force; else echo 'Error: .env file not found' && exit 1; fi",
+            "command": "cd ${workspaceFolder}/API && dotnet ef migrations remove --force",
             "problemMatcher": "$msCompile",
             "presentation": {
                 "reveal": "always",
