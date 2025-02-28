@@ -109,6 +109,10 @@ public class AuthDbContext : DbContext
           .Property(a => a.CreatedAt)
           .IsRequired();
 
+        modelBuilder.Entity<Account>()
+          .Property(a => a.RowVersion)
+          .IsRowVersion();
+
         // ----------------------------
         // --- Application ------------
         // ----------------------------
@@ -177,6 +181,15 @@ public class AuthDbContext : DbContext
           .Property(a => a.CreatedAt)
           .IsRequired();
         
+        // Add IsDeleted property to entities that need it
+        // Then add global query filter
+        modelBuilder.Entity<Application>()
+          .HasQueryFilter(a => a.Status != ApplicationStatus.Removed);
+        
+        modelBuilder.Entity<Application>()
+          .Property(a => a.RowVersion)
+          .IsRowVersion();
+        
         // ----------------------------
         // --- ApplicationAccount -----
         // ----------------------------
@@ -197,6 +210,12 @@ public class AuthDbContext : DbContext
           .HasMany(aa => aa.Sessions)
           .WithOne(s => s.ApplicationAccount)
           .HasForeignKey(s => s.ApplicationAccountId);
+        
+        // --- Indexes ---
+        
+        modelBuilder.Entity<ApplicationAccount>()
+          .HasIndex(aa => new { aa.ApplicationId, aa.AccountId })
+          .IsUnique();
 
         // --- properties ---
 
@@ -461,6 +480,10 @@ public class AuthDbContext : DbContext
           .Property(d => d.CreatedAt)
           .IsRequired();
 
+        modelBuilder.Entity<Developer>()
+          .Property(d => d.RowVersion)
+          .IsRowVersion();
+
         // ----------------------------
         // --- DeveloperAccount -------
         // ----------------------------
@@ -528,6 +551,11 @@ public class AuthDbContext : DbContext
           .WithOne(d => d.Organization)
           .HasForeignKey(d => d.OrganizationId);
 
+        // --- Indexes ---
+
+        modelBuilder.Entity<Organization>()
+          .HasIndex(o => o.Name);
+
         // --- Properties ---
 
         modelBuilder.Entity<Organization>()
@@ -546,6 +574,10 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Organization>()
           .Property(o => o.CreatedAt)
           .IsRequired();
+
+        modelBuilder.Entity<Organization>()
+          .Property(o => o.RowVersion)
+          .IsRowVersion();
 
         // ----------------------------
         // --- User -------------------
@@ -623,7 +655,11 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<User>()
           .Property(u => u.CreatedAt)
           .IsRequired();
-          
+
+        modelBuilder.Entity<User>()
+          .Property(u => u.RowVersion)
+          .IsRowVersion();
+
         // ----------------------------
         // --- EmailAddress -----------
         // ----------------------------

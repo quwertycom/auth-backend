@@ -22,4 +22,5 @@ public class Application
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public byte[]? RowVersion { get; set; }
 }

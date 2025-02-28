@@ -23,4 +23,6 @@ public class Developer
 
     public DateTime? VerifiedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public byte[]? RowVersion { get; set; }
 }

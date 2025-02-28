@@ -14,4 +14,6 @@ public class Organization
     public virtual ICollection<Developer.Developer> Developers { get; set; } = new List<Developer.Developer>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public byte[]? RowVersion { get; set; }
 }
