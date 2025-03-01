@@ -46,6 +46,17 @@ public static class SwaggerServiceExtensions
                 }
             });
             
+            // Custom mapping of sections based on the second part of the URL.
+            c.TagActionsBy(api => {
+                var path = api.RelativePath;
+                if (string.IsNullOrEmpty(path))
+                {
+                    return ["Default"];
+                }
+                var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                return segments.Length >= 2 ? new[] { segments[1] } : new[] { "Default" };
+            });
+            
             // Enable XML comments in Swagger
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
