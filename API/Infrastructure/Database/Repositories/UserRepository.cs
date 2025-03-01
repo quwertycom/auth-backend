@@ -1,0 +1,196 @@
+using API.Infrastructure.Database.Entities.User;
+using API.Shared.Enums.Entities.User;
+using API.Shared.Interfaces.Database.Repositories;
+using Microsoft.EntityFrameworkCore;
+
+namespace API.Infrastructure.Database.Repositories;
+
+public class UserRepository : IUserRepository
+{
+    private readonly AuthDbContext _context;
+
+    public UserRepository(AuthDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task AddUserAsync(User user) {
+      try {
+        await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: {ex.Message}", ex);
+      }
+    }
+    
+   public async Task AddEmailAsync(EmailAddress email) {
+      try {
+        await _context.UserEmails.AddAsync(email);
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to add email: {ex.Message}", ex);
+      }
+   }
+
+   public async Task<User?> GetUserByUsernameAsync(string username) {
+      try {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to get user by username: {ex.Message}", ex);
+      }
+   }
+
+   public async Task<User?> GetUserByEmailAsync(string email) {
+      try {
+        return await _context.Users.FirstOrDefaultAsync(u => u.EmailAddresses.Any(e => e.Value == email));
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to get user by email: {ex.Message}", ex);
+      }
+   }
+
+   public async Task<User?> GetUserByIdAsync(long id) {
+      try {
+        return await _context.Users.FindAsync(id);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to get user by id: {ex.Message}", ex);
+      }
+   }
+
+   public async Task<EmailAddress?> GetUserPrimaryEmailAddressAsync(long userId) {
+      try {
+        return await _context.UserEmails.FirstOrDefaultAsync(e => e.UserId == userId && e.Type == EmailType.Primary);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to get user primary email address: {ex.Message}", ex);
+      }
+   }
+
+   public async Task<EmailAddress?> GetEmailAdressByIdAsync(long id) {
+      try {
+        return await _context.UserEmails.FindAsync(id);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to get email address by id: {ex.Message}", ex);
+      }
+   }
+
+   public async Task<bool> EmailAdressExistsAsync(string email) {
+      try {
+        return await _context.UserEmails.AnyAsync(e => e.Value == email);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to check if email address exists: {ex.Message}", ex);
+      }
+   }
+
+   public async Task<bool> UsernameExistsAsync(string username) {
+      try {
+        return await _context.Users.AnyAsync(u => u.Username == username);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to check if username exists: {ex.Message}", ex);
+      }
+   }
+
+   public async Task UpdateUserStateAsync(long userId, UserState newState) {
+      try {
+        var user = await GetUserByIdAsync(userId);
+        if (user == null) {
+          throw new Exception("NOT_FOUND: User not found");
+        }
+        user.State = newState;
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to update user state: {ex.Message}", ex);
+      }
+   }
+
+   public async Task UpdateEmailStateAsync(long emailAdressId, EmailState newState) {
+      try {
+        var email = await GetEmailAdressByIdAsync(emailAdressId);
+        if (email == null) {
+          throw new Exception("NOT_FOUND: Email address not found");
+        }
+        email.State = newState;
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to update email state: {ex.Message}", ex);
+      }
+   }
+
+   public async Task ChangeUserPrimaryEmailAddressAsync(long userId, long newEmailAdressId) {
+      try {
+        var user = await GetUserByIdAsync(userId);
+        if (user == null) {
+          throw new Exception("NOT_FOUND: User not found");
+        }
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to change user primary email address: {ex.Message}", ex);
+      }
+   }
+
+   public async Task UpdateUserPasswordAsync(long userId, string newHash, string newSalt) {
+      try {
+        var user = await GetUserByIdAsync(userId);
+        if (user == null) {
+          throw new Exception("NOT_FOUND: User not found");
+        }
+        user.PasswordHash = newHash;
+        user.PasswordSalt = newSalt;
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to update user password: {ex.Message}", ex);
+      }
+   }
+
+   public async Task UpdateUserLastLoginAsync(long userId) {
+      try {
+        var user = await GetUserByIdAsync(userId);
+        if (user == null) {
+          throw new Exception("NOT_FOUND: User not found");
+        }
+        user.LastLoginAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to update user last login: {ex.Message}", ex);
+      }
+   }
+
+   public async Task RemoveEmailAddressAsync(long emailAdressId) {
+      try {
+        var email = await GetEmailAdressByIdAsync(emailAdressId);
+        if (email == null) {
+          throw new Exception("NOT_FOUND: Email address not found");
+        }
+        _context.UserEmails.Remove(email);
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to remove email address: {ex.Message}", ex);
+      }
+   }
+
+   public async Task RemoveUserAsync(long userId) {
+      try {
+        var user = await GetUserByIdAsync(userId);
+        if (user == null) {
+          throw new Exception("NOT_FOUND: User not found");
+        }
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to remove user: {ex.Message}", ex);
+      }
+   }
+}

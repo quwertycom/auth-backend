@@ -43,12 +43,7 @@ public static class DatabaseServiceExtensions
         });
 
         // Register repositories
-        // services.AddScoped<IUnitOfWork, UnitOfWork>();
-        // services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-        
-        // Add any specific repositories
-        // services.AddScoped<IUserRepository, UserRepository>();
-        // services.AddScoped<IApplicationRepository, ApplicationRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         
         return services;
     }
