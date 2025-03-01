@@ -1,10 +1,9 @@
 using API.Infrastructure.Database;
 using API.Shared.Configuration;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;  
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System;
+using API.Infrastructure.Database.Repositories;
+using API.Shared.Interfaces.Database.Repositories;
 
 namespace API.Shared.Extensions;
 
