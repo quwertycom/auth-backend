@@ -698,7 +698,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<EmailAddress>()
           .Property(e => e.State)
           .IsRequired()
-          .HasDefaultValue(EmailState.Created);
+          .HasDefaultValue(EmailState.PendingVerification);
 
         modelBuilder.Entity<EmailAddress>()
           .Property(e => e.CreatedAt)

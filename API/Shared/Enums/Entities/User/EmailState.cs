@@ -2,8 +2,8 @@ namespace API.Shared.Enums.Entities.User;
 
 public enum EmailState
 {
-    Created,
-    Verified,
+    PendingVerification,
+    Active,
     Blacklisted,
     Disabled,
     Deleted

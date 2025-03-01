@@ -11,7 +11,7 @@ public class EmailAddress
     public long UserId { get; set; }
 
     public required EmailType Type { get; set; }
-    public required EmailState State { get; set; } = EmailState.Created;
+    public required EmailState State { get; set; } = EmailState.PendingVerification;
 
     public required User User { get; set; }
 

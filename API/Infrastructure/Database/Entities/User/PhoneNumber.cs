@@ -11,7 +11,7 @@ public class PhoneNumber
     public long UserId { get; set; }
 
     public required PhoneType Type { get; set; }
-    public required PhoneState State { get; set; } = PhoneState.Created;
+    public required PhoneState State { get; set; } = PhoneState.PendingVerification;
 
     public required User User { get; set; }
 
