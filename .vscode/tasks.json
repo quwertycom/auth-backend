@@ -4,7 +4,7 @@
         {
             "label": "🚀 Run Development (Docker)",
             "type": "shell",
-            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up --build; else docker compose -f docker-compose.dev.yml up --build; fi",
+            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up --build --watch; else docker compose -f docker-compose.dev.yml up --build --watch; fi",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
