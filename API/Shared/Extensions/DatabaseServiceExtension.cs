@@ -43,6 +43,8 @@ public static class DatabaseServiceExtensions
 
         // Register repositories
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IVerificationRepository, VerificationRepository>();
+        services.AddScoped<ISessionRepository, SessionRepository>();
         
         return services;
     }
