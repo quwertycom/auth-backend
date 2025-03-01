@@ -23,6 +23,13 @@ public interface IUserRepository
     public Task AddEmailAsync(EmailAddress email);
 
     /// <summary>
+    /// Adds a new phone number to the database.
+    /// </summary>
+    /// <param name="phoneNumber">The phone number to add.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task AddPhoneNumberAsync(PhoneNumber phoneNumber);
+
+    /// <summary>
     /// Gets a user by their username.
     /// </summary>
     /// <param name="username">The username of the user to get.</param>

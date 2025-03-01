@@ -34,6 +34,16 @@ public class UserRepository : IUserRepository
       }
    }
 
+   public async Task AddPhoneNumberAsync(PhoneNumber phoneNumber) {
+      try {
+        await _context.PhoneNumbers.AddAsync(phoneNumber);
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to add phone number: {ex.Message}", ex);
+      }
+   }
+
    public async Task<User?> GetUserByUsernameAsync(string username) {
       try {
         return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
