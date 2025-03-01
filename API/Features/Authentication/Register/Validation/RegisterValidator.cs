@@ -47,10 +47,10 @@ public class RegisterValidator : Validator<RegisterRequest>
             .WithMessage("Phone number is required!")
             .MinimumLength(10)
             .WithMessage("Phone number must be at least 10 characters long!")
-            .MaximumLength(16)
-            .WithMessage("Phone number must be less than 16 characters long!") // Updated to 16 to match PhoneNumber.Value max length
-            .Matches(@"^[0-9]+$")
-            .WithMessage("Phone number must contain only numbers!");
+            .MaximumLength(20)
+            .WithMessage("Phone number must be less than 20 characters long!")
+            .Matches(@"^(\+[0-9]{1,3})?[0-9]+$")
+            .WithMessage("Phone number must contain only numbers and optional region code (e.g., +123)");
 
         RuleFor(x => x.BirthDate)
             .NotEmpty()
