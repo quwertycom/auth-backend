@@ -4,17 +4,22 @@
         {
             "label": "🚀 Run Development (Docker)",
             "type": "shell",
-            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up --build --watch; else docker compose -f docker-compose.dev.yml up --build --watch; fi",
+            "command": "if [ -f .env ]; then (docker compose -f docker-compose.dev.yml --env-file .env stop && docker compose -f docker-compose.dev.yml --env-file .env up --build --watch --force-recreate); else (docker compose -f docker-compose.dev.yml stop && docker compose -f docker-compose.dev.yml up --build --watch --force-recreate); fi",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "⏹️ Stop All Services"
+            ]
         },
         {
             "label": "🚀 Run Development (Local)",
             "dependsOrder": "sequence",
             "dependsOn": [
+                "⏹️ Stop All Services",
                 "🛢️ Start Database",
                 "📧 Start MailHog"
             ],
@@ -427,6 +432,15 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             }
+        },
+        {
+            "label": "🔄 Restart All Services",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "⏹️ Stop All Services",
+                "🚀 Run Development (Docker)"
+            ],
+            "problemMatcher": []
         }
     ],
     "inputs": [
