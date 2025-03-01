@@ -72,6 +72,13 @@ public interface IUserRepository
     public Task<bool> UsernameExistsAsync(string username);
 
     /// <summary>
+    /// Checks if a phone number exists in the database.
+    /// </summary>
+    /// <param name="phoneNumber">The phone number to check.</param>
+    /// <returns>A task that represents the asynchronous operation. Returns true if the phone number exists, otherwise false.</returns>
+    public Task<bool> PhoneNumberExistsAsync(string phoneNumber);
+
+    /// <summary>
     /// Updates the state of a user.
     /// </summary>
     /// <param name="userId">The ID of the user to update.</param>

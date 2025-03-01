@@ -97,6 +97,14 @@ public class UserRepository : IUserRepository
       }
    }
 
+   public async Task<bool> PhoneNumberExistsAsync(string phoneNumber) {
+      try {
+        return await _context.PhoneNumbers.AnyAsync(p => p.Value == phoneNumber);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to check if phone number exists: {ex.Message}", ex);
+      }
+   }
    public async Task UpdateUserStateAsync(long userId, UserState newState) {
       try {
         var user = await GetUserByIdAsync(userId);
