@@ -4,6 +4,11 @@ namespace API.Shared.Extensions;
 
 public static class PipelineExtensions
 {
+    /// <summary>
+    /// Configures the pipeline for the application.
+    /// </summary>
+    /// <param name="app">The web application to configure.</param>
+    /// <returns>The configured web application.</returns>
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         // Configure environment-specific settings

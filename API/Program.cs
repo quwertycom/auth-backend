@@ -1,8 +1,5 @@
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using API.Shared.Extensions;
-using Microsoft.AspNetCore.Http;
 using FastEndpoints;
 
 namespace API;
@@ -19,10 +16,10 @@ public class Program
         
         // Configure environment variables and configuration sources with proper priority
         builder.Configuration
-            .AddDotEnvConfiguration(builder.Environment) // Load .env file and add environment variables
+            .AddDotEnvConfiguration(builder.Environment)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables(); // Add again to ensure environment variables have highest priority
+            .AddEnvironmentVariables();
 
         // Configure services using extension methods
         builder.Services.AddAppConfiguration(builder.Configuration);
@@ -36,6 +33,9 @@ public class Program
         // Add Swagger/OpenAPI
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerServices();
+
+        // Add application modules
+        builder.Services.AddApplicationModules();
 
         // Add health checks
         builder.Services.AddHealthCheckServices(builder.Configuration);
