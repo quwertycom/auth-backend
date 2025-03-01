@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 
 namespace API.Shared.Extensions;
 
@@ -25,7 +23,7 @@ public static class PipelineExtensions
         app.UseSecurityHeaders();
         
         // Map endpoints
-        app.MapControllers();
+        app.UseFastEndpoints();
         app.ConfigureHealthChecks();
         
         return app;
@@ -45,11 +43,13 @@ public static class PipelineExtensions
                 {
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     context.Response.ContentType = "application/problem+json";
-                    await context.Response.WriteAsJsonAsync(new ProblemDetails {
+                    var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails()
+                    {
                         Title = "An error occurred",
                         Detail = "See logs for details",
-                        Status = 500
-                    });
+                        Status = StatusCodes.Status500InternalServerError
+                    };
+                    await context.Response.WriteAsJsonAsync(problemDetails);
                 });
             });
             app.UseHsts();

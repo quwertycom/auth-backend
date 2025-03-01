@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using API.Shared.Extensions;
 using Microsoft.AspNetCore.Http;
+using FastEndpoints;
 
 namespace API;
 
@@ -29,8 +30,8 @@ public class Program
         builder.Services.AddSecurityServices(builder.Configuration);
         builder.Services.AddEmailServices(builder.Configuration);
 
-        // Add controllers
-        builder.Services.AddControllers();
+        // Add FastEndpoints
+        builder.Services.AddFastEndpoints();
 
         // Add Swagger/OpenAPI
         builder.Services.AddEndpointsApiExplorer();
