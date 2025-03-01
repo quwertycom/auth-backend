@@ -1,9 +1,10 @@
 
-using API.Features.Authentication.Register.Models.Services.RegisterService;
+using API.Features.Authentication.Register.Models.Contracts;
+using API.Features.Authentication.Register.Models.Services;
 
 namespace API.Features.Authentication.Register.Interfaces;
 
 public interface IRegisterService
 {
-    Task<RegisterResponse> RegisterUserAsync(string username, string password, CancellationToken ct);
+    Task<Models.Services.RegisterResponse> RegisterUserAsync(RegisterRequest request, CancellationToken ct);
 }

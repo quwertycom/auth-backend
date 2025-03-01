@@ -28,11 +28,7 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, RegisterResponse>
 
   public override async Task HandleAsync(RegisterRequest req, CancellationToken ct)
   {
-    var result = await _registerService.RegisterUserAsync(
-      req.Username, 
-      req.Password, 
-      ct
-    );
+    var result = await _registerService.RegisterUserAsync(req, ct);
 
     await SendOkAsync(new RegisterResponse { Status = "success", Message = "User registered successfully", EmailVerificationSessionId = "123" }, ct);
   }
