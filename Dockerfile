@@ -50,7 +50,9 @@ WORKDIR /app/API
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1 \
     ASPNETCORE_ENVIRONMENT=DockerDevelopment \
     ASPNETCORE_URLS=http://0.0.0.0:8000 \
-    ASPNETCORE_Kestrel__EndpointDefaults__Protocols=Http1
+    ASPNETCORE_Kestrel__EndpointDefaults__Protocols=Http1 \
+    DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1 \
+    DOTNET_WATCH_SUPPRESS_PROMPTS=1
 
 ENV DOCKER_RUNNING=true
 

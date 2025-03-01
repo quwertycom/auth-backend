@@ -17,6 +17,7 @@ services:
       - /app/API/bin
       - /app/API/obj
       - nuget_cache:/root/.nuget/packages
+      - dataprotection_keys:/root/.aspnet/DataProtection-Keys
     environment:
       # ASP.NET Core settings
       - ASPNETCORE_ENVIRONMENT=DockerDevelopment
@@ -60,6 +61,16 @@ services:
       
       # Docker indicator
       - DOCKER_RUNNING=true
+    develop:
+      watch:
+        - action: sync
+          path: ./API
+          target: /app/API
+          ignore:
+            - API/bin/
+            - API/obj/
+        - action: rebuild
+          path: API.csproj
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://0.0.0.0:8000/health"]
       interval: 30s
@@ -104,6 +115,8 @@ volumes:
     name: qauth-postgres-data-dev
   nuget_cache:
     name: dotnet-nuget-cache
+  dataprotection_keys:
+    name: qauth-dataprotection-keys-dev
 
 networks:
   qauth-network:
