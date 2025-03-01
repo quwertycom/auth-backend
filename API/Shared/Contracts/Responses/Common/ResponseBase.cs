@@ -3,7 +3,7 @@ namespace API.Shared.Contracts.Responses.Common;
 /// <summary>
 /// Represents a base response.
 /// </summary>
-public class ResponseBase
+public record ResponseBase
 {
     /// <summary>
     /// Status of the response.
@@ -11,7 +11,7 @@ public class ResponseBase
     public required string Status { get; set; }
 
     /// <summary>
-    /// Message of the response.
+    /// Message of the response with more details. Include only if needed.
     /// </summary>
-    public required string Message { get; set; }
+    public string? Message { get; set; }
 }

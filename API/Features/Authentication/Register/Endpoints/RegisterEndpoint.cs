@@ -4,7 +4,7 @@ using API.Features.Authentication.Register.Services;
 using API.Features.Authentication.Register.Interfaces;
 namespace API.Features.Authentication.Register.Endpoints;
 
-public class RegisterEndpoint : Endpoint<RegisterRequest>
+public class RegisterEndpoint : Endpoint<RegisterRequest, RegisterResponse>
 {
   private readonly IRegisterService _registerService;
 
@@ -34,6 +34,6 @@ public class RegisterEndpoint : Endpoint<RegisterRequest>
       ct
     );
 
-    await SendOkAsync(new { message = result }, ct);
+    await SendOkAsync(new RegisterResponse { Status = "success", Message = "User registered successfully", EmailVerificationSessionId = "123" }, ct);
   }
 }
