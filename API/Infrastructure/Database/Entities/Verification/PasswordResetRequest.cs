@@ -2,7 +2,7 @@ using API.Shared.Utilities;
 
 namespace API.Infrastructure.Database.Entities.Verification;
 
-public class ResetPasswordRequest
+public class PasswordResetRequest
 {
     public long Id { get; set; } = Snowflake.Generate();
     

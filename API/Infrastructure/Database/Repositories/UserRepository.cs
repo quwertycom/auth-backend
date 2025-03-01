@@ -26,7 +26,7 @@ public class UserRepository : IUserRepository
     
    public async Task AddEmailAsync(EmailAddress email) {
       try {
-        await _context.UserEmails.AddAsync(email);
+        await _context.EmailAddresses.AddAsync(email);
         await _context.SaveChangesAsync();
       }
       catch (Exception ex) {
@@ -63,7 +63,7 @@ public class UserRepository : IUserRepository
 
    public async Task<EmailAddress?> GetUserPrimaryEmailAddressAsync(long userId) {
       try {
-        return await _context.UserEmails.FirstOrDefaultAsync(e => e.UserId == userId && e.Type == EmailType.Primary);
+        return await _context.EmailAddresses.FirstOrDefaultAsync(e => e.UserId == userId && e.Type == EmailType.Primary);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get user primary email address: {ex.Message}", ex);
@@ -72,7 +72,7 @@ public class UserRepository : IUserRepository
 
    public async Task<EmailAddress?> GetEmailAdressByIdAsync(long id) {
       try {
-        return await _context.UserEmails.FindAsync(id);
+        return await _context.EmailAddresses.FindAsync(id);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get email address by id: {ex.Message}", ex);
@@ -81,7 +81,7 @@ public class UserRepository : IUserRepository
 
    public async Task<bool> EmailAdressExistsAsync(string email) {
       try {
-        return await _context.UserEmails.AnyAsync(e => e.Value == email);
+        return await _context.EmailAddresses.AnyAsync(e => e.Value == email);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to check if email address exists: {ex.Message}", ex);
@@ -172,7 +172,7 @@ public class UserRepository : IUserRepository
         if (email == null) {
           throw new Exception("NOT_FOUND: Email address not found");
         }
-        _context.UserEmails.Remove(email);
+        _context.EmailAddresses.Remove(email);
         await _context.SaveChangesAsync();
       }
       catch (Exception ex) {

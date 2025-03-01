@@ -36,12 +36,12 @@ public class AuthDbContext : DbContext
 
     // Entities.User
     public DbSet<User> Users { get; set; } = null!;
-    public DbSet<EmailAddress> UserEmails { get; set; } = null!;
-    public DbSet<PhoneNumber> UserPhoneNumbers { get; set; } = null!;
+    public DbSet<EmailAddress> EmailAddresses { get; set; } = null!;
+    public DbSet<PhoneNumber> PhoneNumbers { get; set; } = null!;
 
     // Entities.Verification
-    public DbSet<VerifyEmailSession> VerifyEmailSessions { get; set; } = null!;
-    public DbSet<ResetPasswordRequest> ResetPasswordRequests { get; set; } = null!;
+    public DbSet<EmailVerificationRequest> EmailVerificationRequests { get; set; } = null!;
+    public DbSet<PasswordResetRequest> PasswordResetRequests { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -743,108 +743,116 @@ public class AuthDbContext : DbContext
           .IsRequired();
 
         // ----------------------------
-        // --- VerifyEmailSession ------
+        // --- EmailVerificationRequest ------
         // ----------------------------
 
         // --- Relations ---
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
           .HasOne(v => v.User)
           .WithMany()
           .HasForeignKey(v => v.UserId);
 
-        modelBuilder.Entity<VerifyEmailSession>()
-          .HasOne(v => v.Email)
+        modelBuilder.Entity<EmailVerificationRequest>()
+          .HasOne(v => v.EmailAddress)
           .WithMany()
           .HasForeignKey(v => v.EmailId);
 
         // --- Indexes ---
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
             .HasIndex(v => v.Code);
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
             .HasIndex(v => v.ExpiresAt);
 
         // --- Properties ---
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
           .HasKey(v => v.Id);
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
           .Property(v => v.Code)
           .IsRequired();
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
           .Property(v => v.IsUsed)
           .IsRequired()
           .HasDefaultValue(false);
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
           .Property(v => v.UserId)
           .IsRequired();
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
           .Property(v => v.EmailId)
           .IsRequired();
 
-        modelBuilder.Entity<VerifyEmailSession>()
+        modelBuilder.Entity<EmailVerificationRequest>()
           .Property(v => v.CreatedAt)
           .IsRequired();
 
+        modelBuilder.Entity<EmailVerificationRequest>()
+          .Property(v => v.ExpiresAt)
+          .IsRequired();
+
         // ----------------------------
-        // --- ResetPasswordRequest ---
+        // --- PasswordResetRequest ---
         // ----------------------------
 
         // --- Relations ---
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .HasOne(r => r.User)
           .WithMany()
           .HasForeignKey(r => r.UserId);
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .HasOne(r => r.EmailAddress)
           .WithMany()
           .HasForeignKey(r => r.EmailId);
 
         // --- Indexes ---
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
             .HasIndex(r => r.CodeHash)
             .IsUnique();
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
             .HasIndex(r => r.ExpiresAt);
 
         // --- Properties ---
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .HasKey(r => r.Id);
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.CodeHash)
           .IsRequired();
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.IsUsed)
           .IsRequired()
           .HasDefaultValue(false);
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.UserId)
           .IsRequired();
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.EmailId)
           .IsRequired();
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.UsedAt)
           .IsRequired(false);
 
-        modelBuilder.Entity<ResetPasswordRequest>()
+        modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.CreatedAt)
+          .IsRequired();
+          
+        modelBuilder.Entity<PasswordResetRequest>()
+          .Property(r => r.ExpiresAt)
           .IsRequired();
     }
 }

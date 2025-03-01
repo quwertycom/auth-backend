@@ -3,7 +3,7 @@ using API.Infrastructure.Database.Entities.User;
 
 namespace API.Infrastructure.Database.Entities.Verification;
 
-public class VerifyEmailSession
+public class EmailVerificationRequest
 {
     public long Id { get; set; } = Snowflake.Generate();
 
@@ -13,7 +13,7 @@ public class VerifyEmailSession
     public long EmailId { get; set; }
 
     public required User.User User { get; set; }
-    public required EmailAddress Email { get; set; }
+    public required EmailAddress EmailAddress { get; set; }
 
     public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(15);
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
