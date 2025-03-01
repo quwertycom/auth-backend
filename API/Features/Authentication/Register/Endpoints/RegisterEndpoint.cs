@@ -1,7 +1,7 @@
 using FastEndpoints;
-using API.Features.Authentication.Register.Models;
-using API.Features.Authentication.Register.Services;
+using API.Features.Authentication.Register.Models.Contracts;
 using API.Features.Authentication.Register.Interfaces;
+
 namespace API.Features.Authentication.Register.Endpoints;
 
 public class RegisterEndpoint : Endpoint<RegisterRequest, RegisterResponse>

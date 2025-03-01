@@ -1,6 +1,6 @@
 using API.Shared.Enums.Entities.User;
 
-namespace API.Features.Authentication.Register.Models;
+namespace API.Features.Authentication.Register.Models.Contracts;
 
 public record RegisterRequest
 {

@@ -1,4 +1,5 @@
 using API.Features.Authentication.Register.Interfaces;
+using API.Features.Authentication.Register.Models.Services.RegisterService;
 
 namespace API.Features.Authentication.Register.Services;
 
@@ -13,7 +14,7 @@ public class RegisterService : IRegisterService
     //     _userRepository = userRepository;
     // }
     
-    public async Task<string> RegisterUserAsync(string username, string password, CancellationToken ct)
+    public async Task<RegisterResponse> RegisterUserAsync(string username, string password, CancellationToken ct)
     {
         // Implement your registration logic here
         // Example:
@@ -24,6 +25,6 @@ public class RegisterService : IRegisterService
         // 5. Return success message or token
         
         await Task.Delay(100, ct); // Simulating work
-        return $"User registered successfully, username: {username}, password: {password}";
+        return new RegisterResponse { IsSuccess = true, Status = "SUCCESS", Message = "User registered successfully", EmailVerificationSessionId = "123" };
     }
 } 
