@@ -43,8 +43,6 @@ public class RegisterValidator : Validator<RegisterRequest>
             .WithMessage("Email must be less than 256 characters long!");
 
         RuleFor(x => x.PhoneNumber)
-            .NotEmpty()
-            .WithMessage("Phone number is required!")
             .MinimumLength(10)
             .WithMessage("Phone number must be at least 10 characters long!")
             .MaximumLength(20)
