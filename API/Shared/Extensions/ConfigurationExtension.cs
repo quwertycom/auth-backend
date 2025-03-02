@@ -1,5 +1,4 @@
 using API.Shared.Configuration;
-using API.Shared.Interfaces.Configuration;
 using API.Shared.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
