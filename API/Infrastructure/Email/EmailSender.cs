@@ -49,12 +49,12 @@ public class EmailSender : IEmailSender, IDisposable
         _frontendUrl = apiOptions.Value.FrontendBaseUrl ?? "http://localhost:3000";
     }
 
-    public async Task<bool> SendOtpEmailAsync(string toEmail, string otp, string language = "en")
+    public async Task<bool> SendOtpEmailAsync(string toEmail, string otp, string firstName, string language = "en")
     {
         var templateData = new Dictionary<string, string>
         {
             { "{{OTP}}", otp },
-            { "{{USERNAME}}", toEmail.Split('@')[0] }
+            { "{{FIRST_NAME}}", firstName ?? toEmail.Split('@')[0] }
         };
         
         return await SendEmailFromTemplateAsync(

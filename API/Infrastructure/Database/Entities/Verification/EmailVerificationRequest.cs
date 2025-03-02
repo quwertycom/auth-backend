@@ -8,7 +8,7 @@ public class EmailVerificationRequest
     public long Id { get; set; } = Snowflake.Generate();
 
     public required string Code { get; set; }
-    public required bool IsUsed { get; set; } = false;
+    public bool IsUsed { get; set; } = false;
     public long UserId { get; set; }
     public long EmailId { get; set; }
 

@@ -6,5 +6,5 @@ namespace API.Features.Authentication.Register.Interfaces;
 
 public interface IRegisterService
 {
-    Task<Models.Services.RegisterResponse> RegisterUserAsync(RegisterRequest request, CancellationToken ct);
+    Task<RegisterResult> RegisterUserAsync(RegisterRequest request, CancellationToken ct);
 }

@@ -1,4 +1,5 @@
 using FastEndpoints;
+using API.Shared.Contracts.Responses.Common;
 
 namespace API.Shared.Extensions;
 
@@ -27,9 +28,24 @@ public static class PipelineExtensions
         app.UseRateLimiter();
         app.UseSecurityHeaders();
         
-        // Map endpoints
-        app.UseFastEndpoints();
+        // Map health checks
         app.ConfigureHealthChecks();
+
+        // Configure fast endpoints
+        app.UseFastEndpoints(c => {
+            c.Errors.ResponseBuilder = (failures, ctx, statusCode) => {
+                return new API.Shared.Contracts.Responses.Common.ErrorResponse {
+                    Status = "Error",
+                    Message = "Validation Error",
+                    Details = failures.GroupBy(f => f.PropertyName)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Select(f => f.ErrorMessage).ToList()
+                        ),
+                    Timestamp = DateTime.UtcNow
+                };
+            };
+        });
         
         return app;
     }

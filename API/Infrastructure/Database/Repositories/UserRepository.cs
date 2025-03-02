@@ -89,6 +89,15 @@ public class UserRepository : IUserRepository
       }
    }
 
+   public async Task<EmailAddress?> GetEmailAdressByEmailStringAsync(string email) {
+      try {
+        return await _context.EmailAddresses.FirstOrDefaultAsync(e => e.Value == email);
+      }
+      catch (Exception ex) {
+        throw new Exception($"ERROR: Failed to get email address by email string: {ex.Message}", ex);
+      }
+   }
+
    public async Task<bool> EmailAdressExistsAsync(string email) {
       try {
         return await _context.EmailAddresses.AnyAsync(e => e.Value == email);

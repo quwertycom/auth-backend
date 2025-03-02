@@ -9,18 +9,6 @@ namespace API.Shared.Interfaces.Security;
 public interface IHasher
 {
     /// <summary>
-    /// Initializes the hasher with configuration.
-    /// </summary>
-    /// <param name="configuration">The configuration.</param>
-    void Initialize(IConfiguration configuration);
-
-    /// <summary>
-    /// Initializes the hasher with password hasher settings.
-    /// </summary>
-    /// <param name="options">The password hasher settings options.</param>
-    void Initialize(IOptions<PasswordHasherSettings> options);
-
-    /// <summary>
     /// Hashes the password.
     /// </summary>
     /// <param name="password">The password to hash.</param>

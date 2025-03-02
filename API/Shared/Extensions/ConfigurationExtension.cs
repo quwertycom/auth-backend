@@ -1,5 +1,6 @@
 using API.Shared.Configuration;
 using API.Shared.Interfaces.Configuration;
+using API.Shared.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -21,6 +22,13 @@ public static class ConfigurationExtensions
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.Configure<ApiSettings>(configuration.GetSection("Api"));
         services.Configure<DatabaseSettings>(configuration.GetSection("ConnectionStrings"));
+        services.Configure<PasswordHasherSettings>(configuration.GetSection("PasswordHasher"));
+        services.Configure<SnowflakeSettings>(configuration.GetSection("Snowflake"));
+        
+        // Initialize Snowflake immediately to prevent initialization issues
+        var snowflakeSettings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>() 
+            ?? throw new InvalidOperationException("Snowflake settings are missing from configuration");
+        Snowflake.Initialize(Options.Create(snowflakeSettings));
         
         return services;
     }

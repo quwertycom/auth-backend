@@ -8,52 +8,23 @@ namespace API.Infrastructure.Security;
 
 public class Hasher : IHasher
 {
-    private bool _isInitialized;
-    private int _iterations;
-    private int _saltSize;
-    private int _keySize;
-    private IRandomGenerator _randomGenerator;
+    private readonly int _iterations;
+    private readonly int _saltSize;
+    private readonly int _keySize;
+    private readonly IRandomGenerator _randomGenerator;
 
-    public Hasher(IRandomGenerator randomGenerator)
+    public Hasher(IRandomGenerator randomGenerator, IOptions<PasswordHasherSettings> options)
     {
         _randomGenerator = randomGenerator;
-    }
-
-    public void Initialize(IConfiguration configuration)
-    {
-        if (_isInitialized) return;
-
-        var settings = configuration.GetSection("PasswordHasher").Get<PasswordHasherSettings>()
-            ?? throw new InvalidOperationException("PasswordHasher settings are not configured");
-
-        InitializeWithSettings(settings);
-    }
-
-    public void Initialize(IOptions<PasswordHasherSettings> options)
-    {
-        if (_isInitialized) return;
         
         var settings = options.Value;
-        InitializeWithSettings(settings);
-    }
-    
-    private void InitializeWithSettings(PasswordHasherSettings settings)
-    {
         _iterations = settings.Iterations;
         _saltSize = settings.SaltSize;
         _keySize = settings.KeySize;
-        
-        // Validation is now handled by DataAnnotations in the PasswordHasherSettings class
-        _isInitialized = true;
     }
 
     public (string hash, string salt) Hash(string password, string? customSalt = null)
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("PasswordHasher is not initialized. Call Initialize() first.");
-        }
-
         string saltBase64;
         byte[] salt;
 
@@ -74,7 +45,6 @@ public class Hasher : IHasher
             salt = Convert.FromBase64String(saltBase64);
         }
 
-
         // Hash the password with the salt
         byte[] hash = Rfc2898DeriveBytes.Pbkdf2(
             password,
@@ -89,11 +59,6 @@ public class Hasher : IHasher
 
     public bool Compare(string password, string storedHash, string storedSalt)
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("PasswordHasher is not initialized. Call Initialize() first.");
-        }
-
         try
         {
             byte[] salt = Convert.FromBase64String(storedSalt);

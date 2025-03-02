@@ -1,3 +1,4 @@
+using API.Features.Authentication.EmailVerification.Interfaces;
 using API.Features.Authentication.Register.Interfaces;
 using API.Features.Authentication.Register.Models.Contracts;
 using API.Features.Authentication.Register.Models.Services;
@@ -12,27 +13,30 @@ namespace API.Features.Authentication.Register.Services;
 
 public class RegisterService : IRegisterService
 {
+    private readonly IEmailVerificationService _emailVerificationService;
+
     private readonly IUserRepository _userRepository;
 
     private readonly IHasher _hasher;
     
-    public RegisterService(IUserRepository userRepository, IHasher hasher)
+    public RegisterService(IUserRepository userRepository, IHasher hasher, IEmailVerificationService emailVerificationService)
     {
+        _emailVerificationService = emailVerificationService;
         _userRepository = userRepository;
         _hasher = hasher;
     }
     
-    public async Task<Models.Services.RegisterResponse> RegisterUserAsync(RegisterRequest request, CancellationToken ct)
+    public async Task<RegisterResult> RegisterUserAsync(RegisterRequest request, CancellationToken ct)
     {
         try {
             if (await _userRepository.UsernameExistsAsync(request.Username)) {
-                return new Models.Services.RegisterResponse { IsSuccess = false, Status = "USERNAME_EXISTS" };
+                return new RegisterResult { IsSuccess = false, Status = "USERNAME_EXISTS" };
             }
             else if (await _userRepository.EmailAdressExistsAsync(request.Email)) {
-                return new Models.Services.RegisterResponse { IsSuccess = false, Status = "EMAIL_EXISTS" };
+                return new RegisterResult { IsSuccess = false, Status = "EMAIL_EXISTS" };
             }
             else if (request.PhoneNumber != null && await _userRepository.PhoneNumberExistsAsync(request.PhoneNumber)) {
-                return new Models.Services.RegisterResponse { IsSuccess = false, Status = "PHONE_NUMBER_EXISTS" };
+                return new RegisterResult { IsSuccess = false, Status = "PHONE_NUMBER_EXISTS" };
             }
 
             var hashedPassword = _hasher.Hash(request.Password);
@@ -71,12 +75,17 @@ public class RegisterService : IRegisterService
 
                 await _userRepository.AddPhoneNumberAsync(newPhoneNumber);
             }
+
+            var emailVerificationResult = await _emailVerificationService.RequestEmailVerificationAsync(request.Email, ct);
+
+            if (!emailVerificationResult.IsSuccess || emailVerificationResult.EmailVerificationSessionId == null) {
+                return new RegisterResult { IsSuccess = false, Status = emailVerificationResult.Status, Message = emailVerificationResult.Message };
+            }
+
+            return new RegisterResult { IsSuccess = true, Status = "SUCCESS", Message = "User registered successfully", EmailVerificationSessionId = emailVerificationResult.EmailVerificationSessionId };
         }
         catch (Exception ex) {
-            return new Models.Services.RegisterResponse { IsSuccess = false, Status = "ERROR", Message = ex.Message };
+            return new RegisterResult { IsSuccess = false, Status = "ERROR", Message = ex.Message };
         }
-        
-        await Task.Delay(100, ct); // Simulating work
-        return new Models.Services.RegisterResponse { IsSuccess = true, Status = "SUCCESS", Message = "User registered successfully", EmailVerificationSessionId = "123" };
     }
 } 

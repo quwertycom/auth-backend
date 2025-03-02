@@ -10,8 +10,9 @@ public interface IEmailSender
     /// </summary>
     /// <param name="toEmail">The recipient's email address</param>
     /// <param name="otp">The one-time password code</param>
+    /// <param name="firstName">The recipient's first name for personalization (optional)</param>
     /// <param name="language">The language code (e.g., 'en', 'es'). Defaults to 'en'</param>
-    Task<bool> SendOtpEmailAsync(string toEmail, string otp, string language = "en");
+    Task<bool> SendOtpEmailAsync(string toEmail, string otp, string firstName, string language = "en");
 
     /// <summary>
     /// Sends a reset password email to the specified email address.

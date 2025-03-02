@@ -13,6 +13,9 @@ public static class Snowflake
     private static long _lastTimestamp = -1L;
     private static long _sequence;
 
+    // Configuration access
+    private static IOptions<SnowflakeSettings>? _options;
+
     // Component values
     private static long _datacenterId;
     private static long _workerId;
@@ -32,38 +35,26 @@ public static class Snowflake
     private const long SequenceMask = -1L ^ (-1L << SequenceBits);
 
     /// <summary>
-    /// Initializes the Snowflake ID generator using IConfiguration.
+    /// Sets the options to be used when the generator is first accessed.
     /// </summary>
-    /// <param name="configuration">The application configuration.</param>
-    public static void Initialize(IConfiguration configuration)
+    /// <param name="options">The Snowflake settings options.</param>
+    public static void SetOptions(IOptions<SnowflakeSettings> options)
     {
-        if (_isInitialized) return;
-
-        var settings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>()
-            ?? throw new InvalidOperationException("Snowflake settings are not configured");
-
-        InitializeWithSettings(settings);
+        _options = options;
     }
 
     /// <summary>
-    /// Initializes the Snowflake ID generator using SnowflakeSettings options.
+    /// Manual initialization with options
     /// </summary>
-    /// <param name="options">The Snowflake settings options.</param>
     public static void Initialize(IOptions<SnowflakeSettings> options)
     {
         if (_isInitialized) return;
 
         var settings = options.Value;
-        InitializeWithSettings(settings);
-    }
-
-    private static void InitializeWithSettings(SnowflakeSettings settings)
-    {
         _datacenterId = settings.DatacenterId;
         _workerId = settings.WorkerId;
         _epoch = DateTimeOffset.Parse(settings.Epoch);
-
-        // Validation is now handled by DataAnnotations in the SnowflakeSettings class
+        
         _isInitialized = true;
     }
 
@@ -73,10 +64,7 @@ public static class Snowflake
     /// <returns>A unique Snowflake ID.</returns>
     public static long Generate()
     {
-        if (!_isInitialized)
-        {
-            throw new InvalidOperationException("Snowflake helper is not initialized. Call Initialize() first.");
-        }
+        EnsureInitialized();
 
         lock (_lock)
         {
@@ -107,6 +95,19 @@ public static class Snowflake
                    (_datacenterId << DatacenterIdShift) |
                    (_workerId << WorkerIdShift) |
                    _sequence;
+        }
+    }
+
+    private static void EnsureInitialized()
+    {
+        if (!_isInitialized)
+        {
+            if (_options == null)
+            {
+                throw new InvalidOperationException("Snowflake has not been configured. Call SetOptions() first.");
+            }
+            
+            Initialize(_options);
         }
     }
 

@@ -8,7 +8,7 @@ public record ErrorResponse : ResponseBase
     /// <summary>
     /// Additional details about the error.
     /// </summary>
-    public IDictionary<string, string>? Details { get; set; }
+    public IDictionary<string, List<string>>? Details { get; set; }
 
     /// <summary>
     /// Timestamp of the error.

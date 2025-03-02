@@ -65,6 +65,13 @@ public interface IUserRepository
     public Task<EmailAddress?> GetEmailAdressByIdAsync(long id);
 
     /// <summary>
+    /// Gets an email address by its email address.
+    /// </summary>
+    /// <param name="email">The email address of the email address to get.</param>
+    /// <returns>A task that represents the asynchronous operation. Returns the email address if found, otherwise null.</returns>
+    public Task<EmailAddress?> GetEmailAdressByEmailStringAsync(string email);
+
+    /// <summary>
     /// Checks if an email address exists in the database.
     /// </summary>
     /// <param name="email">The email address to check.</param>

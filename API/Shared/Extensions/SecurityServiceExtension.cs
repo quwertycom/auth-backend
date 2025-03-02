@@ -1,6 +1,7 @@
 using API.Infrastructure.Security;
 using API.Shared.Configuration;
 using API.Shared.Interfaces.Security;
+using API.Shared.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

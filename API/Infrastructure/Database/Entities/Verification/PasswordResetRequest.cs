@@ -7,7 +7,7 @@ public class PasswordResetRequest
     public long Id { get; set; } = Snowflake.Generate();
     
     public required string CodeHash { get; set; }
-    public required bool IsUsed { get; set; } = false;
+    public bool IsUsed { get; set; } = false;
     public long UserId { get; set; }
     public long EmailId { get; set; }
 
