@@ -18,7 +18,6 @@ public abstract class TestBase
     protected IHasher MockHasher { get; private set; } = null!;
     protected IJwtService MockJwtService { get; private set; } = null!;
     protected IRandomGenerator MockRandomGenerator { get; private set; } = null!;
-    protected IRegisterService MockRegisterService { get; private set; } = null!;
 
     [SetUp]
     public virtual void Setup()
@@ -31,6 +30,5 @@ public abstract class TestBase
         MockHasher = Substitute.For<IHasher>();
         MockJwtService = Substitute.For<IJwtService>();
         MockRandomGenerator = Substitute.For<IRandomGenerator>();
-        MockRegisterService = Substitute.For<IRegisterService>();
     }
 }
