@@ -1,5 +1,6 @@
 using FastEndpoints;
 using API.Shared.Contracts.Responses.Common;
+using FluentValidation;
 
 namespace API.Shared.Extensions;
 

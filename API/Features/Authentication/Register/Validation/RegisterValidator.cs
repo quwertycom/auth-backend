@@ -47,15 +47,19 @@ public class RegisterValidator : Validator<RegisterRequest>
             .WithMessage("Phone number must be at least 10 characters long!")
             .MaximumLength(20)
             .WithMessage("Phone number must be less than 20 characters long!")
-            .Matches(@"^(\+[0-9]{1,3})?[0-9]+$")
-            .WithMessage("Phone number must contain only numbers and optional region code (e.g., +123)");
+            .Matches(@"^\+([0-9]{1,3})?[0-9]+$")
+            .WithMessage("Phone number must start with '+' and contain only numbers and optional region code (e.g., +123)");
 
         RuleFor(x => x.BirthDate)
-            .NotEmpty()
-            .WithMessage("Birth date is required!");
+            .NotNull()
+            .WithMessage("Birth date is required!")
+            .Must(birthDate => birthDate <= DateTime.Now.AddYears(-16))
+            .WithMessage("You must be at least 16 years old!")
+            .Must(birthDate => birthDate >= new DateTime(1900, 1, 1))
+            .WithMessage("Birth date cannot be older than 1900 year!");
 
         RuleFor(x => x.Gender)
-            .NotEmpty()
+            .NotNull()
             .WithMessage("Gender is required!");
 
         RuleFor(x => x.Password)
