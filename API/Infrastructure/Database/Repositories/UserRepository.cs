@@ -158,6 +158,20 @@ public class UserRepository : IUserRepository
         if (user == null) {
           throw new Exception("NOT_FOUND: User not found");
         }
+
+        var newPrimaryEmail = await GetEmailAdressByIdAsync(newEmailAdressId);
+        if (newPrimaryEmail == null) {
+            throw new Exception("NOT_FOUND: New email address not found");
+        }
+
+        var currentPrimaryEmail = await GetUserPrimaryEmailAddressAsync(userId);
+        if (currentPrimaryEmail != null) {
+            currentPrimaryEmail.Type = EmailType.Other;
+        }
+
+        newPrimaryEmail.Type = EmailType.Primary;
+        await _context.SaveChangesAsync();
+
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to change user primary email address: {ex.Message}", ex);

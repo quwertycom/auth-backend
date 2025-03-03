@@ -1,4 +1,3 @@
-using Moq;
 using NUnit.Framework;
 using NSubstitute;
 using API.Shared.Interfaces.Database.Repositories;
