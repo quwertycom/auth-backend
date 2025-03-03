@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using API.Shared.Interfaces.Email;
 using API.Shared.Interfaces.Security;
 using API.Features.Authentication.Register.Interfaces;
+using API.Shared.Utilities;
+using Microsoft.Extensions.Options;
+using API.Shared.Configuration;
+
 namespace API.UnitTests;
 
 public abstract class TestBase
@@ -32,5 +36,14 @@ public abstract class TestBase
         MockJwtService = Substitute.For<IJwtService>();
         MockRandomGenerator = Substitute.For<IRandomGenerator>();
         MockRegisterService = Substitute.For<IRegisterService>();
+
+        // Initialize Snowflake for tests
+        var snowflakeSettings = new SnowflakeSettings
+        {
+            DatacenterId = 1, // Example Datacenter ID
+            WorkerId = 1,     // Example Worker ID
+            Epoch = "2024-01-01" // Example Epoch
+        };
+        Snowflake.Initialize(Options.Create(snowflakeSettings));
     }
 }
