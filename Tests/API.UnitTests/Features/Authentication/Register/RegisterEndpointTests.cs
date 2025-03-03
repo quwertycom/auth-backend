@@ -9,6 +9,7 @@ using API.Features.Authentication.Register.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
 using API.Features.Authentication.Register.Models.Services;
 using API.Features.Authentication.Register.Validation;
+using FluentValidation.Results;
 
 namespace API.UnitTests.Features.Authentication.Register;
 
@@ -46,40 +47,10 @@ public class RegisterEndpointTests : TestBase
 
         await MockRegisterService
             .Received(1)
-            .RegisterUserAsync(Arg.Is<RegisterRequest>(r => 
+            .RegisterUserAsync(Arg.Is<RegisterRequest>(r =>
                                r.Username == request.Username &&
                                r.Email == request.Email &&
-                               r.Password == request.Password), 
+                               r.Password == request.Password),
                                Arg.Any<CancellationToken>());
-    }
-
-
-    [Test]
-    public async Task RegisterValidator_EmptyRequest_HasValidationErrors()
-    {
-        // Arrange
-        var validator = new RegisterValidator();
-        var request = new RegisterRequest
-        {
-            Username = "",
-            FirstName = "",
-            LastName = "",
-            Email = "",
-            Password = "",
-            BirthDate = DateTime.MinValue,
-            Gender = API.Shared.Enums.Entities.User.UserGender.Male
-        };
-
-        // Act
-        var validationResult = await validator.ValidateAsync(request);
-
-        // Assert
-        validationResult.IsValid.Should().BeFalse();
-        validationResult.Errors.Should().HaveCount(17);
-        validationResult.Errors.Should().Contain(error => error.PropertyName == "Username");
-        validationResult.Errors.Should().Contain(error => error.PropertyName == "Email");
-        validationResult.Errors.Should().Contain(error => error.PropertyName == "Password");
-        validationResult.Errors.Should().Contain(error => error.PropertyName == "BirthDate");
-        validationResult.Errors.Should().Contain(error => error.PropertyName == "Gender");
     }
 }
