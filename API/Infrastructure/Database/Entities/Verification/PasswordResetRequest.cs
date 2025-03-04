@@ -8,6 +8,7 @@ public class PasswordResetRequest
     
     public required string CodeHash { get; set; }
     public bool IsUsed { get; set; } = false;
+    public bool IsRevoked { get; set; } = false;
     public long UserId { get; set; }
     public long EmailId { get; set; }
 

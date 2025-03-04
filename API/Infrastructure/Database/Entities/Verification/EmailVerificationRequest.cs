@@ -9,6 +9,7 @@ public class EmailVerificationRequest
 
     public required string Code { get; set; }
     public bool IsUsed { get; set; } = false;
+    public bool IsRevoked { get; set; } = false;
     public long UserId { get; set; }
     public long EmailId { get; set; }
 
