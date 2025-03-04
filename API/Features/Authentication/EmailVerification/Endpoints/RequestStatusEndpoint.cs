@@ -15,7 +15,7 @@ public class RequestStatusEndpoint : Endpoint<RequestStatusRequest, RequestStatu
 
     public override void Configure()
     {
-        Get("/api/authentication/email-verification/session-status");
+        Get("/api/authentication/email-verification/request-status");
         AllowAnonymous();
     }
 
