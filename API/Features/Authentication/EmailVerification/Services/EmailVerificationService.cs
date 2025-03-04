@@ -5,6 +5,7 @@ using API.Shared.Interfaces.Security;
 using API.Shared.Interfaces.Email;
 using API.Infrastructure.Database.Entities.Verification;
 using API.Shared.Enums.Entities.User;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace API.Features.Authentication.EmailVerification.Services;
 
@@ -132,8 +133,63 @@ public class EmailVerificationService : IEmailVerificationService {
         }
     }
 
-    public Task<VerifyEmailResult> VerifyEmailAsync(long sessionId, string code, CancellationToken cancellationToken)
+    public async Task<VerifyEmailResult> VerifyEmailAsync(long sessionId, string code, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        try {
+          var session = await _verificationRepository.GetEmailVerificationRequestByIdAsync(sessionId);
+
+          if (session == null) {
+            return new VerifyEmailResult {
+              IsSuccess = false,
+              Status = "SESSION_NOT_FOUND",
+              Message = "Session not found",
+              HttpStatusCode = 404
+            };
+          }
+
+          if (session.IsUsed) {
+            return new VerifyEmailResult {
+              IsSuccess = false,
+              Status = "SESSION_USED",
+              Message = "Session has already been used",
+              HttpStatusCode = 400
+            };
+          }
+
+          if (session.ExpiresAt < DateTime.UtcNow) {
+            return new VerifyEmailResult {
+              IsSuccess = false,
+              Status = "SESSION_EXPIRED",
+              Message = "Session has expired",
+              HttpStatusCode = 410
+            };
+          }
+
+          if (session.Code != code) {
+            return new VerifyEmailResult {
+              IsSuccess = false,
+              Status = "CODE_MISMATCH",
+              Message = "Invalid verification code",
+              HttpStatusCode = 400
+            };
+          }
+
+          await _verificationRepository.MarkEmailVerificationRequestAsUsedAsync(sessionId);
+          await _userRepository.UpdateUserStateAsync(session.UserId, UserState.Active);
+
+          return new VerifyEmailResult {
+            IsSuccess = true,
+            Status = "SUCCESS",
+            Message = "Email verified successfully",
+            SessionId = sessionId.ToString()
+          };
+        } catch (Exception ex) {
+          return new VerifyEmailResult {
+            IsSuccess = false,
+            Status = "ERROR",
+            Message = ex.Message,
+            HttpStatusCode = 500
+          };
+        }
     }
 }

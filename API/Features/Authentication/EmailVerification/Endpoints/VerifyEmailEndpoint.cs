@@ -17,27 +17,18 @@ public class VerifyEmailEndpoint : Endpoint<VerifyEmailRequest, VerifyEmailRespo
   }
 
   public override async Task HandleAsync(VerifyEmailRequest req, CancellationToken ct) {
-    var sessionId = long.Parse(req.EmailVerificationSessionId);
-    var result = await _emailVerificationService.VerifyEmailAsync(sessionId, req.Code, ct);
+    var result = await _emailVerificationService.VerifyEmailAsync(long.Parse(req.EmailVerificationSessionId), req.Code, ct);
 
     if (result.IsSuccess) {
       await SendAsync(new VerifyEmailResponse {
         Status = result.Status,
         Message = result.Message ?? "Email verified successfully"
-      }, statusCode: 200, ct);
+      }, statusCode: result.HttpStatusCode ?? 200, ct);
     } else {
-      int statusCode = result.Status switch {
-        "SESSION_NOT_FOUND" => 404,
-        "SESSION_EXPIRED" => 410,
-        "INVALID_CODE" => 400,
-        "ERROR" => 500,
-        _ => 400
-      };
-
       await SendAsync(new VerifyEmailResponse {
         Status = result.Status,
         Message = result.Message
-      }, statusCode, ct);
+      }, statusCode: result.HttpStatusCode ?? 400, ct);
     }
   }
 }
