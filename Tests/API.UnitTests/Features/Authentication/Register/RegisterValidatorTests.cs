@@ -10,7 +10,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_EmptyRequest_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "",
@@ -44,7 +44,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_EmptyEmail_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -70,7 +70,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_InvalidEmailFormat_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -95,7 +95,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_TooShortPhoneNumber_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -121,7 +121,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_TooLongPhoneNumber_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -147,7 +147,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_InvalidPhoneNumberFormat_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -173,7 +173,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_EmptyPassword_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -202,7 +202,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_TooShortPassword_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -227,7 +227,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_AllLowercasePassword_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -252,7 +252,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_AllUppercasePassword_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -277,7 +277,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_OnlyNumbersPassword_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -303,7 +303,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_EmptyUsername_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "",
@@ -330,7 +330,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_InvalidUsernameFormat_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "invalid-username",
@@ -355,7 +355,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_TooShortUsername_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "ab",
@@ -380,7 +380,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_TooLongUsername_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "thisisareallylongusernamethatisover32characters",
@@ -405,7 +405,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_EmptyFirstName_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -431,7 +431,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_OnlyNumbersFirstName_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -456,7 +456,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_TooLongFirstName_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -481,7 +481,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_EmptyLastName_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -507,7 +507,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_OnlyNumbersLastName_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
@@ -533,7 +533,7 @@ public class RegisterValidatorTests : TestBase
     public async Task RegisterValidator_TooLongLastName_HasValidationErrors()
     {
         // Arrange
-        var validator = new RegisterValidator();
+        var validator = new RegisterRequestValidator();
         var request = new RegisterRequest
         {
             Username = "testuser",
