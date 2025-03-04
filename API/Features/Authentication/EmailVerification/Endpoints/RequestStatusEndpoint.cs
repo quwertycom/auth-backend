@@ -4,11 +4,11 @@ using API.Features.Authentication.EmailVerification.Interfaces;
 
 namespace API.Features.Authentication.EmailVerification.Endpoints;
 
-public class SessionStatusEndpoint : Endpoint<SessionStatusRequest, SessionStatusResponse>
+public class RequestStatusEndpoint : Endpoint<RequestStatusRequest, RequestStatusResponse>
 {
     private readonly IEmailVerificationService _emailVerificationService;
 
-    public SessionStatusEndpoint(IEmailVerificationService emailVerificationService)
+    public RequestStatusEndpoint(IEmailVerificationService emailVerificationService)
     {
         _emailVerificationService = emailVerificationService;
     }
@@ -19,17 +19,17 @@ public class SessionStatusEndpoint : Endpoint<SessionStatusRequest, SessionStatu
         AllowAnonymous();
     }
 
-    public override async Task HandleAsync(SessionStatusRequest req, CancellationToken ct)
+    public override async Task HandleAsync(RequestStatusRequest req, CancellationToken ct)
     {
-        var result = await _emailVerificationService.GetSessionStatusAsync(long.Parse(req.SessionId), req.Email, ct);
+        var result = await _emailVerificationService.GetRequestStatusAsync(req.RequestId, req.Email, ct);
 
         if (result.IsSuccess) {
-            await SendAsync(new SessionStatusResponse {
+            await SendAsync(new RequestStatusResponse {
                 Status = result.Status,
                 Message = result.Message
             }, statusCode: result.HttpStatusCode ?? 200, ct);
         } else {
-            await SendAsync(new SessionStatusResponse {
+            await SendAsync(new RequestStatusResponse {
                 Status = result.Status,
                 Message = result.Message
             }, statusCode: result.HttpStatusCode ?? 400, ct);

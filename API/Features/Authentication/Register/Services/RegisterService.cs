@@ -78,11 +78,11 @@ public class RegisterService : IRegisterService
 
             var emailVerificationResult = await _emailVerificationService.RequestEmailVerificationAsync(request.Email, ct);
 
-            if (!emailVerificationResult.IsSuccess || emailVerificationResult.EmailVerificationSessionId == null) {
+            if (!emailVerificationResult.IsSuccess || emailVerificationResult.RequestId == null) {
                 return new RegisterResult { IsSuccess = false, Status = emailVerificationResult.Status, Message = emailVerificationResult.Message };
             }
 
-            return new RegisterResult { IsSuccess = true, Status = "SUCCESS", Message = "User registered successfully", EmailVerificationSessionId = emailVerificationResult.EmailVerificationSessionId };
+            return new RegisterResult { IsSuccess = true, Status = "SUCCESS", Message = "User registered successfully", RequestId = emailVerificationResult.RequestId };
         }
         catch (Exception ex) {
             return new RegisterResult { IsSuccess = false, Status = "ERROR", Message = ex.Message };

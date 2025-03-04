@@ -36,10 +36,10 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, Results<Ok<RegisterRes
 
     Console.WriteLine(result.Status + " " + result.Message);
 
-    if (result.IsSuccess && result.EmailVerificationSessionId != null) {
+    if (result.IsSuccess && result.RequestId != null) {
       return TypedResults.Ok(new RegisterResponse {
         Status = "SUCCESS",
-        EmailVerificationSessionId = result.EmailVerificationSessionId
+        RequestId = result.RequestId
       });
     }
     

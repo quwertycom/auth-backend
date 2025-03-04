@@ -46,7 +46,7 @@ public class EmailVerificationService : IEmailVerificationService {
 
       var verificationCode = _randomGenerator.GenerateNumberCode(8);
 
-      var newSession = new EmailVerificationRequest {
+      var newRequest = new EmailVerificationRequest {
         Code = verificationCode,
         User = user,
         EmailAddress = email,
@@ -54,9 +54,9 @@ public class EmailVerificationService : IEmailVerificationService {
         CreatedAt = DateTime.UtcNow
       };
 
-      await _verificationRepository.AddEmailVerificationRequestAsync(newSession);
+      await _verificationRepository.AddEmailVerificationRequestAsync(newRequest);
 
-      var emailVerificationSessionId = newSession.Id.ToString();
+      var emailVerificationRequestId = newRequest.Id.ToString();
 
       bool emailSent = await _emailSender.SendOtpEmailAsync(
         emailAddress, 
@@ -73,7 +73,7 @@ public class EmailVerificationService : IEmailVerificationService {
         };
       }
 
-      return new RequestEmailVerificationResult { IsSuccess = true, Status = "SUCCESS", Message = "Email verification request created", EmailVerificationSessionId = newSession.Id.ToString() };
+      return new RequestEmailVerificationResult { IsSuccess = true, Status = "SUCCESS", Message = "Email verification request created", RequestId = newRequest.Id.ToString() };
       
     }
     catch (Exception ex) {
@@ -81,50 +81,50 @@ public class EmailVerificationService : IEmailVerificationService {
     }
   }
 
-  public async Task<GetSessionStatusResult> GetSessionStatusAsync(long sessionId, string email, CancellationToken cancellationToken)
+  public async Task<GetRequestStatusResult> GetRequestStatusAsync(string requestId, string email, CancellationToken cancellationToken)
     {
         try {
-          var session = await _verificationRepository.GetEmailVerificationRequestByIdAsync(sessionId);
-          if (session == null) {
-            return new GetSessionStatusResult {
+          var request = await _verificationRepository.GetEmailVerificationRequestByIdAsync(long.Parse(requestId));
+          if (request == null) {
+            return new GetRequestStatusResult {
               IsSuccess = false, 
-              Status = "SESSION_NOT_FOUND", 
-              Message = "Session not found",
+              Status = "REQUEST_NOT_FOUND", 
+              Message = "Request not found",
               HttpStatusCode = 404
             };
           }
 
-          var sessionEmail = await _userRepository.GetEmailAdressByIdAsync(session.EmailId);
+          var requestEmail = await _userRepository.GetEmailAdressByIdAsync(request.EmailId);
 
-          if (sessionEmail == null || sessionEmail.Value != email) {
-            return new GetSessionStatusResult {
+          if (requestEmail == null || requestEmail.Value != email) {
+            return new GetRequestStatusResult {
               IsSuccess = false,
               Status = "EMAIL_MISMATCH",
               Message = "Email address does not match"
             };
-          } else if (session.IsUsed) {
-            return new GetSessionStatusResult {
+          } else if (request.IsUsed) {
+            return new GetRequestStatusResult {
               IsSuccess = false,
-              Status = "SESSION_USED",
-              Message = "Session has already been used",
+              Status = "REQUEST_USED",
+              Message = "Request has already been used",
             };
-          } if (session.ExpiresAt < DateTime.UtcNow) {
-            return new GetSessionStatusResult {
+          } else if (request.ExpiresAt < DateTime.UtcNow) {
+            return new GetRequestStatusResult {
               IsSuccess = false,
-              Status = "SESSION_EXPIRED",
-              Message = "Session has expired",
+              Status = "REQUEST_EXPIRED",
+              Message = "Request has expired",
               HttpStatusCode = 410
             };
           } 
 
-          return new GetSessionStatusResult {
+          return new GetRequestStatusResult {
             IsSuccess = true,
             Status = "SUCCESS",
-            Message = "Session valid",
+            Message = "Request valid",
             IsValid = true
           };
         } catch (Exception ex) {
-            return new GetSessionStatusResult {
+            return new GetRequestStatusResult {
               IsSuccess = false, 
               Status = "ERROR", 
               Message = ex.Message,
@@ -133,39 +133,39 @@ public class EmailVerificationService : IEmailVerificationService {
         }
     }
 
-    public async Task<VerifyEmailResult> VerifyEmailAsync(long sessionId, string code, CancellationToken cancellationToken)
+    public async Task<VerifyEmailResult> VerifyEmailAsync(string requestId, string code, CancellationToken cancellationToken)
     {
         try {
-          var session = await _verificationRepository.GetEmailVerificationRequestByIdAsync(sessionId);
+          var request = await _verificationRepository.GetEmailVerificationRequestByIdAsync(long.Parse(requestId));
 
-          if (session == null) {
+          if (request == null) {
             return new VerifyEmailResult {
               IsSuccess = false,
-              Status = "SESSION_NOT_FOUND",
-              Message = "Session not found",
+              Status = "REQUEST_NOT_FOUND",
+              Message = "Request not found",
               HttpStatusCode = 404
             };
           }
 
-          if (session.IsUsed) {
+          if (request.IsUsed) {
             return new VerifyEmailResult {
               IsSuccess = false,
-              Status = "SESSION_USED",
-              Message = "Session has already been used",
+              Status = "REQUEST_USED",
+              Message = "Request has already been used",
               HttpStatusCode = 400
             };
           }
 
-          if (session.ExpiresAt < DateTime.UtcNow) {
+          if (request.ExpiresAt < DateTime.UtcNow) {
             return new VerifyEmailResult {
               IsSuccess = false,
-              Status = "SESSION_EXPIRED",
-              Message = "Session has expired",
+              Status = "REQUEST_EXPIRED",
+              Message = "Request has expired",
               HttpStatusCode = 410
             };
           }
 
-          if (session.Code != code) {
+          if (request.Code != code) {
             return new VerifyEmailResult {
               IsSuccess = false,
               Status = "CODE_MISMATCH",
@@ -174,14 +174,14 @@ public class EmailVerificationService : IEmailVerificationService {
             };
           }
 
-          await _verificationRepository.MarkEmailVerificationRequestAsUsedAsync(sessionId);
-          await _userRepository.UpdateUserStateAsync(session.UserId, UserState.Active);
+          await _verificationRepository.MarkEmailVerificationRequestAsUsedAsync(long.Parse(requestId));
+          await _userRepository.UpdateUserStateAsync(request.User.Id, UserState.Active);
 
           return new VerifyEmailResult {
             IsSuccess = true,
             Status = "SUCCESS",
             Message = "Email verified successfully",
-            SessionId = sessionId.ToString()
+            RequestId = requestId
           };
         } catch (Exception ex) {
           return new VerifyEmailResult {

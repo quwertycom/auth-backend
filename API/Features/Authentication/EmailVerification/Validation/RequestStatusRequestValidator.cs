@@ -4,15 +4,15 @@ using FluentValidation;
 
 namespace API.Features.Authentication.EmailVerification.Validation;
 
-public class SessionStatusRequestValidator : Validator<SessionStatusRequest>
+public class RequestStatusRequestValidator : Validator<RequestStatusRequest>
 {
-    public SessionStatusRequestValidator()
+    public RequestStatusRequestValidator()
     {
-        RuleFor(x => x.SessionId)
+        RuleFor(x => x.RequestId)
             .NotEmpty()
-            .WithMessage("SessionId is required!")
+            .WithMessage("RequestId is required!")
             .Matches(@"^[0-9]+$")
-            .WithMessage("SessionId must be a number!");
+            .WithMessage("RequestId must be a number!");
 
         RuleFor(x => x.Email)
             .NotEmpty()

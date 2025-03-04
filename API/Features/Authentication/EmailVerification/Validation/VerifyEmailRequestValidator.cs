@@ -6,11 +6,11 @@ public class VerifyEmailRequestValidator : Validator<VerifyEmailRequest>
 {
     public VerifyEmailRequestValidator()
     {
-        RuleFor(x => x.EmailVerificationSessionId)
+        RuleFor(x => x.RequestId)
             .NotEmpty()
-            .WithMessage("EmailVerificationSessionId is required!")
+            .WithMessage("RequestId is required!")
             .Matches(@"^[0-9]+$")
-            .WithMessage("EmailVerificationSessionId must be a number!");
+            .WithMessage("RequestId must be a number!");
 
         RuleFor(x => x.Code)
             .NotEmpty()

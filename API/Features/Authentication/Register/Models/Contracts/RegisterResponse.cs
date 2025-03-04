@@ -4,5 +4,5 @@ namespace API.Features.Authentication.Register.Models.Contracts;
 
 public record RegisterResponse : ResponseBase
 {
-    public required string? EmailVerificationSessionId { get; set; }
+    public required string? RequestId { get; set; }
 }
