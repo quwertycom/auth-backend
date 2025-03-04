@@ -4,9 +4,9 @@ using FluentValidation;
 
 namespace API.Features.Authentication.Register.Validation;
 
-public class RegisterValidator : Validator<RegisterRequest>
+public class RegisterRequestValidator : Validator<RegisterRequest>
 {
-    public RegisterValidator()
+    public RegisterRequestValidator()
     {
         RuleFor(x => x.Username)
             .NotEmpty()
