@@ -80,21 +80,59 @@ public class EmailVerificationService : IEmailVerificationService {
     }
   }
 
-    public async Task<GetVerificationSessionStatusResult> GetVerificationSessionStatusAsync(long emailVerificationSessionId, CancellationToken cancellationToken)
+  public async Task<GetSessionStatusResult> GetSessionStatusAsync(long sessionId, string email, CancellationToken cancellationToken)
     {
         try {
-          var session = await _verificationRepository.GetEmailVerificationRequestByIdAsync(emailVerificationSessionId);
+          var session = await _verificationRepository.GetEmailVerificationRequestByIdAsync(sessionId);
           if (session == null) {
-            return new GetVerificationSessionStatusResult { IsSuccess = false, Status = "SESSION_NOT_FOUND", Message = "Session not found" };
+            return new GetSessionStatusResult {
+              IsSuccess = false, 
+              Status = "SESSION_NOT_FOUND", 
+              Message = "Session not found",
+              HttpStatusCode = 404
+            };
           }
 
-          return new GetVerificationSessionStatusResult { IsSuccess = true, Status = "SUCCESS", Message = "Session found", IsValid = session.ExpiresAt > DateTime.UtcNow };
+          var sessionEmail = await _userRepository.GetEmailAdressByIdAsync(session.EmailId);
+
+          if (sessionEmail == null || sessionEmail.Value != email) {
+            return new GetSessionStatusResult {
+              IsSuccess = false,
+              Status = "EMAIL_MISMATCH",
+              Message = "Email address does not match"
+            };
+          } else if (session.IsUsed) {
+            return new GetSessionStatusResult {
+              IsSuccess = false,
+              Status = "SESSION_USED",
+              Message = "Session has already been used",
+            };
+          } if (session.ExpiresAt < DateTime.UtcNow) {
+            return new GetSessionStatusResult {
+              IsSuccess = false,
+              Status = "SESSION_EXPIRED",
+              Message = "Session has expired",
+              HttpStatusCode = 410
+            };
+          } 
+
+          return new GetSessionStatusResult {
+            IsSuccess = true,
+            Status = "SUCCESS",
+            Message = "Session found",
+            IsValid = true
+          };
         } catch (Exception ex) {
-            return new GetVerificationSessionStatusResult { IsSuccess = false, Status = "ERROR", Message = ex.Message };
+            return new GetSessionStatusResult {
+              IsSuccess = false, 
+              Status = "ERROR", 
+              Message = ex.Message,
+              HttpStatusCode = 500
+            };
         }
     }
 
-    public Task<VerifyEmailResult> VerifyEmailAsync(long emailVerificationSessionId, string code, CancellationToken cancellationToken)
+    public Task<VerifyEmailResult> VerifyEmailAsync(long sessionId, string code, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
