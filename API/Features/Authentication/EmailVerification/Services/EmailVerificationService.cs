@@ -119,7 +119,7 @@ public class EmailVerificationService : IEmailVerificationService {
           return new GetSessionStatusResult {
             IsSuccess = true,
             Status = "SUCCESS",
-            Message = "Session found",
+            Message = "Session valid",
             IsValid = true
           };
         } catch (Exception ex) {
