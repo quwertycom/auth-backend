@@ -1,13 +1,22 @@
-
-using API.Common.Utilities.Interfaces;
+using System.Threading.Tasks;
+using API.Shared.Interfaces.Email;
 
 namespace API.IntegrationTests.Mocks;
 
+/// <summary>
+/// Mock implementation of IEmailSender for testing purposes that doesn't actually send emails
+/// </summary>
 public class MockEmailSender : IEmailSender
 {
-    public Task<bool> SendEmailAsync(string email, string subject, string message) => Task.FromResult(true);
+    public Task<bool> SendOtpEmailAsync(string toEmail, string otp, string firstName, string language = "en")
+    {
+        // Log or store the email for testing rather than sending
+        return Task.FromResult(true);
+    }
 
-    public Task<bool> SendOtpEmailAsync(string email, string otp) => Task.FromResult(true);
-
-    public Task<bool> SendResetPasswordEmailAsync(string email, string token) => Task.FromResult(true);
-}
+    public Task<bool> SendResetPasswordEmailAsync(string toEmail, string codeHash, string language = "en")
+    {
+        // Log or store the email for testing rather than sending
+        return Task.FromResult(true);
+    }
+} 
