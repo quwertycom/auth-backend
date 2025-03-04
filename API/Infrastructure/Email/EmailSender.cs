@@ -92,7 +92,7 @@ public class EmailSender : IEmailSender, IDisposable
     /// <param name="language">Language code (e.g. 'en', 'fr')</param>
     /// <param name="placeholders">Dictionary of placeholders and their values</param>
     /// <returns>True if email was sent successfully</returns>
-    private async Task<bool> SendEmailFromTemplateAsync(
+    protected virtual async Task<bool> SendEmailFromTemplateAsync(
         string toEmail, 
         string subject, 
         string templateName, 
@@ -154,7 +154,7 @@ public class EmailSender : IEmailSender, IDisposable
     /// <summary>
     /// Reads the template content from file.
     /// </summary>
-    private async Task<string> ReadTemplateAsync(string templatePath)
+    public virtual async Task<string> ReadTemplateAsync(string templatePath)
     {
         if (!File.Exists(templatePath))
         {
