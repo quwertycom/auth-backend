@@ -1,15 +1,7 @@
-using NUnit.Framework;
-using API.Features.Authentication.Register.Endpoints;
-using FastEndpoints;
-using Microsoft.AspNetCore.Http;
-using API.Features.Authentication.Register.Models.Contracts;
-using FluentAssertions;
-using NSubstitute;
-using API.Features.Authentication.Register.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
+using API.Features.Authentication.Register.Endpoints;
+using API.Features.Authentication.Register.Models.Contracts;
 using API.Features.Authentication.Register.Models.Services;
-using API.Features.Authentication.Register.Validation;
-using FluentValidation.Results;
 
 namespace API.UnitTests.Features.Authentication.Register;
 

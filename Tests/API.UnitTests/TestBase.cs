@@ -1,12 +1,9 @@
-using NUnit.Framework;
-using NSubstitute;
+using Microsoft.Extensions.Options;
 using API.Shared.Interfaces.Database.Repositories;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using API.Shared.Interfaces.Email;
 using API.Shared.Interfaces.Security;
 using API.Features.Authentication.Register.Interfaces;
 using API.Shared.Utilities;
-using Microsoft.Extensions.Options;
 using API.Shared.Configuration;
 
 namespace API.UnitTests;

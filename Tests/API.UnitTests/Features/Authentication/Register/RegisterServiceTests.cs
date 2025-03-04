@@ -1,16 +1,8 @@
-using NUnit.Framework;
 using API.Features.Authentication.Register.Services;
 using API.Features.Authentication.Register.Models.Contracts;
-using API.Features.Authentication.Register.Models.Services;
 using API.Features.Authentication.EmailVerification.Models.Services;
 using API.Infrastructure.Database.Entities.User;
-using API.Infrastructure.Security;
 using API.Shared.Enums.Entities.User;
-using FluentAssertions;
-using NSubstitute;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace API.UnitTests.Features.Authentication.Register;
 

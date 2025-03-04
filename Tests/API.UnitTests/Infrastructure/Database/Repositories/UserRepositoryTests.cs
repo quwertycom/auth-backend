@@ -1,13 +1,8 @@
-using NUnit.Framework;
+using Microsoft.EntityFrameworkCore;
 using API.Infrastructure.Database.Repositories;
 using API.Infrastructure.Database;
-using NSubstitute;
-using FluentAssertions;
 using API.Infrastructure.Database.Entities.User;
 using API.Shared.Enums.Entities.User;
-using Microsoft.EntityFrameworkCore;
-using Assert = NUnit.Framework.Assert;
-using System;
 
 namespace API.UnitTests.Infrastructure.Repositories;
 

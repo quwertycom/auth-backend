@@ -1,10 +1,6 @@
 using API.Features.Authentication.Register.Validation;
-using FluentValidation.Results;
-using FluentAssertions;
-using NUnit.Framework;
 using API.Features.Authentication.Register.Models.Contracts;
 using API.Shared.Enums.Entities.User;
-using System;
 
 namespace API.UnitTests.Features.Authentication.Register;
 

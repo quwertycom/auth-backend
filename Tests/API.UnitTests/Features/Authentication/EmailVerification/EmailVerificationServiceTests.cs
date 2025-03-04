@@ -1,17 +1,10 @@
-using NUnit.Framework;
 using API.Features.Authentication.EmailVerification.Services;
-using API.Features.Authentication.EmailVerification.Models.Services;
 using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Security;
 using API.Shared.Interfaces.Email;
 using API.Infrastructure.Database.Entities.User;
 using API.Infrastructure.Database.Entities.Verification;
 using API.Shared.Enums.Entities.User;
-using NSubstitute;
-using FluentAssertions;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using API.Shared.Utilities;
 
 namespace API.UnitTests.Features.Authentication.EmailVerification;

@@ -1,14 +1,9 @@
-using NUnit.Framework;
+using Microsoft.EntityFrameworkCore;
 using API.Infrastructure.Database.Repositories;
 using API.Infrastructure.Database;
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using API.Infrastructure.Database.Entities.Verification;
 using API.Infrastructure.Database.Entities.User;
 using API.Shared.Enums.Entities.User;
-using System;
-using System.Linq;
-using Assert = NUnit.Framework.Assert;
 
 namespace API.UnitTests.Infrastructure.Repositories;
 
