@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using API.Shared.Interfaces.Email;
 
 namespace API.IntegrationTests.Mocks;
