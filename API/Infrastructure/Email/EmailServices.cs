@@ -13,14 +13,14 @@ namespace API.Infrastructure.Email;
 /// </summary>
 public class SmtpEmailService : IEmailService
 {
-    private readonly EmailSettings _settings;
+    protected readonly EmailSettings _settings;
 
     public SmtpEmailService(IOptions<EmailSettings> options)
     {
         _settings = options.Value;
     }
 
-    public async Task SendEmailAsync(string to, string subject, string body)
+    public virtual async Task SendEmailAsync(string to, string subject, string body)
     {
         using var smtpClient = new SmtpClient
         {
