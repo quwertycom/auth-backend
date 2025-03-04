@@ -17,7 +17,8 @@ public class VerifyEmailEndpoint : Endpoint<VerifyEmailRequest, VerifyEmailRespo
   }
 
   public override async Task HandleAsync(VerifyEmailRequest req, CancellationToken ct) {
-    var result = await _emailVerificationService.VerifyEmailAsync(req.EmailVerificationSessionId, req.Code, ct);
+    var sessionId = long.Parse(req.EmailVerificationSessionId);
+    var result = await _emailVerificationService.VerifyEmailAsync(sessionId, req.Code, ct);
 
     if (result.IsSuccess) {
       await SendAsync(new VerifyEmailResponse {

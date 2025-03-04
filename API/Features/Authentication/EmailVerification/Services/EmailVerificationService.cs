@@ -80,12 +80,21 @@ public class EmailVerificationService : IEmailVerificationService {
     }
   }
 
-    public Task<GetVerificationSessionStatusResult> GetVerificationSessionStatusAsync(string emailVerificationSessionId, CancellationToken cancellationToken)
+    public async Task<GetVerificationSessionStatusResult> GetVerificationSessionStatusAsync(long emailVerificationSessionId, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        try {
+          var session = await _verificationRepository.GetEmailVerificationRequestByIdAsync(emailVerificationSessionId);
+          if (session == null) {
+            return new GetVerificationSessionStatusResult { IsSuccess = false, Status = "SESSION_NOT_FOUND", Message = "Session not found" };
+          }
+
+          return new GetVerificationSessionStatusResult { IsSuccess = true, Status = "SUCCESS", Message = "Session found", IsValid = session.ExpiresAt > DateTime.UtcNow };
+        } catch (Exception ex) {
+            return new GetVerificationSessionStatusResult { IsSuccess = false, Status = "ERROR", Message = ex.Message };
+        }
     }
 
-    public Task<VerifyEmailResult> VerifyEmailAsync(string emailVerificationSessionId, string code, CancellationToken cancellationToken)
+    public Task<VerifyEmailResult> VerifyEmailAsync(long emailVerificationSessionId, string code, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

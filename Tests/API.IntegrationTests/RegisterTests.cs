@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using API.Features.Authentication.Register.Models.Contracts;
 using API.Shared.Contracts.Responses.Common;
 using API.Shared.Enums.Entities.User;
-using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace API.IntegrationTests;

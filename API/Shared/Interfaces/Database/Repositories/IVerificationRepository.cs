@@ -23,6 +23,13 @@ public interface IVerificationRepository
     public Task AddPasswordResetRequestAsync(PasswordResetRequest passwordResetRequest);
 
     /// <summary>
+    /// Gets an email verification request by its ID.
+    /// </summary>
+    /// <param name="emailVerificationRequestId">The ID of the email verification request to get.</param>
+    /// <returns>A task that represents the asynchronous operation. Returns the email verification request if found, otherwise null.</returns>
+    public Task<EmailVerificationRequest?> GetEmailVerificationRequestByIdAsync(long emailVerificationRequestId);
+
+    /// <summary>
     /// Gets an email verification request by its code.
     /// </summary>
     /// <param name="code">The code of the email verification request to get.</param>

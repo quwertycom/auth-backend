@@ -39,6 +39,18 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
+    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByIdAsync(long emailVerificationRequestId)    
+    {
+        try
+        {
+            return await _context.EmailVerificationRequests.FindAsync(emailVerificationRequestId);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"ERROR: Failed to get email verification request by id: {ex.Message}", ex);
+        }
+    }
+
     public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByCodeAsync(string code)
     {
         try

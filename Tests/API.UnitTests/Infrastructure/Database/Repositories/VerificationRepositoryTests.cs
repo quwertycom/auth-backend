@@ -150,6 +150,42 @@ public class VerificationRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetEmailVerificationRequestByIdAsync_RequestExists_ReturnsRequest()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        // Generate a long ID using Snowflake
+        long requestId = API.Shared.Utilities.Snowflake.Generate();
+        var request = new EmailVerificationRequest { Id = requestId, Code = "12345678", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.EmailVerificationRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetEmailVerificationRequestByIdAsync(requestId);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.Id.Should().Be(requestId); // Assert using long ID
+    }
+
+    [Test]
+    public async Task GetEmailVerificationRequestByIdAsync_RequestDoesNotExist_ReturnsNull()
+    {
+        // Arrange (No request with this id)
+        // Generate a long ID for a non-existent request
+        long nonExistentRequestId = API.Shared.Utilities.Snowflake.Generate();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetEmailVerificationRequestByIdAsync(nonExistentRequestId);
+
+        // Assert
+        retrievedRequest.Should().BeNull();
+    }
+
+    [Test]
     public async Task GetEmailVerificationRequestByEmailStringAsync_RequestExists_ReturnsRequest()
     {
         // Arrange
