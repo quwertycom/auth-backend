@@ -1,5 +1,7 @@
 using API.Features.Authentication.EmailVerification.Interfaces;
 using API.Features.Authentication.EmailVerification.Services;
+using API.Features.Authentication.Login.Interfaces;
+using API.Features.Authentication.Login.Services;
 using API.Features.Authentication.Register.Interfaces;
 using API.Features.Authentication.Register.Services;
 
@@ -17,6 +19,7 @@ public static class AuthenticationModule
     /// <returns>The service collection</returns>
     public static IServiceCollection AddAuthenticationServices(this IServiceCollection services)
     {
+        services.AddScoped<ILoginService, LoginService>();
         services.AddScoped<IRegisterService, RegisterService>();
         services.AddScoped<IEmailVerificationService, EmailVerificationService>();
 
