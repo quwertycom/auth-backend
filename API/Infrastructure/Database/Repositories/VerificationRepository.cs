@@ -39,7 +39,7 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByIdAsync(long emailVerificationRequestId, bool includeUser = false, bool includeEmailAddress = false)    
+    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByIdAsync(long emailVerificationRequestId, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {

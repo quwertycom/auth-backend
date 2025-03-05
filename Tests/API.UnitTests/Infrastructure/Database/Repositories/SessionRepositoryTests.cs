@@ -45,7 +45,8 @@ public class SessionRepositoryTests : TestBase
     public async Task AddSessionAsync_ValidSession_AddsSessionToDatabase()
     {
         // Arrange
-        var user = new User {
+        var user = new User
+        {
             Username = "testuser",
             FirstName = "Test",
             LastName = "User",
@@ -57,7 +58,8 @@ public class SessionRepositoryTests : TestBase
         };
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
-        var session = new Session {
+        var session = new Session
+        {
             UserId = user.Id,
             User = user,
             Target = SessionTarget.User // Set required Target

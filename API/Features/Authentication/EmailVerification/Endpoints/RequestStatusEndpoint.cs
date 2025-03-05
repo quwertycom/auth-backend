@@ -23,7 +23,8 @@ public class RequestStatusEndpoint : Endpoint<RequestStatusRequest, RequestStatu
     {
         var result = await _emailVerificationService.GetRequestStatusAsync(req.RequestId, req.Email, ct);
 
-        await SendAsync(new RequestStatusResponse {
+        await SendAsync(new RequestStatusResponse
+        {
             Status = result.Status,
             Message = result.Message
         }, statusCode: result.HttpStatusCode ?? (result.IsSuccess ? 200 : 400), ct);

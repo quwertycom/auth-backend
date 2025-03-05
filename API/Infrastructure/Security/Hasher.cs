@@ -16,7 +16,7 @@ public class Hasher : IHasher
     public Hasher(IRandomGenerator randomGenerator, IOptions<PasswordHasherSettings> options)
     {
         _randomGenerator = randomGenerator;
-        
+
         var settings = options.Value;
         _iterations = settings.Iterations;
         _saltSize = settings.SaltSize;

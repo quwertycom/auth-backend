@@ -12,25 +12,25 @@ public class DatabaseSettings
     /// </summary>
     [Required]
     public string Host { get; set; } = null!;
-    
+
     /// <summary>
     /// Name of the database
     /// </summary>
     [Required]
     public string Database { get; set; } = null!;
-    
+
     /// <summary>
     /// Username for the database
     /// </summary>
     [Required]
     public string Username { get; set; } = null!;
-    
+
     /// <summary>
     /// Password for the database
     /// </summary>
     [Required]
     public string Password { get; set; } = null!;
-    
+
     /// <summary>
     /// Gets the PostgreSQL connection string based on current settings
     /// </summary>

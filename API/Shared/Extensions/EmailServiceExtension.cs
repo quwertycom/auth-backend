@@ -18,19 +18,19 @@ public static class EmailServiceExtensions
     public static IServiceCollection AddEmailServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Email services and settings are already registered in ConfigurationExtensions.AddAppConfiguration
-        
+
         // Register email services
         services.AddScoped<IEmailSender, EmailSender>();
-        
+
         // Register development or production email service based on configuration
-        services.AddScoped<IEmailService>(serviceProvider => 
+        services.AddScoped<IEmailService>(serviceProvider =>
         {
             var emailSettings = serviceProvider.GetRequiredService<IOptions<EmailSettings>>().Value;
-            
+
             return new SmtpEmailService(
               serviceProvider.GetRequiredService<IOptions<EmailSettings>>());
         });
-        
+
         return services;
     }
 }

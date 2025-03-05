@@ -563,7 +563,7 @@ public class UserRepositoryTests : TestBase
         // Arrange
         var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
         var primaryEmail = new EmailAddress { Value = "primary@example.com", UserId = user.Id, Type = EmailType.Primary, State = EmailState.Active, User = user };
-        var newPrimaryEmail = new EmailAddress { Value = "newprimary@example.com", UserId = user.Id, Type = EmailType.Other, State = EmailState.Active,  User = user }; // Initially Other
+        var newPrimaryEmail = new EmailAddress { Value = "newprimary@example.com", UserId = user.Id, Type = EmailType.Other, State = EmailState.Active, User = user }; // Initially Other
         user.EmailAddresses.Add(primaryEmail);
         user.EmailAddresses.Add(newPrimaryEmail);
         _dbContext.Users.Add(user);
@@ -582,7 +582,7 @@ public class UserRepositoryTests : TestBase
         updatedNewPrimaryEmail?.Type.Should().Be(EmailType.Primary);
     }
 
-     [Test]
+    [Test]
     public void ChangeUserPrimaryEmailAddressAsync_UserDoesNotExist_ThrowsException()
     {
         // Arrange

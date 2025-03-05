@@ -15,7 +15,7 @@ public static class ModuleExtensions
     public static IServiceCollection AddApplicationModules(this IServiceCollection services)
     {
         services.AddAuthenticationServices();
-        
+
         return services;
     }
-} 
+}

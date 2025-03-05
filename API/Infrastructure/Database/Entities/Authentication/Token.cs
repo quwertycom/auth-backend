@@ -26,7 +26,7 @@ public class Token
     public Application.Application? Application { get; set; }
     public Application.ApplicationAccount? ApplicationAccount { get; set; }
     public Token? ParentToken { get; set; }
- 
+
     public DateTime? ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(30);
     public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

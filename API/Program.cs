@@ -13,7 +13,7 @@ public class Program
 
         // Create builder
         var builder = WebApplication.CreateBuilder(args);
-        
+
         // Configure environment variables and configuration sources with proper priority
         builder.Configuration
             .AddDotEnvConfiguration(builder.Environment)

@@ -12,7 +12,7 @@ public class User
     public required string LastName { get; set; }
     public required string PasswordHash { get; set; }
     public required string PasswordSalt { get; set; }
-    
+
     public required DateTime BirthDate { get; set; }
     public required UserGender Gender { get; set; }
     public required UserState State { get; set; } = UserState.PendingVerification;

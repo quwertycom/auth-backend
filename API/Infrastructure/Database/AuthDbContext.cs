@@ -95,7 +95,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Account>()
           .Property(a => a.UserId)
           .IsRequired();
-        
+
         modelBuilder.Entity<Account>()
           .Property(a => a.OrganizationId)
           .IsRequired(false);
@@ -145,7 +145,7 @@ public class AuthDbContext : DbContext
         // --- Properties ---
 
         modelBuilder.Entity<Application>()
-          .HasKey(a => a.Id); 
+          .HasKey(a => a.Id);
 
         modelBuilder.Entity<Application>()
           .Property(a => a.Name)
@@ -180,16 +180,16 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Application>()
           .Property(a => a.CreatedAt)
           .IsRequired();
-        
+
         // Add IsDeleted property to entities that need it
         // Then add global query filter
         modelBuilder.Entity<Application>()
           .HasQueryFilter(a => a.Status != ApplicationStatus.Removed);
-        
+
         modelBuilder.Entity<Application>()
           .Property(a => a.RowVersion)
           .IsRowVersion();
-        
+
         // ----------------------------
         // --- ApplicationAccount -----
         // ----------------------------
@@ -210,9 +210,9 @@ public class AuthDbContext : DbContext
           .HasMany(aa => aa.Sessions)
           .WithOne(s => s.ApplicationAccount)
           .HasForeignKey(s => s.ApplicationAccountId);
-        
+
         // --- Indexes ---
-        
+
         modelBuilder.Entity<ApplicationAccount>()
           .HasIndex(aa => new { aa.ApplicationId, aa.AccountId })
           .IsUnique();
@@ -283,7 +283,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Session>()
           .Property(s => s.UserId)
           .IsRequired();
-        
+
         modelBuilder.Entity<Session>()
           .Property(s => s.AccountId)
           .IsRequired(false);
@@ -291,7 +291,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Session>()
           .Property(s => s.ApplicationId)
           .IsRequired(false);
-        
+
         modelBuilder.Entity<Session>()
           .Property(s => s.ApplicationAccountId)
           .IsRequired(false);
@@ -299,7 +299,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Session>()
           .Property(s => s.Target)
           .IsRequired();
-        
+
         modelBuilder.Entity<Session>()
           .Property(s => s.LastUsedAt)
           .IsRequired(false)
@@ -353,7 +353,7 @@ public class AuthDbContext : DbContext
 
         modelBuilder.Entity<Token>()
           .HasIndex(t => t.ExpiresAt);
-        
+
         // --- Properties ---
 
         modelBuilder.Entity<Token>()
@@ -467,7 +467,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<Developer>()
           .Property(d => d.Type)
           .IsRequired();
-          
+
         modelBuilder.Entity<Developer>()
           .Property(d => d.Status)
           .IsRequired();
@@ -615,7 +615,7 @@ public class AuthDbContext : DbContext
 
         modelBuilder.Entity<User>()
           .HasKey(u => u.Id);
-        
+
         modelBuilder.Entity<User>()
           .Property(u => u.Username)
           .IsRequired()
@@ -850,7 +850,7 @@ public class AuthDbContext : DbContext
         modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.CreatedAt)
           .IsRequired();
-          
+
         modelBuilder.Entity<PasswordResetRequest>()
           .Property(r => r.ExpiresAt)
           .IsRequired();

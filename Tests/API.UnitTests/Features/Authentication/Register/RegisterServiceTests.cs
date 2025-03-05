@@ -14,26 +14,27 @@ public class RegisterServiceTests : TestBase
     public override void Setup()
     {
         base.Setup();
-        
+
         // Create instance of the service with mocked dependencies
         var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
-        
+
         _registerService = new RegisterService(
             MockUserRepository,
             MockHasher,
             mockEmailVerificationService
         );
-        
+
         // Setup default behavior for the Hasher
         MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
-        
+
         // Setup default behavior for email verification service
         mockEmailVerificationService
             .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new RequestEmailVerificationResult { 
-                IsSuccess = true, 
-                Status = "SUCCESS", 
-                RequestId = "verification-session-id" 
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
             });
     }
 
@@ -51,22 +52,22 @@ public class RegisterServiceTests : TestBase
             BirthDate = DateTime.Now.AddYears(-20),
             Gender = UserGender.Male
         };
-        
+
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
-        
+
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Status.Should().Be("SUCCESS");
         result.RequestId.Should().Be("verification-session-id");
-        
+
         // Verify interactions with repositories
-        await MockUserRepository.Received(1).AddUserAsync(Arg.Is<User>(u => 
+        await MockUserRepository.Received(1).AddUserAsync(Arg.Is<User>(u =>
             u.Username == request.Username &&
             u.FirstName == request.FirstName &&
             u.LastName == request.LastName &&
@@ -76,17 +77,17 @@ public class RegisterServiceTests : TestBase
             u.Gender == request.Gender &&
             u.State == UserState.PendingVerification
         ));
-        
-        await MockUserRepository.Received(1).AddEmailAsync(Arg.Is<EmailAddress>(e => 
-            e.Value == request.Email && 
+
+        await MockUserRepository.Received(1).AddEmailAsync(Arg.Is<EmailAddress>(e =>
+            e.Value == request.Email &&
             e.State == EmailState.PendingVerification &&
             e.Type == EmailType.Primary
         ));
-        
+
         // Since the request doesn't have a phone number, shouldn't call this
         await MockUserRepository.DidNotReceive().AddPhoneNumberAsync(Arg.Any<PhoneNumber>());
     }
-    
+
     [Test]
     public async Task RegisterUserAsync_WithPhoneNumber_AddsPhoneNumber()
     {
@@ -102,26 +103,26 @@ public class RegisterServiceTests : TestBase
             BirthDate = DateTime.Now.AddYears(-20),
             Gender = UserGender.Male
         };
-        
+
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
-        
+
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
-        
+
         // Verify phone number was added
-        await MockUserRepository.Received(1).AddPhoneNumberAsync(Arg.Is<PhoneNumber>(p => 
-            p.Value == request.PhoneNumber && 
+        await MockUserRepository.Received(1).AddPhoneNumberAsync(Arg.Is<PhoneNumber>(p =>
+            p.Value == request.PhoneNumber &&
             p.State == PhoneState.PendingVerification &&
             p.Type == PhoneType.Primary
         ));
     }
-    
+
     [Test]
     public async Task RegisterUserAsync_UsernameExists_ReturnsFailureResult()
     {
@@ -136,22 +137,22 @@ public class RegisterServiceTests : TestBase
             BirthDate = DateTime.Now.AddYears(-20),
             Gender = UserGender.Male
         };
-        
+
         MockUserRepository.UsernameExistsAsync("existinguser").Returns(true);
-        
+
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("USERNAME_EXISTS");
-        
+
         // Verify no user was added
         await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<User>());
         await MockUserRepository.DidNotReceive().AddEmailAsync(Arg.Any<EmailAddress>());
     }
-    
+
     [Test]
     public async Task RegisterUserAsync_EmailExists_ReturnsFailureResult()
     {
@@ -166,23 +167,23 @@ public class RegisterServiceTests : TestBase
             BirthDate = DateTime.Now.AddYears(-20),
             Gender = UserGender.Male
         };
-        
+
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync("existing@example.com").Returns(true);
-        
+
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_EXISTS");
-        
+
         // Verify no user was added
         await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<User>());
         await MockUserRepository.DidNotReceive().AddEmailAsync(Arg.Any<EmailAddress>());
     }
-    
+
     [Test]
     public async Task RegisterUserAsync_PhoneNumberExists_ReturnsFailureResult()
     {
@@ -198,24 +199,24 @@ public class RegisterServiceTests : TestBase
             BirthDate = DateTime.Now.AddYears(-20),
             Gender = UserGender.Male
         };
-        
+
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.PhoneNumberExistsAsync("+1234567890").Returns(true);
-        
+
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("PHONE_NUMBER_EXISTS");
-        
+
         // Verify no user was added
         await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<User>());
         await MockUserRepository.DidNotReceive().AddEmailAsync(Arg.Any<EmailAddress>());
     }
-    
+
     [Test]
     public async Task RegisterUserAsync_EmailVerificationFails_ReturnsFailureResult()
     {
@@ -230,36 +231,37 @@ public class RegisterServiceTests : TestBase
             BirthDate = DateTime.Now.AddYears(-20),
             Gender = UserGender.Male
         };
-        
+
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
-        
+
         // Setup email verification to fail
         var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
         mockEmailVerificationService
             .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new RequestEmailVerificationResult { 
-                IsSuccess = false, 
-                Status = "EMAIL_VERIFICATION_FAILED", 
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = false,
+                Status = "EMAIL_VERIFICATION_FAILED",
                 Message = "Could not send verification email"
             });
-            
+
         var serviceWithFailingVerification = new RegisterService(
             MockUserRepository,
             MockHasher,
             mockEmailVerificationService
         );
-        
+
         // Act
         var result = await serviceWithFailingVerification.RegisterUserAsync(request, CancellationToken.None)!;
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_VERIFICATION_FAILED");
         result.Message.Should().Be("Could not send verification email");
     }
-    
+
     [Test]
     public async Task RegisterUserAsync_ExceptionThrown_ReturnsErrorResult()
     {
@@ -274,14 +276,14 @@ public class RegisterServiceTests : TestBase
             BirthDate = DateTime.Now.AddYears(-20),
             Gender = UserGender.Male
         };
-        
+
         // Setup repository to throw an exception
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>())
             .Returns(Task.FromException<bool>(new Exception("Database connection failed")));
-        
+
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();

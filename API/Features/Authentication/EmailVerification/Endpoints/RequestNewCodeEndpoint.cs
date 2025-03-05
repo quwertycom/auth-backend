@@ -23,7 +23,8 @@ public class RequestNewCodeEndpoint : Endpoint<RequestNewCodeRequest, RequestNew
     {
         var result = await _emailVerificationService.RequestNewCodeAsync(req.Email, ct);
 
-        await SendAsync(new RequestNewCodeResponse {
+        await SendAsync(new RequestNewCodeResponse
+        {
             NewRequestId = result.NewRequestId,
             Status = result.Status,
             Message = result.Message,

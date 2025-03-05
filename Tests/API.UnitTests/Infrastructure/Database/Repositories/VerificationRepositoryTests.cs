@@ -508,7 +508,8 @@ public class VerificationRepositoryTests : TestBase
         requests.Should().HaveCount(2);
         requests.Should().Contain(request1);
         requests.Should().Contain(request2);
-        foreach(var request in requests) {
+        foreach (var request in requests)
+        {
             request.EmailAddress.Should().NotBeNull();
             request.User.Should().NotBeNull();
         }
@@ -581,7 +582,8 @@ public class VerificationRepositoryTests : TestBase
         activeRequests.Should().Contain(activeRequest2);
         activeRequests.Should().NotContain(usedRequest);
         activeRequests.Should().NotContain(expiredRequest);
-        foreach(var request in activeRequests) {
+        foreach (var request in activeRequests)
+        {
             request.EmailAddress.Should().NotBeNull();
             request.User.Should().NotBeNull();
         }

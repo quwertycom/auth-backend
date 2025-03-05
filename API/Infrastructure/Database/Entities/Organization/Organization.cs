@@ -8,7 +8,7 @@ public class Organization
 
     public required string Name { get; set; }
     public required string Description { get; set; }
-    
+
     public virtual ICollection<Account.Account> Members { get; set; } = new List<Account.Account>();
     public virtual ICollection<OrganizationRole> Roles { get; set; } = new List<OrganizationRole>();
     public virtual ICollection<Developer.Developer> Developers { get; set; } = new List<Developer.Developer>();

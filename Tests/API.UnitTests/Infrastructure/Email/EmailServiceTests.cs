@@ -54,7 +54,7 @@ public class EmailServiceTests
             message.IsBodyHtml == true
         ));
     }
-    
+
     [Test]
     public async Task SendEmailAsync_NoDefaultEmailSettings_UsesFallbacks()
     {
@@ -68,9 +68,9 @@ public class EmailServiceTests
             DefaultFromEmail = "", // Empty from email
             DefaultFromName = ""   // Empty from name
         });
-        
+
         _emailService = new TestableSmtpEmailService(_mockEmailOptions, _mockSmtpClient);
-        
+
         var toEmail = "recipient@example.com";
         var subject = "Test Subject";
         var body = "Test Body";
@@ -85,7 +85,7 @@ public class EmailServiceTests
             message.From.DisplayName == "Authentication Service"
         ));
     }
-    
+
     [Test]
     public async Task SendEmailAsync_HTML_IsSetProperly()
     {
@@ -103,7 +103,7 @@ public class EmailServiceTests
             message.Body.Contains("<h1>")
         ));
     }
-    
+
     [Test]
     public void SendEmailAsync_PropagatesExceptions()
     {
@@ -111,18 +111,18 @@ public class EmailServiceTests
         var toEmail = "recipient@example.com";
         var subject = "Test Exception";
         var body = "Test Body";
-        
+
         // Configure mock to throw exception
         _mockSmtpClient.SendMailAsync(Arg.Any<MailMessage>())
             .Returns(Task.FromException(new SmtpException("Test SMTP error")));
 
         // Act & Assert
         Func<Task> act = async () => await _emailService.SendEmailAsync(toEmail, subject, body);
-        
+
         act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Test SMTP error*");
     }
-    
+
     [Test]
     public async Task SendEmailAsync_WithCredentials_ConfiguresProperly()
     {
@@ -138,9 +138,9 @@ public class EmailServiceTests
             DefaultFromEmail = "sender@example.com",
             DefaultFromName = "Sender Name"
         });
-        
+
         var testableService = new CredentialsTestEmailService(_mockEmailOptions, _mockSmtpClient);
-        
+
         var toEmail = "recipient@example.com";
         var subject = "Credential Test";
         var body = "Test Body";
@@ -180,14 +180,14 @@ public class TestableSmtpEmailService : SmtpEmailService
                 IsBodyHtml = true,
             };
 
-            string fromEmail = string.IsNullOrEmpty(_settings.DefaultFromEmail) 
-                ? "noreply@example.com" 
+            string fromEmail = string.IsNullOrEmpty(_settings.DefaultFromEmail)
+                ? "noreply@example.com"
                 : _settings.DefaultFromEmail;
-                
+
             string fromName = string.IsNullOrEmpty(_settings.DefaultFromName)
                 ? "Authentication Service"
                 : _settings.DefaultFromName;
-                
+
             mailMessage.From = new MailAddress(fromEmail, fromName);
             mailMessage.To.Add(to);
 
@@ -218,29 +218,29 @@ public class CredentialsTestEmailService : SmtpEmailService
     public override async Task SendEmailAsync(string to, string subject, string body)
     {
         // Simulate creating an SMTP client with credentials
-        if (!_settings.UseDefaultCredentials && 
-            !string.IsNullOrEmpty(_settings.Username) && 
+        if (!_settings.UseDefaultCredentials &&
+            !string.IsNullOrEmpty(_settings.Username) &&
             !string.IsNullOrEmpty(_settings.Password))
         {
             NetworkCredential = new NetworkCredential(_settings.Username, _settings.Password);
             WasCredentialSet = true;
         }
-        
+
         var mailMessage = new MailMessage
         {
             Subject = subject,
             Body = body,
             IsBodyHtml = true,
         };
-        
-        string fromEmail = string.IsNullOrEmpty(_settings.DefaultFromEmail) 
-            ? "noreply@example.com" 
+
+        string fromEmail = string.IsNullOrEmpty(_settings.DefaultFromEmail)
+            ? "noreply@example.com"
             : _settings.DefaultFromEmail;
-            
+
         string fromName = string.IsNullOrEmpty(_settings.DefaultFromName)
             ? "Authentication Service"
             : _settings.DefaultFromName;
-            
+
         mailMessage.From = new MailAddress(fromEmail, fromName);
         mailMessage.To.Add(to);
 

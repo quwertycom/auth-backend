@@ -39,21 +39,21 @@ public class EmailSenderTests
             DefaultFromEmail = "test@example.com",
             DefaultFromName = "Test Sender"
         });
-        
+
         _mockApiOptions.Value.Returns(new ApiSettings { FrontendBaseUrl = "http://localhost:3000" });
-        
+
         // Setup directory structure for testing
         _webRootPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "wwwroot");
         _templatesPath = Path.Combine(_webRootPath, "Templates", "Email");
         _enTemplatesPath = Path.Combine(_templatesPath, "en");
-        
+
         // Create directories if they don't exist
         Directory.CreateDirectory(_templatesPath);
         Directory.CreateDirectory(_enTemplatesPath);
-        
+
         // Set the mock environment
         _mockEnvironment.WebRootPath.Returns(_webRootPath);
-        
+
         // Create test template files
         CreateTestTemplateFiles();
     }
@@ -82,18 +82,18 @@ public class EmailSenderTests
         {
             string enTemplatePath = Path.Combine(_enTemplatesPath, "otp-email.html");
             File.WriteAllText(enTemplatePath, "<html><body>EN template with {{OTP}} and {{FIRST_NAME}}</body></html>");
-            
+
             // Create reset password template
             string resetPath = Path.Combine(_enTemplatesPath, "reset-password.html");
             File.WriteAllText(resetPath, "<html><body>Reset your password using this link: {{RESET_LINK}} for {{USERNAME}}</body></html>");
         }
-        
+
         // Create default template
         if (_templatesPath != null)
         {
             string defaultTemplatePath = Path.Combine(_templatesPath, "otp-email.html");
             File.WriteAllText(defaultTemplatePath, "<html><body>Default template with {{OTP}} and {{FIRST_NAME}}</body></html>");
-            
+
             string resetPath = Path.Combine(_templatesPath, "reset-password.html");
             File.WriteAllText(resetPath, "<html><body>Default reset password using: {{RESET_LINK}} for {{USERNAME}}</body></html>");
         }
@@ -135,7 +135,7 @@ public class EmailSenderTests
         // Arrange
         var mockSmtpClient = Substitute.For<ISmtpClientWrapper>();
         var emailSender = new MockableEmailSender(_mockEmailOptions!, _mockApiOptions!, _mockEnvironment!, mockSmtpClient);
-        
+
         var toEmail = "recipient@example.com";
         var otp = "123456";
         var firstName = "Recipient";
@@ -152,14 +152,14 @@ public class EmailSenderTests
             message.Body.Contains(firstName)
         ));
     }
-    
+
     [Test]
     public async Task SendResetPasswordEmailAsync_ValidInput_SendsEmail()
     {
         // Arrange
         var mockSmtpClient = Substitute.For<ISmtpClientWrapper>();
         var emailSender = new MockableEmailSender(_mockEmailOptions!, _mockApiOptions!, _mockEnvironment!, mockSmtpClient);
-        
+
         var toEmail = "reset@example.com";
         var codeHash = "abcdef123456";
         var expectedResetLink = "http://localhost:3000/app/auth/reset-password?code=abcdef123456";
@@ -176,16 +176,16 @@ public class EmailSenderTests
             message.Body.Contains("reset") // Username extracted from email
         ));
     }
-    
+
     [Test]
     public async Task SendEmailAsync_WithCustomFrontendUrl_UsesCorrectResetLink()
     {
         // Arrange
         _mockApiOptions!.Value.Returns(new ApiSettings { FrontendBaseUrl = "https://custom-domain.com" });
-        
+
         var mockSmtpClient = Substitute.For<ISmtpClientWrapper>();
         var emailSender = new MockableEmailSender(_mockEmailOptions!, _mockApiOptions, _mockEnvironment!, mockSmtpClient);
-        
+
         var toEmail = "reset@example.com";
         var codeHash = "abcdef123456";
         var expectedResetLink = "https://custom-domain.com/app/auth/reset-password?code=abcdef123456";
@@ -199,7 +199,7 @@ public class EmailSenderTests
             message.Body.Contains(expectedResetLink)
         ));
     }
-    
+
     [Test]
     public void ReadTemplateAsync_TemplateNotFound_ThrowsException()
     {
@@ -209,7 +209,7 @@ public class EmailSenderTests
 
         // Act & Assert
         Func<Task> act = async () => await emailSender.ReadTemplateAsync(nonExistentPath);
-        
+
         act.Should().ThrowAsync<FileNotFoundException>()
             .WithMessage("*Email template not found*");
     }
@@ -226,50 +226,50 @@ public class MockableEmailSender : EmailSender
 {
     private readonly ISmtpClientWrapper? _smtpClientWrapper;
     private readonly IWebHostEnvironment _environment;
-    
+
     public MockableEmailSender(
-        IOptions<EmailSettings> emailOptions, 
-        IOptions<ApiSettings> apiOptions, 
+        IOptions<EmailSettings> emailOptions,
+        IOptions<ApiSettings> apiOptions,
         IWebHostEnvironment environment,
-        ISmtpClientWrapper? smtpClientWrapper = null) 
+        ISmtpClientWrapper? smtpClientWrapper = null)
         : base(emailOptions, apiOptions, environment)
     {
         _smtpClientWrapper = smtpClientWrapper;
         _environment = environment;
     }
-    
+
     // Expose the private method for testing
     public string GetTemplatePathForTest(string templateName, string language)
     {
         // First check if language-specific template exists
         string langSpecificPath = Path.Combine(_environment.WebRootPath, "Templates/Email", language, $"{templateName}.html");
-        
+
         // If language-specific template doesn't exist, fall back to default
         if (!File.Exists(langSpecificPath))
         {
             return Path.Combine(_environment.WebRootPath, "Templates/Email", $"{templateName}.html");
         }
-        
+
         return langSpecificPath;
     }
-    
+
     public override Task<string> ReadTemplateAsync(string templatePath)
     {
         if (!File.Exists(templatePath))
         {
             throw new FileNotFoundException($"Email template not found at: {templatePath}");
         }
-        
+
         // For tests, we'll return the actual file content or a simple template with placeholders
-        return File.Exists(templatePath) 
-            ? File.ReadAllTextAsync(templatePath) 
+        return File.Exists(templatePath)
+            ? File.ReadAllTextAsync(templatePath)
             : Task.FromResult("<html><body>Email template with {{OTP}} and {{FIRST_NAME}}</body></html>");
     }
-    
+
     protected override async Task<bool> SendEmailFromTemplateAsync(
-        string toEmail, 
-        string subject, 
-        string templateName, 
+        string toEmail,
+        string subject,
+        string templateName,
         string language,
         Dictionary<string, string> placeholders)
     {
@@ -277,13 +277,13 @@ public class MockableEmailSender : EmailSender
         {
             // Get template path, including language-specific version if it exists
             string templatePath = GetTemplatePathForTest(templateName, language);
-            
+
             // Read the template content
             string templateContent = await ReadTemplateAsync(templatePath);
-            
+
             // Replace all placeholders
             string emailBody = ReplacePlaceholders(templateContent, placeholders);
-            
+
             // Create the email
             var mailMessage = new MailMessage
             {
@@ -291,20 +291,20 @@ public class MockableEmailSender : EmailSender
                 Body = emailBody,
                 IsBodyHtml = true,
             };
-            
+
             // Use from email/name from settings or fallback to defaults
             string fromEmail = "test@example.com";
             string fromName = "Test Sender";
             mailMessage.From = new MailAddress(fromEmail, fromName);
-            
+
             mailMessage.To.Add(toEmail);
-            
+
             // If we have a mock wrapper, use it instead of the real SmtpClient
             if (_smtpClientWrapper != null)
             {
                 await _smtpClientWrapper.SendMailAsync(mailMessage);
             }
-            
+
             return true;
         }
         catch (Exception ex)
@@ -312,17 +312,17 @@ public class MockableEmailSender : EmailSender
             throw new Exception($"Failed to send email using template '{templateName}': {ex.Message}", ex);
         }
     }
-    
+
     // Helper method to replace placeholders
     private string ReplacePlaceholders(string templateContent, Dictionary<string, string> placeholders)
     {
         string result = templateContent;
-        
+
         foreach (var placeholder in placeholders)
         {
             result = result.Replace(placeholder.Key, placeholder.Value);
         }
-        
+
         return result;
     }
 }

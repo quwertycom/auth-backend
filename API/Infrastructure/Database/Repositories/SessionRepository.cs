@@ -46,22 +46,27 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Session> query = _context.Sessions;
 
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(s => s.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(s => s.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(s => s.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(s => s.ApplicationAccount);
             }
-            if (includeTokens) {
+            if (includeTokens)
+            {
                 query = query.Include(s => s.Tokens);
             }
-            
+
             return await query.FirstOrDefaultAsync(s => s.Id == id);
         }
         catch (Exception ex)
@@ -76,22 +81,27 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Session> query = _context.Sessions;
 
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(s => s.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(s => s.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(s => s.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(s => s.ApplicationAccount);
             }
-            if (includeTokens) {
+            if (includeTokens)
+            {
                 query = query.Include(s => s.Tokens);
             }
-            
+
             return await query.FirstOrDefaultAsync(s => s.Tokens.Any(t => t.Value == tokenString));
         }
         catch (Exception ex)
@@ -106,22 +116,27 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Session> query = _context.Sessions;
 
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(s => s.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(s => s.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(s => s.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(s => s.ApplicationAccount);
             }
-            if (includeTokens) {
+            if (includeTokens)
+            {
                 query = query.Include(s => s.Tokens);
             }
-            
+
             return await query.FirstOrDefaultAsync(s => s.UserId == userId);
         }
         catch (Exception ex)
@@ -136,22 +151,27 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Session> query = _context.Sessions;
 
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(s => s.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(s => s.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(s => s.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(s => s.ApplicationAccount);
             }
-            if (includeTokens) {
+            if (includeTokens)
+            {
                 query = query.Include(s => s.Tokens);
             }
-            
+
             return await query.Where(s => s.UserId == userId).ToListAsync();
         }
         catch (Exception ex)
@@ -166,22 +186,27 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Session> query = _context.Sessions;
 
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(s => s.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(s => s.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(s => s.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(s => s.ApplicationAccount);
             }
-            if (includeTokens) {
+            if (includeTokens)
+            {
                 query = query.Include(s => s.Tokens);
             }
-            
+
             return await query.Where(s => s.UserId == userId && !s.IsRevoked).ToListAsync();
         }
         catch (Exception ex)
@@ -196,25 +221,31 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Token> query = _context.Tokens;
 
-            if (includeSession) {
+            if (includeSession)
+            {
                 query = query.Include(t => t.Session);
             }
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(t => t.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(t => t.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(t => t.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(t => t.ApplicationAccount);
             }
-            if (includeParentToken) {
+            if (includeParentToken)
+            {
                 query = query.Include(t => t.ParentToken);
             }
-            
+
             return await query.FirstOrDefaultAsync(t => t.Value == tokenString);
         }
         catch (Exception ex)
@@ -229,25 +260,31 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Token> query = _context.Tokens;
 
-            if (includeSession) {
+            if (includeSession)
+            {
                 query = query.Include(t => t.Session);
             }
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(t => t.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(t => t.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(t => t.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(t => t.ApplicationAccount);
             }
-            if (includeParentToken) {
+            if (includeParentToken)
+            {
                 query = query.Include(t => t.ParentToken);
             }
-            
+
             return await query.Where(t => t.UserId == userId).ToListAsync();
         }
         catch (Exception ex)
@@ -262,25 +299,31 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Token> query = _context.Tokens;
 
-            if (includeSession) {
+            if (includeSession)
+            {
                 query = query.Include(t => t.Session);
             }
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(t => t.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(t => t.Account);
-            }   
-            if (includeApplication) {
+            }
+            if (includeApplication)
+            {
                 query = query.Include(t => t.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(t => t.ApplicationAccount);
             }
-            if (includeParentToken) {
+            if (includeParentToken)
+            {
                 query = query.Include(t => t.ParentToken);
             }
-            
+
             return await query.Where(t => t.UserId == userId && !t.IsRevoked).ToListAsync();
         }
         catch (Exception ex)
@@ -295,25 +338,31 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<Token> query = _context.Tokens;
 
-            if (includeSession) {
+            if (includeSession)
+            {
                 query = query.Include(t => t.Session);
             }
-            if (includeUser) {
+            if (includeUser)
+            {
                 query = query.Include(t => t.User);
             }
-            if (includeAccount) {
+            if (includeAccount)
+            {
                 query = query.Include(t => t.Account);
             }
-            if (includeApplication) {
+            if (includeApplication)
+            {
                 query = query.Include(t => t.Application);
             }
-            if (includeApplicationAccount) {
+            if (includeApplicationAccount)
+            {
                 query = query.Include(t => t.ApplicationAccount);
             }
-            if (includeParentToken) {
+            if (includeParentToken)
+            {
                 query = query.Include(t => t.ParentToken);
             }
-            
+
             return await query.FirstOrDefaultAsync(t => t.Id == id);
         }
         catch (Exception ex)
@@ -328,19 +377,23 @@ public class SessionRepository : ISessionRepository
         {
             IQueryable<User> query = _context.Users;
 
-            if (includeAccounts) {
+            if (includeAccounts)
+            {
                 query = query.Include(u => u.Accounts);
             }
-            if (includeSessions) {
+            if (includeSessions)
+            {
                 query = query.Include(u => u.Sessions);
             }
-            if (includePhoneNumbers) {
+            if (includePhoneNumbers)
+            {
                 query = query.Include(u => u.PhoneNumbers);
             }
-            if (includeEmailAddresses) {
+            if (includeEmailAddresses)
+            {
                 query = query.Include(u => u.EmailAddresses);
             }
-            
+
             return await query.FirstOrDefaultAsync(u => u.Sessions.Any(s => s.Id == sessionId));
         }
         catch (Exception ex)
@@ -364,19 +417,23 @@ public class SessionRepository : ISessionRepository
 
             IQueryable<User> query = _context.Users.Where(u => u.Id == session.UserId);
 
-            if (includeAccounts) {
+            if (includeAccounts)
+            {
                 query = query.Include(u => u.Accounts);
             }
-            if (includeSessions) {
+            if (includeSessions)
+            {
                 query = query.Include(u => u.Sessions);
             }
-            if (includePhoneNumbers) {
+            if (includePhoneNumbers)
+            {
                 query = query.Include(u => u.PhoneNumbers);
             }
-            if (includeEmailAddresses) {
+            if (includeEmailAddresses)
+            {
                 query = query.Include(u => u.EmailAddresses);
             }
-            
+
             return await query.FirstOrDefaultAsync();
         }
         catch (Exception ex)
@@ -425,7 +482,8 @@ public class SessionRepository : ISessionRepository
         try
         {
             var session = await GetSessionByIdAsync(sessionId);
-            if (session is null) {
+            if (session is null)
+            {
                 throw new Exception("NOT_FOUND: Session not found");
             }
             var tokens = await _context.Tokens.Where(t => t.SessionId == sessionId).ToListAsync();

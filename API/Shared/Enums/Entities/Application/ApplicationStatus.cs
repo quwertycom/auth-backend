@@ -1,7 +1,7 @@
 namespace API.Shared.Enums.Entities.Application;
 
-public enum ApplicationStatus   
-{   
+public enum ApplicationStatus
+{
     Development,
     Testing,
     Verification,

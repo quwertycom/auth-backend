@@ -14,7 +14,7 @@ public class RegisterTests : TestBase
     {
         // Act: Simply check if the endpoint exists and responds (status code could be 400 if validation fails)
         var response = await _client.GetAsync("/api/authentication/register");
-        
+
         // Assert: The endpoint exists even if it returns method not allowed
         Assert.IsFalse(response.StatusCode == HttpStatusCode.NotFound, "Register endpoint should exist");
     }
@@ -38,7 +38,7 @@ public class RegisterTests : TestBase
 
         // Act
         var response = await PostAsync("/api/authentication/register", request);
-        
+
         // Assert
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadFromJsonAsync<RegisterResponse>();
@@ -81,11 +81,11 @@ public class RegisterTests : TestBase
 
         // Act
         var response = await PostAsync("/api/authentication/register", secondRequest);
-        
+
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
         var content = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(content);
         Assert.AreEqual("EMAIL_EXISTS", content!.Status);
     }
-} 
+}

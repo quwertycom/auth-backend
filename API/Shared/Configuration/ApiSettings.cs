@@ -12,9 +12,9 @@ public class ApiSettings
     /// </summary>
     [Required]
     public string Port { get; set; } = "8000";
-    
+
     /// <summary>
     /// The base URL of the frontend application
     /// </summary>
     public string? FrontendBaseUrl { get; set; } = "http://localhost:3000";
-} 
+}

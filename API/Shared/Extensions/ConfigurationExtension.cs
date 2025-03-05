@@ -23,15 +23,15 @@ public static class ConfigurationExtensions
         services.Configure<DatabaseSettings>(configuration.GetSection("ConnectionStrings"));
         services.Configure<PasswordHasherSettings>(configuration.GetSection("PasswordHasher"));
         services.Configure<SnowflakeSettings>(configuration.GetSection("Snowflake"));
-        
+
         // Initialize Snowflake immediately to prevent initialization issues
-        var snowflakeSettings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>() 
+        var snowflakeSettings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>()
             ?? throw new InvalidOperationException("Snowflake settings are missing from configuration");
         Snowflake.Initialize(Options.Create(snowflakeSettings));
-        
+
         return services;
     }
-    
+
     /// <summary>
     /// Loads environment variables from .env file in development and adds them to configuration with high priority
     /// </summary>
@@ -42,10 +42,10 @@ public static class ConfigurationExtensions
             // Find .env file location - check both project directory and solution root
             var projectDir = Directory.GetCurrentDirectory();
             var solutionDir = Directory.GetParent(projectDir)?.FullName;
-            
+
             var projectEnvPath = Path.Combine(projectDir, ".env");
             var solutionEnvPath = solutionDir != null ? Path.Combine(solutionDir, ".env") : null;
-            
+
             // Try loading from project directory first, then solution directory
             if (File.Exists(projectEnvPath))
             {
@@ -56,19 +56,19 @@ public static class ConfigurationExtensions
                 Env.Load(solutionEnvPath);
             }
         }
-        
+
         // Add environment variables with highest priority
         builder.AddEnvironmentVariables();
-        
+
         return builder;
     }
-    
+
     /// <summary>
     /// Binds and validates configuration section to strongly typed options
     /// </summary>
     public static IServiceCollection AddConfigurationWithValidation<TOptions>(
         this IServiceCollection services,
-        IConfiguration configuration, 
+        IConfiguration configuration,
         string sectionName) where TOptions : class, new()
     {
         // Register the configuration instance with validation
@@ -76,10 +76,10 @@ public static class ConfigurationExtensions
             .Bind(configuration.GetSection(sectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
-            
+
         return services;
     }
-    
+
     /// <summary>
     /// Extension method to get strongly typed configuration sections
     /// </summary>
@@ -89,4 +89,4 @@ public static class ConfigurationExtensions
         configuration.GetSection(sectionName).Bind(section);
         return section;
     }
-} 
+}

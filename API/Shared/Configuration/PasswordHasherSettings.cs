@@ -13,14 +13,14 @@ public class PasswordHasherSettings
     [Required]
     [Range(10000, int.MaxValue, ErrorMessage = "Iterations must be at least 10000 for security")]
     public int Iterations { get; set; } = 10000;
-    
+
     /// <summary>
     /// Size of the salt in bytes used in the password hashing algorithm.
     /// </summary>
     [Required]
     [Range(16, int.MaxValue, ErrorMessage = "Salt size must be at least 16 bytes")]
     public int SaltSize { get; set; } = 16;
-    
+
     /// <summary>
     /// Size of the key in bytes derived from the password and salt during hashing.
     /// </summary>

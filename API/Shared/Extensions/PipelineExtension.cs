@@ -22,20 +22,23 @@ public static class PipelineExtensions
         app.UseStaticFiles();
         app.UseRouting();
         app.UseCors();
-        
+
         // Configure security middleware
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseRateLimiter();
         app.UseSecurityHeaders();
-        
+
         // Map health checks
         app.ConfigureHealthChecks();
 
         // Configure fast endpoints
-        app.UseFastEndpoints(c => {
-            c.Errors.ResponseBuilder = (failures, ctx, statusCode) => {
-                return new API.Shared.Contracts.Responses.Common.ErrorResponse {
+        app.UseFastEndpoints(c =>
+        {
+            c.Errors.ResponseBuilder = (failures, ctx, statusCode) =>
+            {
+                return new API.Shared.Contracts.Responses.Common.ErrorResponse
+                {
                     Status = "Error",
                     Message = "Validation Error",
                     Details = failures.GroupBy(f => f.PropertyName)
@@ -47,7 +50,7 @@ public static class PipelineExtensions
                 };
             };
         });
-        
+
         return app;
     }
 
@@ -59,7 +62,7 @@ public static class PipelineExtensions
         }
         else
         {
-            app.UseExceptionHandler(exceptionHandlerApp => 
+            app.UseExceptionHandler(exceptionHandlerApp =>
             {
                 exceptionHandlerApp.Run(async context =>
                 {
@@ -81,14 +84,14 @@ public static class PipelineExtensions
 
     private static WebApplication UseSecurityHeaders(this WebApplication app)
     {
-        app.Use((context, next) => 
+        app.Use((context, next) =>
         {
             context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'");
             context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
             context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
             return next();
         });
-        
+
         return app;
     }
-} 
+}

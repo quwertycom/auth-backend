@@ -5,7 +5,7 @@ namespace API.Infrastructure.Database.Entities.Verification;
 public class PasswordResetRequest
 {
     public long Id { get; set; } = Snowflake.Generate();
-    
+
     public required string CodeHash { get; set; }
     public bool IsUsed { get; set; } = false;
     public bool IsRevoked { get; set; } = false;

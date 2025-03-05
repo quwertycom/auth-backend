@@ -19,7 +19,7 @@ public static class SwaggerServiceExtensions
                 Version = "v1",
                 Description = "Authentication and Authorization API"
             });
-            
+
             // Add JWT Authentication to Swagger UI
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
@@ -30,7 +30,7 @@ public static class SwaggerServiceExtensions
                 In = ParameterLocation.Header,
                 Description = "JWT Authorization header using the Bearer scheme."
             });
-            
+
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
@@ -45,9 +45,10 @@ public static class SwaggerServiceExtensions
                     Array.Empty<string>()
                 }
             });
-            
+
             // Custom mapping of sections based on the second part of the URL.
-            c.TagActionsBy(api => {
+            c.TagActionsBy(api =>
+            {
                 var path = api.RelativePath;
                 if (string.IsNullOrEmpty(path))
                 {
@@ -56,7 +57,7 @@ public static class SwaggerServiceExtensions
                 var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
                 return segments.Length >= 2 ? new[] { segments[1] } : new[] { "Default" };
             });
-            
+
             // Enable XML comments in Swagger
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -65,17 +66,17 @@ public static class SwaggerServiceExtensions
                 c.IncludeXmlComments(xmlPath);
             }
         });
-        
+
         return services;
     }
-    
+
     public static WebApplication UseSwaggerServices(this WebApplication app)
     {
         app.UseSwagger(c =>
         {
             c.RouteTemplate = "api/docs/{documentName}/swagger.json";
         });
-        
+
         app.UseSwaggerUI(c =>
         {
             c.SwaggerEndpoint("/api/docs/v1/swagger.json", "Auth API v1");
@@ -83,7 +84,7 @@ public static class SwaggerServiceExtensions
             c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
             c.DefaultModelsExpandDepth(-1); // Hide models section
         });
-        
+
         return app;
     }
-} 
+}

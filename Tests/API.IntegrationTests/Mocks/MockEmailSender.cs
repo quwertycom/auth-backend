@@ -18,4 +18,4 @@ public class MockEmailSender : IEmailSender
         // Log or store the email for testing rather than sending
         return Task.FromResult(true);
     }
-} 
+}

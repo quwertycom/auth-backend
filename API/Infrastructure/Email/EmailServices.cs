@@ -32,8 +32,8 @@ public class SmtpEmailService : IEmailService
             Timeout = _settings.Timeout
         };
 
-        if (!_settings.UseDefaultCredentials && 
-            !string.IsNullOrEmpty(_settings.Username) && 
+        if (!_settings.UseDefaultCredentials &&
+            !string.IsNullOrEmpty(_settings.Username) &&
             !string.IsNullOrEmpty(_settings.Password))
         {
             smtpClient.Credentials = new NetworkCredential(_settings.Username, _settings.Password);
@@ -47,14 +47,14 @@ public class SmtpEmailService : IEmailService
         };
 
         // Use from email/name from settings or fallback to defaults
-        string fromEmail = string.IsNullOrEmpty(_settings.DefaultFromEmail) 
-            ? "noreply@example.com" 
+        string fromEmail = string.IsNullOrEmpty(_settings.DefaultFromEmail)
+            ? "noreply@example.com"
             : _settings.DefaultFromEmail;
-            
+
         string fromName = string.IsNullOrEmpty(_settings.DefaultFromName)
             ? "Authentication Service"
             : _settings.DefaultFromName;
-            
+
         mailMessage.From = new MailAddress(fromEmail, fromName);
         mailMessage.To.Add(to);
 
@@ -67,4 +67,4 @@ public class SmtpEmailService : IEmailService
             throw new InvalidOperationException($"Failed to send email: {ex.Message}", ex);
         }
     }
-} 
+}

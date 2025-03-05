@@ -44,13 +44,15 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress {
+        var mockEmailAddressEntity = new EmailAddress
+        {
             Id = Snowflake.Generate(),
             UserId = Snowflake.Generate(),
             Value = emailAddress,
             State = EmailState.PendingVerification,
             Type = EmailType.Primary,
-            User = new User() {
+            User = new User()
+            {
                 Id = Snowflake.Generate(),
                 Username = "testuser",
                 FirstName = "Test",
@@ -111,13 +113,15 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress {
+        var mockEmailAddressEntity = new EmailAddress
+        {
             Id = Snowflake.Generate(),
             UserId = Snowflake.Generate(),
             Value = emailAddress,
             State = EmailState.PendingVerification,
             Type = EmailType.Primary,
-            User = new User() {
+            User = new User()
+            {
                 Id = Snowflake.Generate(),
                 Username = "testuser",
                 FirstName = "Test",
@@ -150,13 +154,15 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress {
+        var mockEmailAddressEntity = new EmailAddress
+        {
             Id = Snowflake.Generate(),
             UserId = Snowflake.Generate(),
             Value = emailAddress,
             State = EmailState.Active,
             Type = EmailType.Primary,
-            User = new User() {
+            User = new User()
+            {
                 Id = Snowflake.Generate(),
                 Username = "testuser",
                 FirstName = "Test",
@@ -191,13 +197,15 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress {
+        var mockEmailAddressEntity = new EmailAddress
+        {
             Id = Snowflake.Generate(),
             UserId = Snowflake.Generate(),
             Value = emailAddress,
             State = EmailState.PendingVerification,
             Type = EmailType.Primary,
-            User = new User() {
+            User = new User()
+            {
                 Id = Snowflake.Generate(),
                 Username = "testuser",
                 FirstName = "Test",

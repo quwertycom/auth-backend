@@ -54,7 +54,7 @@ public static class Snowflake
         _datacenterId = settings.DatacenterId;
         _workerId = settings.WorkerId;
         _epoch = DateTimeOffset.Parse(settings.Epoch);
-        
+
         _isInitialized = true;
     }
 
@@ -106,7 +106,7 @@ public static class Snowflake
             {
                 throw new InvalidOperationException("Snowflake has not been configured. Call SetOptions() first.");
             }
-            
+
             Initialize(_options);
         }
     }

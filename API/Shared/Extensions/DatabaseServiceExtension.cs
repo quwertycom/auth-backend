@@ -13,12 +13,12 @@ public static class DatabaseServiceExtensions
     {
         // First configure DatabaseSettings from configuration
         services.Configure<DatabaseSettings>(configuration.GetSection("ConnectionStrings"));
-        
+
         // Then override with environment variables if they exist
-        services.PostConfigure<DatabaseSettings>(settings => 
+        services.PostConfigure<DatabaseSettings>(settings =>
         {
             var isDocker = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOCKER_RUNNING"));
-            
+
             // Docker environment may use different host names (like 'db' instead of 'localhost')
             settings.Host = (Environment.GetEnvironmentVariable("Postgres__Host") == "db" && !isDocker) ? "localhost" : Environment.GetEnvironmentVariable("Postgres__Host") ?? "localhost";
             settings.Database = Environment.GetEnvironmentVariable("Postgres__Database") ?? "qauth_db";
@@ -31,7 +31,7 @@ public static class DatabaseServiceExtensions
         {
             var dbSettings = serviceProvider.GetRequiredService<IOptions<DatabaseSettings>>().Value;
             var connectionString = dbSettings.GetConnectionString();
-            
+
             options.UseNpgsql(connectionString, npgsqlOptions =>
             {
                 npgsqlOptions.EnableRetryOnFailure(
@@ -45,20 +45,20 @@ public static class DatabaseServiceExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IVerificationRepository, VerificationRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
-        
+
         return services;
     }
-    
+
     public static IServiceCollection AddInMemoryDatabaseServices(this IServiceCollection services)
     {
         // For testing purposes
         services.AddDbContext<AuthDbContext>(options =>
             options.UseInMemoryDatabase("TestDb"));
-            
+
         // Register repositories
         // services.AddScoped<IUnitOfWork, UnitOfWork>();
         // services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-        
+
         return services;
     }
-} 
+}

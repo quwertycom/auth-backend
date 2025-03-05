@@ -16,6 +16,6 @@ public class DeveloperAccount
 
     public required virtual Developer Developer { get; set; }
     public required virtual Account.Account Account { get; set; }
-    
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
