@@ -7,25 +7,48 @@ namespace API.UnitTests.Features.Authentication.Register;
 
 public class RegisterEndpointTests : TestBase
 {
+    #region Helper Methods
+    
+    private RegisterRequest CreateDefaultRegisterRequest(
+        string username = "testuser",
+        string firstName = "Test", 
+        string lastName = "User", 
+        string email = "test@example.com",
+        string password = "Password123!",
+        string? phoneNumber = null)
+    {
+        return new RegisterRequest
+        {
+            Username = username,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            Password = password,
+            BirthDate = DateTime.Now.AddYears(-20),
+            PhoneNumber = phoneNumber,
+            Gender = API.Shared.Enums.Entities.User.UserGender.Male
+        };
+    }
+    
+    private RegisterEndpoint CreateEndpoint()
+    {
+        return new RegisterEndpoint(MockRegisterService);
+    }
+    
+    #endregion
+    
+    #region RegisterEndpoint Tests
+    
     [Test]
     public async Task RegisterEndpoint_ValidRequest_ReturnsOkResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = API.Shared.Enums.Entities.User.UserGender.Male
-        };
+        var request = CreateDefaultRegisterRequest();
 
         MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = true, Status = "SUCCESS", RequestId = "1234567890" });
 
-        var endpoint = new RegisterEndpoint(MockRegisterService);
+        var endpoint = CreateEndpoint();
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -63,21 +86,12 @@ public class RegisterEndpointTests : TestBase
     public async Task RegisterEndpoint_UsernameExists_ReturnsBadRequest()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "existinguser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = API.Shared.Enums.Entities.User.UserGender.Male
-        };
+        var request = CreateDefaultRegisterRequest(username: "existinguser");
 
         MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "USERNAME_EXISTS", Message = "Username already exists" });
 
-        var endpoint = new RegisterEndpoint(MockRegisterService);
+        var endpoint = CreateEndpoint();
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -114,21 +128,12 @@ public class RegisterEndpointTests : TestBase
     public async Task RegisterEndpoint_EmailExists_ReturnsBadRequest()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "existing@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = API.Shared.Enums.Entities.User.UserGender.Male
-        };
+        var request = CreateDefaultRegisterRequest(email: "existing@example.com");
 
         MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "EMAIL_EXISTS", Message = "Email already exists" });
 
-        var endpoint = new RegisterEndpoint(MockRegisterService);
+        var endpoint = CreateEndpoint();
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -165,22 +170,12 @@ public class RegisterEndpointTests : TestBase
     public async Task RegisterEndpoint_PhoneNumberExists_ReturnsBadRequest()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            PhoneNumber = "+1234567890",
-            Gender = API.Shared.Enums.Entities.User.UserGender.Male
-        };
+        var request = CreateDefaultRegisterRequest(phoneNumber: "+1234567890");
 
         MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "PHONE_NUMBER_EXISTS", Message = "Phone number already exists" });
 
-        var endpoint = new RegisterEndpoint(MockRegisterService);
+        var endpoint = CreateEndpoint();
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -217,21 +212,12 @@ public class RegisterEndpointTests : TestBase
     public async Task RegisterEndpoint_InternalServerError_ReturnsBadRequest()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = API.Shared.Enums.Entities.User.UserGender.Male
-        };
+        var request = CreateDefaultRegisterRequest();
 
         MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
 
-        var endpoint = new RegisterEndpoint(MockRegisterService);
+        var endpoint = CreateEndpoint();
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -259,4 +245,6 @@ public class RegisterEndpointTests : TestBase
             .Received(1)
             .RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>());
     }
+    
+    #endregion
 }

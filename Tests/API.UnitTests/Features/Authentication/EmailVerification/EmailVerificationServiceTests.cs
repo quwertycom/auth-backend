@@ -39,35 +39,71 @@ public class EmailVerificationServiceTests : TestBase
         _mockEmailSender.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
     }
 
+    #region Helper Methods
+
+    private User CreateMockUser(UserState state = UserState.PendingVerification)
+    {
+        return new User
+        {
+            Id = Snowflake.Generate(),
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hashedpassword",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = state
+        };
+    }
+
+    private EmailAddress CreateMockEmailAddress(string email, EmailState state, User? user = null)
+    {
+        var mockUser = user ?? CreateMockUser();
+        return new EmailAddress
+        {
+            Id = Snowflake.Generate(),
+            UserId = mockUser.Id,
+            Value = email,
+            State = state,
+            Type = EmailType.Primary,
+            User = mockUser
+        };
+    }
+
+    private EmailVerificationRequest CreateMockVerificationRequest(
+        string requestId, 
+        string code, 
+        EmailAddress emailAddress,
+        User user,
+        bool isUsed = false,
+        bool isExpired = false)
+    {
+        return new EmailVerificationRequest
+        {
+            Id = long.Parse(requestId),
+            Code = code,
+            User = user,
+            EmailAddress = emailAddress,
+            ExpiresAt = isExpired ? DateTime.UtcNow.AddMinutes(-5) : DateTime.UtcNow.AddMinutes(5),
+            IsUsed = isUsed
+        };
+    }
+
+    #endregion
+
+    #region RequestEmailVerificationAsync Tests
+
     [Test]
     public async Task RequestEmailVerificationAsync_ValidRequest_ReturnsSuccessResult()
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            UserId = Snowflake.Generate(),
-            Value = emailAddress,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = new User()
-            {
-                Id = Snowflake.Generate(),
-                Username = "testuser",
-                FirstName = "Test",
-                LastName = "User",
-                PasswordHash = "hashedpassword",
-                PasswordSalt = "salt",
-                BirthDate = DateTime.Now.AddYears(-20),
-                Gender = UserGender.Male,
-                State = UserState.PendingVerification
-            }
-        };
-        var mockUserEntity = mockEmailAddressEntity.User;
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
 
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUserEntity));
+        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
 
         // Act
         var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
@@ -81,7 +117,7 @@ public class EmailVerificationServiceTests : TestBase
         await _mockVerificationRepository!.Received(1).AddEmailVerificationRequestAsync(Arg.Is<EmailVerificationRequest>(req =>
             req.Code == "12345678" &&
             req.EmailAddress == mockEmailAddressEntity &&
-            req.User == mockUserEntity &&
+            req.User == mockUser &&
             req.ExpiresAt > DateTime.UtcNow &&
             req.CreatedAt <= DateTime.UtcNow
         ));
@@ -113,26 +149,9 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            UserId = Snowflake.Generate(),
-            Value = emailAddress,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = new User()
-            {
-                Id = Snowflake.Generate(),
-                Username = "testuser",
-                FirstName = "Test",
-                LastName = "User",
-                PasswordHash = "hashedpassword",
-                PasswordSalt = "salt",
-                BirthDate = DateTime.Now.AddYears(-20),
-                Gender = UserGender.Male,
-                State = UserState.PendingVerification
-            }
-        };
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
+        
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
         _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(null));
 
@@ -154,30 +173,11 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            UserId = Snowflake.Generate(),
-            Value = emailAddress,
-            State = EmailState.Active,
-            Type = EmailType.Primary,
-            User = new User()
-            {
-                Id = Snowflake.Generate(),
-                Username = "testuser",
-                FirstName = "Test",
-                LastName = "User",
-                PasswordHash = "hashedpassword",
-                PasswordSalt = "salt",
-                BirthDate = DateTime.Now.AddYears(-20),
-                Gender = UserGender.Male,
-                State = UserState.PendingVerification
-            }
-        };
-        var mockUserEntity = mockEmailAddressEntity.User;
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.Active, mockUser);
 
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUserEntity));
+        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
 
         // Act
         var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
@@ -197,30 +197,11 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            UserId = Snowflake.Generate(),
-            Value = emailAddress,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = new User()
-            {
-                Id = Snowflake.Generate(),
-                Username = "testuser",
-                FirstName = "Test",
-                LastName = "User",
-                PasswordHash = "hashedpassword",
-                PasswordSalt = "salt",
-                BirthDate = DateTime.Now.AddYears(-20),
-                Gender = UserGender.Male,
-                State = UserState.PendingVerification
-            }
-        };
-        var mockUserEntity = mockEmailAddressEntity.User;
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
 
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUserEntity));
+        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
         _mockEmailSender!.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(false);
 
         // Act
@@ -257,7 +238,9 @@ public class EmailVerificationServiceTests : TestBase
         await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
         await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
-
+    
+    #endregion
+    
     #region GetRequestStatusAsync Tests
     
     [Test]
@@ -266,37 +249,9 @@ public class EmailVerificationServiceTests : TestBase
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
-        
-        var emailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
-        
-        var verificationRequest = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            EmailAddress = emailAddressEntity,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
-            IsUsed = false,
-            Code = "12345678",
-            User = mockUser
-        };
+        var mockUser = CreateMockUser();
+        var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
+        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
@@ -342,37 +297,9 @@ public class EmailVerificationServiceTests : TestBase
         string email = "test@example.com";
         string differentEmail = "different@example.com";
         
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
-        
-        var emailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = differentEmail,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
-        
-        var verificationRequest = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            EmailAddress = emailAddressEntity,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
-            IsUsed = false,
-            Code = "12345678",
-            User = mockUser
-        };
+        var mockUser = CreateMockUser();
+        var emailAddressEntity = CreateMockEmailAddress(differentEmail, EmailState.PendingVerification, mockUser);
+        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
@@ -396,37 +323,9 @@ public class EmailVerificationServiceTests : TestBase
         string requestId = "123456789";
         string email = "test@example.com";
         
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
-        
-        var emailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
-        
-        var verificationRequest = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            EmailAddress = emailAddressEntity,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
-            IsUsed = true,
-            Code = "12345678",
-            User = mockUser
-        };
+        var mockUser = CreateMockUser();
+        var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
+        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isUsed: true);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
@@ -450,37 +349,9 @@ public class EmailVerificationServiceTests : TestBase
         string requestId = "123456789";
         string email = "test@example.com";
         
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
-        
-        var emailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
-        
-        var verificationRequest = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            EmailAddress = emailAddressEntity,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(-5), // Expired
-            IsUsed = false,
-            Code = "12345678",
-            User = mockUser
-        };
+        var mockUser = CreateMockUser();
+        var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
+        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isExpired: true);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
@@ -533,35 +404,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
         
-        var user = new User { 
-            Id = userId, 
-            State = UserState.PendingVerification,
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
+        var user = CreateMockUser();
+        user.Id = userId;
         
-        var emailAddress = new EmailAddress { 
-            Id = emailId, 
-            State = EmailState.PendingVerification,
-            Value = "test@example.com",
-            Type = EmailType.Primary,
-            User = user
-        };
+        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        emailAddress.Id = emailId;
         
-        var request = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            Code = code,
-            User = user,
-            EmailAddress = emailAddress,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
-            IsUsed = false
-        };
+        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
@@ -614,35 +463,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
         
-        var user = new User { 
-            Id = userId, 
-            State = UserState.PendingVerification,
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
+        var user = CreateMockUser();
+        user.Id = userId;
         
-        var emailAddress = new EmailAddress { 
-            Id = emailId, 
-            State = EmailState.PendingVerification,
-            Value = "test@example.com",
-            Type = EmailType.Primary,
-            User = user
-        };
+        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        emailAddress.Id = emailId;
         
-        var request = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            Code = code,
-            User = user,
-            EmailAddress = emailAddress,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
-            IsUsed = true
-        };
+        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isUsed: true);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
@@ -671,35 +498,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
         
-        var user = new User { 
-            Id = userId, 
-            State = UserState.PendingVerification,
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
+        var user = CreateMockUser();
+        user.Id = userId;
         
-        var emailAddress = new EmailAddress { 
-            Id = emailId, 
-            State = EmailState.PendingVerification,
-            Value = "test@example.com",
-            Type = EmailType.Primary,
-            User = user
-        };
+        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        emailAddress.Id = emailId;
         
-        var request = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            Code = code,
-            User = user,
-            EmailAddress = emailAddress,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(-5), // Expired
-            IsUsed = false
-        };
+        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isExpired: true);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
@@ -729,35 +534,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
         
-        var user = new User { 
-            Id = userId, 
-            State = UserState.PendingVerification,
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
+        var user = CreateMockUser();
+        user.Id = userId;
         
-        var emailAddress = new EmailAddress { 
-            Id = emailId, 
-            State = EmailState.PendingVerification,
-            Value = "test@example.com",
-            Type = EmailType.Primary,
-            User = user
-        };
+        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        emailAddress.Id = emailId;
         
-        var request = new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            Code = code,
-            User = user,
-            EmailAddress = emailAddress,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
-            IsUsed = false
-        };
+        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
         
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
@@ -810,27 +593,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "test@example.com";
-        
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            UserId = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary,
-            User = new User()
-            {
-                Id = Snowflake.Generate(),
-                Username = "testuser",
-                FirstName = "Test",
-                LastName = "User",
-                State = UserState.PendingVerification,
-                PasswordHash = "hashedpassword",
-                PasswordSalt = "salt",
-                BirthDate = DateTime.Now.AddYears(-20),
-                Gender = UserGender.Male
-            }
-        };
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
         
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
@@ -873,27 +637,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "verified@example.com";
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.Active
-        };
-        
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.Active,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
+        var mockUser = CreateMockUser(UserState.Active);
+        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Active, mockUser);
         
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
@@ -913,27 +658,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "blacklisted@example.com";
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
-        
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.Blacklisted,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Blacklisted, mockUser);
         
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
@@ -953,27 +679,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "disabled@example.com";
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
-        
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.Disabled,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Disabled, mockUser);
         
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
@@ -993,27 +700,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "deleted@example.com";
-        var mockUser = new User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
-        
-        var mockEmailAddressEntity = new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            Value = email,
-            State = EmailState.Deleted,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
+        var mockUser = CreateMockUser();
+        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Deleted, mockUser);
         
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));

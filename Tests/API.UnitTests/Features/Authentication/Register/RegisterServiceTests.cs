@@ -9,6 +9,9 @@ namespace API.UnitTests.Features.Authentication.Register;
 public class RegisterServiceTests : TestBase
 {
     private RegisterService? _registerService;
+    private API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService? _mockEmailVerificationService;
+
+    #region Setup
 
     [SetUp]
     public override void Setup()
@@ -16,19 +19,19 @@ public class RegisterServiceTests : TestBase
         base.Setup();
 
         // Create instance of the service with mocked dependencies
-        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        _mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
 
         _registerService = new RegisterService(
             MockUserRepository,
             MockHasher,
-            mockEmailVerificationService
+            _mockEmailVerificationService
         );
 
         // Setup default behavior for the Hasher
         MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
 
         // Setup default behavior for email verification service
-        mockEmailVerificationService
+        _mockEmailVerificationService
             .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new RequestEmailVerificationResult
             {
@@ -38,24 +41,50 @@ public class RegisterServiceTests : TestBase
             });
     }
 
+    #endregion
+
+    #region Helper Methods
+
+    private RegisterRequest CreateDefaultRegisterRequest(
+        string username = "testuser",
+        string firstName = "Test",
+        string lastName = "User",
+        string email = "test@example.com",
+        string password = "Password123!",
+        string? phoneNumber = null,
+        DateTime? birthDate = null,
+        UserGender gender = UserGender.Male)
+    {
+        return new RegisterRequest
+        {
+            Username = username,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            Password = password,
+            PhoneNumber = phoneNumber,
+            BirthDate = birthDate ?? DateTime.Now.AddYears(-20),
+            Gender = gender
+        };
+    }
+
+    private void SetupRepositoriesForSuccess()
+    {
+        MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
+        MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
+        MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
+    }
+
+    #endregion
+
+    #region Successful Registration Tests
+
     [Test]
     public async Task RegisterUserAsync_ValidRequest_ReturnsSuccessResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
-        MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
+        var request = CreateDefaultRegisterRequest();
+        SetupRepositoriesForSuccess();
 
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
@@ -92,21 +121,8 @@ public class RegisterServiceTests : TestBase
     public async Task RegisterUserAsync_WithPhoneNumber_AddsPhoneNumber()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            PhoneNumber = "+1234567890",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
-        MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
+        var request = CreateDefaultRegisterRequest(phoneNumber: "+1234567890");
+        SetupRepositoriesForSuccess();
 
         // Act
         var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
@@ -123,21 +139,15 @@ public class RegisterServiceTests : TestBase
         ));
     }
 
+    #endregion
+
+    #region Registration Failure Tests
+    
     [Test]
     public async Task RegisterUserAsync_UsernameExists_ReturnsFailureResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "existinguser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
+        var request = CreateDefaultRegisterRequest(username: "existinguser");
         MockUserRepository.UsernameExistsAsync("existinguser").Returns(true);
 
         // Act
@@ -157,17 +167,7 @@ public class RegisterServiceTests : TestBase
     public async Task RegisterUserAsync_EmailExists_ReturnsFailureResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "existing@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
+        var request = CreateDefaultRegisterRequest(email: "existing@example.com");
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync("existing@example.com").Returns(true);
 
@@ -188,18 +188,7 @@ public class RegisterServiceTests : TestBase
     public async Task RegisterUserAsync_PhoneNumberExists_ReturnsFailureResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            PhoneNumber = "+1234567890",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
+        var request = CreateDefaultRegisterRequest(phoneNumber: "+1234567890");
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.PhoneNumberExistsAsync("+1234567890").Returns(true);
@@ -221,19 +210,8 @@ public class RegisterServiceTests : TestBase
     public async Task RegisterUserAsync_EmailVerificationFails_ReturnsFailureResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
-        MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
+        var request = CreateDefaultRegisterRequest();
+        SetupRepositoriesForSuccess();
 
         // Setup email verification to fail
         var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
@@ -261,21 +239,16 @@ public class RegisterServiceTests : TestBase
         result.Status.Should().Be("EMAIL_VERIFICATION_FAILED");
         result.Message.Should().Be("Could not send verification email");
     }
+    
+    #endregion
+
+    #region Exception Handling Tests
 
     [Test]
     public async Task RegisterUserAsync_ExceptionThrown_ReturnsErrorResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
+        var request = CreateDefaultRegisterRequest();
 
         // Setup repository to throw an exception
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>())
@@ -295,20 +268,8 @@ public class RegisterServiceTests : TestBase
     public async Task RegisterUserAsync_AddUserAsyncThrowsException_ReturnsErrorResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
-        MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
+        var request = CreateDefaultRegisterRequest();
+        SetupRepositoriesForSuccess();
         MockUserRepository.AddUserAsync(Arg.Any<User>())
             .Returns(Task.FromException(new Exception("Failed to add user to database")));
 
@@ -326,20 +287,8 @@ public class RegisterServiceTests : TestBase
     public async Task RegisterUserAsync_AddEmailAsyncThrowsException_ReturnsErrorResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
-        MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
+        var request = CreateDefaultRegisterRequest();
+        SetupRepositoriesForSuccess();
         MockUserRepository.AddEmailAsync(Arg.Any<EmailAddress>())
             .Returns(Task.FromException(new Exception("Failed to add email to database")));
 
@@ -357,21 +306,8 @@ public class RegisterServiceTests : TestBase
     public async Task RegisterUserAsync_AddPhoneNumberAsyncThrowsException_ReturnsErrorResult()
     {
         // Arrange
-        var request = new RegisterRequest
-        {
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            Email = "test@example.com",
-            Password = "Password123!",
-            PhoneNumber = "+1234567890",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male
-        };
-
-        MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
-        MockUserRepository.PhoneNumberExistsAsync(Arg.Any<string>()).Returns(false);
+        var request = CreateDefaultRegisterRequest(phoneNumber: "+1234567890");
+        SetupRepositoriesForSuccess();
         MockUserRepository.AddPhoneNumberAsync(Arg.Any<PhoneNumber>())
             .Returns(Task.FromException(new Exception("Failed to add phone number to database")));
 
@@ -384,4 +320,6 @@ public class RegisterServiceTests : TestBase
         result.Status.Should().Be("ERROR");
         result.Message.Should().Contain("Failed to add phone number to database");
     }
+    
+    #endregion
 }
