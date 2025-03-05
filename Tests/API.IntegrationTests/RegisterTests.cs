@@ -44,7 +44,7 @@ public class RegisterTests : TestBase
         var content = await response.Content.ReadFromJsonAsync<RegisterResponse>();
         Assert.IsNotNull(content);
         Assert.AreEqual("SUCCESS", content!.Status);
-        Assert.IsNotNull(content.EmailVerificationSessionId);
+        Assert.IsNotNull(content.RequestId);
     }
 
     [Test]
