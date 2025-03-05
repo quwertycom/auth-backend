@@ -84,7 +84,7 @@ public class EmailVerificationService : IEmailVerificationService {
   public async Task<GetRequestStatusResult> GetRequestStatusAsync(string requestId, string email, CancellationToken cancellationToken)
     {
         try {
-          var request = await _verificationRepository.GetEmailVerificationRequestByIdAsync(long.Parse(requestId));
+          var request = await _verificationRepository.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true);
           if (request == null) {
             return new GetRequestStatusResult {
               IsSuccess = false, 
@@ -94,7 +94,7 @@ public class EmailVerificationService : IEmailVerificationService {
             };
           }
 
-          var requestEmail = await _userRepository.GetEmailAdressByIdAsync(request.EmailId);
+          var requestEmail = await _userRepository.GetEmailAdressByIdAsync(request.EmailAddress.Id);
 
           if (requestEmail == null || requestEmail.Value != email) {
             return new GetRequestStatusResult {
@@ -136,7 +136,7 @@ public class EmailVerificationService : IEmailVerificationService {
     public async Task<VerifyEmailResult> VerifyEmailAsync(string requestId, string code, CancellationToken cancellationToken)
     {
         try {
-          var request = await _verificationRepository.GetEmailVerificationRequestByIdAsync(long.Parse(requestId));
+          var request = await _verificationRepository.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true);
 
           if (request == null) {
             return new VerifyEmailResult {
@@ -175,8 +175,8 @@ public class EmailVerificationService : IEmailVerificationService {
           }
 
           await _verificationRepository.MarkEmailVerificationRequestAsUsedAsync(long.Parse(requestId));
-          await _userRepository.UpdateUserStateAsync(request.UserId, UserState.Active);
-          await _userRepository.UpdateEmailStateAsync(request.EmailId, EmailState.Active);
+          await _userRepository.UpdateUserStateAsync(request.User.Id, UserState.Active);
+          await _userRepository.UpdateEmailStateAsync(request.EmailAddress.Id, EmailState.Active);
 
           return new VerifyEmailResult {
             IsSuccess = true,
