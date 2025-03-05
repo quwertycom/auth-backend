@@ -101,6 +101,28 @@ public class VerificationRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetEmailVerificationRequestByCodeAsync_RequestExists_ReturnsRequestWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var request = new EmailVerificationRequest { Code = "12345678", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.EmailVerificationRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetEmailVerificationRequestByCodeAsync("12345678", includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.Code.Should().Be("12345678");
+        retrievedRequest?.EmailAddress.Should().NotBeNull();
+        retrievedRequest?.User.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetEmailVerificationRequestByCodeAsync_RequestDoesNotExist_ReturnsNull()
     {
         // Arrange (No request with this code)
@@ -129,6 +151,28 @@ public class VerificationRepositoryTests : TestBase
 
         // Assert
         retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.EmailId.Should().Be(email.Id);
+    }
+
+    [Test]
+    public async Task GetEmailVerificationRequestByEmailIdAsync_RequestExists_ReturnsRequestWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var request = new EmailVerificationRequest { Code = "12345678", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.EmailVerificationRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetEmailVerificationRequestByEmailIdAsync(email.Id, includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.EmailAddress.Should().NotBeNull();
+        retrievedRequest?.User.Should().NotBeNull();
         retrievedRequest?.EmailId.Should().Be(email.Id);
     }
 
@@ -167,6 +211,30 @@ public class VerificationRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetEmailVerificationRequestByIdAsync_RequestExists_ReturnsRequestWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        // Generate a long ID using Snowflake
+        long requestId = API.Shared.Utilities.Snowflake.Generate();
+        var request = new EmailVerificationRequest { Id = requestId, Code = "12345678", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.EmailVerificationRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetEmailVerificationRequestByIdAsync(requestId, includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.Id.Should().Be(requestId); // Assert using long ID
+        retrievedRequest?.EmailAddress.Should().NotBeNull();
+        retrievedRequest?.User.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetEmailVerificationRequestByIdAsync_RequestDoesNotExist_ReturnsNull()
     {
         // Arrange (No request with this id)
@@ -198,6 +266,28 @@ public class VerificationRepositoryTests : TestBase
         // Assert
         retrievedRequest.Should().NotBeNull();
         retrievedRequest?.EmailAddress.Value.Should().Be("test@example.com");
+    }
+
+    [Test]
+    public async Task GetEmailVerificationRequestByEmailStringAsync_RequestExists_ReturnsRequestWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var request = new EmailVerificationRequest { Code = "12345678", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.EmailVerificationRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetEmailVerificationRequestByEmailStringAsync("test@example.com", includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.EmailAddress.Value.Should().Be("test@example.com");
+        retrievedRequest?.EmailAddress.Should().NotBeNull();
+        retrievedRequest?.User.Should().NotBeNull();
     }
 
     [Test]
@@ -233,6 +323,28 @@ public class VerificationRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetPasswordResetRequestByCodeHashAsync_RequestExists_ReturnsRequestWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var request = new PasswordResetRequest { CodeHash = "hashedcode", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.PasswordResetRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync("hashedcode", includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.CodeHash.Should().Be("hashedcode");
+        retrievedRequest?.EmailAddress.Should().NotBeNull();
+        retrievedRequest?.User.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetPasswordResetRequestByCodeHashAsync_RequestDoesNotExist_ReturnsNull()
     {
         // Arrange (No request with this code hash)
@@ -262,6 +374,28 @@ public class VerificationRepositoryTests : TestBase
         // Assert
         retrievedRequest.Should().NotBeNull();
         retrievedRequest?.EmailId.Should().Be(email.Id);
+    }
+
+    [Test]
+    public async Task GetPasswordResetRequestByEmailIdAsync_RequestExists_ReturnsRequestWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var request = new PasswordResetRequest { CodeHash = "hashedcode", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.PasswordResetRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetPasswordResetRequestByEmailIdAsync(email.Id, includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.EmailId.Should().Be(email.Id);
+        retrievedRequest?.EmailAddress.Should().NotBeNull();
+        retrievedRequest?.User.Should().NotBeNull();
     }
 
     [Test]
@@ -297,6 +431,28 @@ public class VerificationRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetPasswordResetRequestByEmailStringAsync_RequestExists_ReturnsRequestWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var request = new PasswordResetRequest { CodeHash = "hashedcode", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.PasswordResetRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedRequest = await _verificationRepository.GetPasswordResetRequestByEmailStringAsync("test@example.com", includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        retrievedRequest.Should().NotBeNull();
+        retrievedRequest?.EmailAddress.Value.Should().Be("test@example.com");
+        retrievedRequest?.EmailAddress.Should().NotBeNull();
+        retrievedRequest?.User.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetPasswordResetRequestByEmailStringAsync_RequestDoesNotExist_ReturnsNull()
     {
         // Arrange (No request with this email string)
@@ -329,6 +485,33 @@ public class VerificationRepositoryTests : TestBase
         requests.Should().HaveCount(2);
         requests.Should().Contain(request1);
         requests.Should().Contain(request2);
+    }
+
+    [Test]
+    public async Task GetAllUserPasswordResetRequestsAsync_UserHasRequests_ReturnsRequestsWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var request1 = new PasswordResetRequest { CodeHash = "hashedcode1", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        var request2 = new PasswordResetRequest { CodeHash = "hashedcode2", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
+        _dbContext.PasswordResetRequests.AddRange(request1, request2);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var requests = await _verificationRepository.GetAllUserPasswordResetRequestsAsync(user.Id, includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        requests.Should().NotBeNull();
+        requests.Should().HaveCount(2);
+        requests.Should().Contain(request1);
+        requests.Should().Contain(request2);
+        foreach(var request in requests) {
+            request.EmailAddress.Should().NotBeNull();
+            request.User.Should().NotBeNull();
+        }
     }
 
     [Test]
@@ -371,6 +554,37 @@ public class VerificationRepositoryTests : TestBase
         activeRequests.Should().Contain(activeRequest2);
         activeRequests.Should().NotContain(usedRequest);
         activeRequests.Should().NotContain(expiredRequest);
+    }
+
+    [Test]
+    public async Task GetUserActivePasswordResetRequestsAsync_UserHasActiveRequests_ReturnsActiveRequestsWithEmailAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        var activeRequest1 = new PasswordResetRequest { CodeHash = "hashedcode1", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, IsUsed = false, User = user, EmailAddress = email };
+        var activeRequest2 = new PasswordResetRequest { CodeHash = "hashedcode2", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, IsUsed = false, User = user, EmailAddress = email };
+        var usedRequest = new PasswordResetRequest { CodeHash = "hashedcode3", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, IsUsed = true, User = user, EmailAddress = email };
+        var expiredRequest = new PasswordResetRequest { CodeHash = "hashedcode4", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(-1), CreatedAt = DateTime.UtcNow, IsUsed = false, User = user, EmailAddress = email };
+        _dbContext.PasswordResetRequests.AddRange(activeRequest1, activeRequest2, usedRequest, expiredRequest);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var activeRequests = await _verificationRepository.GetUserActivePasswordResetRequestsAsync(user.Id, includeEmailAddress: true, includeUser: true);
+
+        // Assert
+        activeRequests.Should().NotBeNull();
+        activeRequests.Should().HaveCount(2);
+        activeRequests.Should().Contain(activeRequest1);
+        activeRequests.Should().Contain(activeRequest2);
+        activeRequests.Should().NotContain(usedRequest);
+        activeRequests.Should().NotContain(expiredRequest);
+        foreach(var request in activeRequests) {
+            request.EmailAddress.Should().NotBeNull();
+            request.User.Should().NotBeNull();
+        }
     }
 
     [Test]

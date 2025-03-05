@@ -23,7 +23,7 @@ public class RegisterEndpointTests : TestBase
         };
 
         MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
-           .Returns(new RegisterResult { IsSuccess = true, Status = "SUCCESS", EmailVerificationSessionId = "1234567890" });
+           .Returns(new RegisterResult { IsSuccess = true, Status = "SUCCESS", RequestId = "1234567890" });
 
         var endpoint = new RegisterEndpoint(MockRegisterService);
 
@@ -46,9 +46,9 @@ public class RegisterEndpointTests : TestBase
 
         okResult.Value.Should().NotBeNull();
         okResult.Value?.Status.Should().Be("SUCCESS");
-        okResult.Value?.EmailVerificationSessionId.Should().NotBeNull();
-        okResult.Value?.EmailVerificationSessionId.Should().NotBeEmpty();
-        okResult.Value?.EmailVerificationSessionId.Should().Be("1234567890");
+        okResult.Value?.RequestId.Should().NotBeNull();
+        okResult.Value?.RequestId.Should().NotBeEmpty();
+        okResult.Value?.RequestId.Should().Be("1234567890");
 
         await MockRegisterService
             .Received(1)

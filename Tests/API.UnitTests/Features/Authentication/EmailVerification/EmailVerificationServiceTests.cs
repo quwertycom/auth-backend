@@ -74,7 +74,7 @@ public class EmailVerificationServiceTests : TestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Status.Should().Be("SUCCESS");
-        result.EmailVerificationSessionId.Should().NotBeNullOrEmpty();
+        result.RequestId.Should().NotBeNullOrEmpty();
 
         await _mockVerificationRepository!.Received(1).AddEmailVerificationRequestAsync(Arg.Is<EmailVerificationRequest>(req =>
             req.Code == "12345678" &&
@@ -100,7 +100,7 @@ public class EmailVerificationServiceTests : TestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_NOT_FOUND");
-        result.EmailVerificationSessionId.Should().BeNull();
+        result.RequestId.Should().BeNull();
 
         await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
         await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
@@ -139,7 +139,7 @@ public class EmailVerificationServiceTests : TestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("USER_NOT_FOUND");
-        result.EmailVerificationSessionId.Should().BeNull();
+        result.RequestId.Should().BeNull();
 
         await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
         await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
@@ -180,7 +180,7 @@ public class EmailVerificationServiceTests : TestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_NOT_VERIFIED");
-        result.EmailVerificationSessionId.Should().BeNull();
+        result.RequestId.Should().BeNull();
 
         await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
         await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
@@ -222,7 +222,7 @@ public class EmailVerificationServiceTests : TestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_SENDING_FAILED");
-        result.EmailVerificationSessionId.Should().BeNull();
+        result.RequestId.Should().BeNull();
 
         await _mockVerificationRepository!.Received(1).AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
         await _mockEmailSender!.Received(1).SendOtpEmailAsync(emailAddress, "12345678", "Test", "en");
@@ -244,7 +244,7 @@ public class EmailVerificationServiceTests : TestBase
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("ERROR");
         result.Message.Should().Contain("Database error");
-        result.EmailVerificationSessionId.Should().BeNull();
+        result.RequestId.Should().BeNull();
 
         await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
         await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());

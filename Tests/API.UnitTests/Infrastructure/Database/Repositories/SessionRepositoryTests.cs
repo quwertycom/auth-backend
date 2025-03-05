@@ -152,6 +152,53 @@ public class SessionRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetSessionByIdAsync_SessionExists_ReturnsSessionWithUserAndTokens_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        var token = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "testtoken",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh,
+            Target = TokenTarget.User,
+            UserId = user.Id,
+            User = user
+        };
+        session.Tokens.Add(token);
+        _dbContext.Sessions.Add(session);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedSession = await _sessionRepository.GetSessionByIdAsync(session.Id, includeUser: true, includeTokens: true);
+
+        // Assert
+        retrievedSession.Should().NotBeNull();
+        retrievedSession?.Id.Should().Be(session.Id);
+        retrievedSession?.User.Should().NotBeNull();
+        retrievedSession?.Tokens.Should().NotBeEmpty();
+    }
+
+    [Test]
     public async Task GetSessionByIdAsync_SessionDoesNotExist_ReturnsNull()
     {
         // Arrange (No session added)
@@ -209,6 +256,53 @@ public class SessionRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetSessionByTokenStringAsync_SessionExists_ReturnsSessionWithUserAndTokens_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        var token = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "testtoken",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        session.Tokens.Add(token);
+        _dbContext.Sessions.Add(session);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedSession = await _sessionRepository.GetSessionByTokenStringAsync("testtoken", includeUser: true, includeTokens: true);
+
+        // Assert
+        retrievedSession.Should().NotBeNull();
+        retrievedSession?.Id.Should().Be(session.Id);
+        retrievedSession?.User.Should().NotBeNull();
+        retrievedSession?.Tokens.Should().NotBeEmpty();
+    }
+
+    [Test]
     public async Task GetSessionByTokenStringAsync_SessionDoesNotExist_ReturnsNull()
     {
         // Arrange (No session with the token string)
@@ -251,6 +345,53 @@ public class SessionRepositoryTests : TestBase
         // Assert
         retrievedSession.Should().NotBeNull();
         retrievedSession?.UserId.Should().Be(user.Id);
+    }
+
+    [Test]
+    public async Task GetSessionByUserIdAsync_SessionExists_ReturnsSessionWithUserAndTokens_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        var token = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "testtoken",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        session.Tokens.Add(token);
+        _dbContext.Sessions.Add(session);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedSession = await _sessionRepository.GetSessionByUserIdAsync(user.Id, includeUser: true, includeTokens: true);
+
+        // Assert
+        retrievedSession.Should().NotBeNull();
+        retrievedSession?.UserId.Should().Be(user.Id);
+        retrievedSession?.User.Should().NotBeNull();
+        retrievedSession?.Tokens.Should().NotBeEmpty();
     }
 
     [Test]
@@ -317,6 +458,76 @@ public class SessionRepositoryTests : TestBase
         sessions.Should().HaveCount(2);
         sessions.Should().Contain(session1);
         sessions.Should().Contain(session2);
+    }
+
+    [Test]
+    public async Task GetAllUserSessionsAsync_UserHasSessions_ReturnsSessionsWithUserAndTokens_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session1 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        var session2 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        var token1 = new Token
+        {
+            SessionId = session1.Id,
+            Session = session1,
+            Value = "token1",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        var token2 = new Token
+        {
+            SessionId = session2.Id,
+            Session = session2,
+            Value = "token2",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        session1.Tokens.Add(token1);
+        session2.Tokens.Add(token2);
+        _dbContext.Sessions.AddRange(session1, session2);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var sessions = await _sessionRepository.GetAllUserSessionsAsync(user.Id, includeUser: true, includeTokens: true);
+
+        // Assert
+        sessions.Should().NotBeNull();
+        sessions.Should().HaveCount(2);
+        sessions.Should().Contain(session1);
+        sessions.Should().Contain(session2);
+        foreach (var session in sessions)
+        {
+            session.User.Should().NotBeNull();
+            session.Tokens.Should().NotBeEmpty();
+        }
     }
 
     [Test]
@@ -393,6 +604,86 @@ public class SessionRepositoryTests : TestBase
         activeSessions.Should().Contain(activeSession1);
         activeSessions.Should().Contain(activeSession2);
         activeSessions.Should().NotContain(revokedSession);
+    }
+
+    [Test]
+    public async Task GetActiveUserSessionsAsync_UserHasActiveSessions_ReturnsActiveSessionsWithUserAndTokens_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var activeSession1 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            IsRevoked = false,
+            Target = SessionTarget.User // Set required Target
+        };
+        var activeSession2 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            IsRevoked = false,
+            Target = SessionTarget.User // Set required Target
+        };
+        var revokedSession = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            IsRevoked = true,
+            Target = SessionTarget.User // Set required Target
+        };
+        var token1 = new Token
+        {
+            SessionId = activeSession1.Id,
+            Session = activeSession1,
+            Value = "token1",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        var token2 = new Token
+        {
+            SessionId = activeSession2.Id,
+            Session = activeSession2,
+            Value = "token2",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        activeSession1.Tokens.Add(token1);
+        activeSession2.Tokens.Add(token2);
+        _dbContext.Sessions.AddRange(activeSession1, activeSession2, revokedSession);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var activeSessions = await _sessionRepository.GetActiveUserSessionsAsync(user.Id, includeUser: true, includeTokens: true);
+
+        // Assert
+        activeSessions.Should().NotBeNull();
+        activeSessions.Should().HaveCount(2);
+        activeSessions.Should().Contain(activeSession1);
+        activeSessions.Should().Contain(activeSession2);
+        activeSessions.Should().NotContain(revokedSession);
+        foreach (var session in activeSessions)
+        {
+            session.User.Should().NotBeNull();
+            session.Tokens.Should().NotBeEmpty();
+        }
     }
 
     [Test]
@@ -475,6 +766,53 @@ public class SessionRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetTokenByTokenStringAsync_TokenExists_ReturnsTokenWithSessionAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        _dbContext.Sessions.Add(session);
+        var token = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "testtoken",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        _dbContext.Tokens.Add(token);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedToken = await _sessionRepository.GetTokenByTokenStringAsync("testtoken", includeSession: true, includeUser: true);
+
+        // Assert
+        retrievedToken.Should().NotBeNull();
+        retrievedToken?.Value.Should().Be("testtoken");
+        retrievedToken?.Session.Should().NotBeNull();
+        retrievedToken?.User.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetTokenByTokenStringAsync_TokenDoesNotExist_ReturnsNull()
     {
         // Arrange (No token with the token string)
@@ -548,6 +886,75 @@ public class SessionRepositoryTests : TestBase
         tokens.Should().HaveCount(2);
         tokens.Should().Contain(token1);
         tokens.Should().Contain(token2);
+    }
+
+    [Test]
+    public async Task GetAllUserTokensAsync_UserHasTokens_ReturnsTokensWithSessionAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session1 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        var session2 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        _dbContext.Sessions.AddRange(session1, session2);
+        var token1 = new Token
+        {
+            SessionId = session1.Id,
+            Session = session1,
+            CreatedAt = DateTime.UtcNow,
+            UserId = user.Id,
+            Value = "token1",
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            User = user
+        };
+        var token2 = new Token
+        {
+            SessionId = session2.Id,
+            Session = session2,
+            CreatedAt = DateTime.UtcNow,
+            UserId = user.Id,
+            Value = "token2",
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            User = user
+        };
+        _dbContext.Tokens.AddRange(token1, token2);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var tokens = await _sessionRepository.GetAllUserTokensAsync(user.Id, includeSession: true, includeUser: true);
+
+        // Assert
+        tokens.Should().NotBeNull();
+        tokens.Should().HaveCount(2);
+        tokens.Should().Contain(token1);
+        tokens.Should().Contain(token2);
+        foreach (var token in tokens)
+        {
+            token.Session.Should().NotBeNull();
+            token.User.Should().NotBeNull();
+        }
     }
 
     [Test]
@@ -646,6 +1053,81 @@ public class SessionRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetActiveUserTokensAsync_UserHasActiveTokens_ReturnsActiveTokensWithSessionAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        _dbContext.Sessions.Add(session);
+        var activeToken1 = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            CreatedAt = DateTime.UtcNow,
+            Value = "activeToken1",
+            IsRevoked = false,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            User = user
+        };
+        var activeToken2 = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            CreatedAt = DateTime.UtcNow,
+            Value = "activeToken2",
+            IsRevoked = false,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            User = user
+        };
+        var revokedToken = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            CreatedAt = DateTime.UtcNow,
+            Value = "revokedToken",
+            IsRevoked = true,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            User = user
+        };
+        _dbContext.Tokens.AddRange(activeToken1, activeToken2, revokedToken);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var activeTokens = await _sessionRepository.GetActiveUserTokensAsync(user.Id, includeSession: true, includeUser: true);
+
+        // Assert
+        activeTokens.Should().NotBeNull();
+        activeTokens.Should().HaveCount(2);
+        activeTokens.Should().Contain(activeToken1);
+        activeTokens.Should().Contain(activeToken2);
+        activeTokens.Should().NotContain(revokedToken);
+        foreach (var token in activeTokens)
+        {
+            token.Session.Should().NotBeNull();
+            token.User.Should().NotBeNull();
+        }
+    }
+
+    [Test]
     public async Task GetActiveUserTokensAsync_UserHasNoActiveTokens_ReturnsEmptyList()
     {
         // Arrange
@@ -735,6 +1217,53 @@ public class SessionRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetTokenByIdAsync_TokenExists_ReturnsTokenWithSessionAndUser_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        _dbContext.Sessions.Add(session);
+        var token = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "testtoken",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        _dbContext.Tokens.Add(token);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedToken = await _sessionRepository.GetTokenByIdAsync(token.Id, includeSession: true, includeUser: true);
+
+        // Assert
+        retrievedToken.Should().NotBeNull();
+        retrievedToken?.Id.Should().Be(token.Id);
+        retrievedToken?.Session.Should().NotBeNull();
+        retrievedToken?.User.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetTokenByIdAsync_TokenDoesNotExist_ReturnsNull()
     {
         // Arrange (No token with the id)
@@ -777,6 +1306,41 @@ public class SessionRepositoryTests : TestBase
         // Assert
         retrievedUser.Should().NotBeNull();
         retrievedUser?.Id.Should().Be(user.Id);
+    }
+
+    [Test]
+    public async Task GetUserBySessionIdAsync_SessionExists_ReturnsUserWithSessionsAndTokens_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        _dbContext.Sessions.Add(session);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedUser = await _sessionRepository.GetUserBySessionIdAsync(session.Id, includeSessions: true);
+
+        // Assert
+        retrievedUser.Should().NotBeNull();
+        retrievedUser?.Id.Should().Be(user.Id);
+        retrievedUser?.Sessions.Should().NotBeNull();
+        retrievedUser?.Sessions.Should().NotBeEmpty();
     }
 
     [Test]
@@ -834,6 +1398,53 @@ public class SessionRepositoryTests : TestBase
         // Assert
         retrievedUser.Should().NotBeNull();
         retrievedUser?.Id.Should().Be(user.Id);
+    }
+
+    [Test]
+    public async Task GetUserByTokenIdAsync_TokenExists_ReturnsUserWithSessionsAndTokens_IncludeAllTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        _dbContext.Users.Add(user);
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User // Set required Target
+        };
+        _dbContext.Sessions.Add(session);
+        var token = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "testtoken",
+            CreatedAt = DateTime.UtcNow,
+            Type = TokenType.Refresh, // Set required Type
+            Target = TokenTarget.User, // Set required Target
+            UserId = user.Id,
+            User = user
+        };
+        _dbContext.Tokens.Add(token);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedUser = await _sessionRepository.GetUserByTokenIdAsync(token.Id, includeSessions: true);
+
+        // Assert
+        retrievedUser.Should().NotBeNull();
+        retrievedUser?.Id.Should().Be(user.Id);
+        retrievedUser?.Sessions.Should().NotBeNull();
+        retrievedUser?.Sessions.Should().NotBeEmpty();
     }
 
     [Test]

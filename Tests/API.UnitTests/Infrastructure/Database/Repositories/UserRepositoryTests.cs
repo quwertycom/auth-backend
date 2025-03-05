@@ -90,6 +90,35 @@ public class UserRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetUserByUsernameAsync_UserExists_ReturnsUserWithEmails_IncludeEmailsTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        var email = new EmailAddress { Value = "test@example.com", UserId = user.Id, Type = EmailType.Primary, State = EmailState.PendingVerification, User = user };
+        user.EmailAddresses.Add(email);
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedUser = await _userRepository.GetUserByUsernameAsync("testuser", includeEmails: true);
+
+        // Assert
+        retrievedUser.Should().NotBeNull();
+        retrievedUser?.Username.Should().Be("testuser");
+        retrievedUser?.EmailAddresses.Should().NotBeEmpty();
+    }
+
+    [Test]
     public async Task GetUserByUsernameAsync_UserDoesNotExist_ReturnsNull()
     {
         // Arrange (No user added to the database)
@@ -125,6 +154,35 @@ public class UserRepositoryTests : TestBase
         // Assert
         retrievedUser.Should().NotBeNull();
         retrievedUser?.Id.Should().Be(user.Id);
+    }
+
+    [Test]
+    public async Task GetUserByIdAsync_UserExists_ReturnsUserWithEmails_IncludeEmailsTrue()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+        var email = new EmailAddress { Value = "test@example.com", UserId = user.Id, Type = EmailType.Primary, State = EmailState.PendingVerification, User = user };
+        user.EmailAddresses.Add(email);
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedUser = await _userRepository.GetUserByIdAsync(user.Id, includeEmails: true);
+
+        // Assert
+        retrievedUser.Should().NotBeNull();
+        retrievedUser?.Id.Should().Be(user.Id);
+        retrievedUser?.EmailAddresses.Should().NotBeEmpty();
     }
 
     [Test]
@@ -234,6 +292,25 @@ public class UserRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetUserByEmailAsync_EmailExists_ReturnsUserWithEmails_IncludeEmailsTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { Value = "test@example.com", UserId = user.Id, Type = EmailType.Primary, State = EmailState.PendingVerification, User = user };
+        user.EmailAddresses.Add(email);
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedUser = await _userRepository.GetUserByEmailAsync("test@example.com", includeEmails: true);
+
+        // Assert
+        retrievedUser.Should().NotBeNull();
+        retrievedUser?.Username.Should().Be("testuser");
+        retrievedUser?.EmailAddresses.Should().NotBeEmpty();
+    }
+
+    [Test]
     public async Task GetUserByEmailAsync_EmailDoesNotExist_ReturnsNull()
     {
         // Arrange (No user with the email added)
@@ -266,6 +343,26 @@ public class UserRepositoryTests : TestBase
         retrievedEmail.Should().NotBeNull();
         retrievedEmail?.Value.Should().Be("primary@example.com");
         retrievedEmail?.Type.Should().Be(EmailType.Primary);
+    }
+
+    [Test]
+    public async Task GetUserPrimaryEmailAddressAsync_PrimaryEmailExists_ReturnsEmailAddressWithUser_IncludeUserTrue()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var primaryEmail = new EmailAddress { Value = "primary@example.com", UserId = user.Id, Type = EmailType.Primary, State = EmailState.PendingVerification, User = user };
+        user.EmailAddresses.Add(primaryEmail);
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedEmail = await _userRepository.GetUserPrimaryEmailAddressAsync(user.Id, includeUser: true);
+
+        // Assert
+        retrievedEmail.Should().NotBeNull();
+        retrievedEmail?.Value.Should().Be("primary@example.com");
+        retrievedEmail?.Type.Should().Be(EmailType.Primary);
+        retrievedEmail?.User.Should().NotBeNull();
     }
 
     [Test]
@@ -302,6 +399,23 @@ public class UserRepositoryTests : TestBase
     }
 
     [Test]
+    public async Task GetEmailAdressByIdAsync_EmailExists_ReturnsEmailAddressWithUser_IncludeUserTrue()
+    {
+        // Arrange
+        var email = new EmailAddress { Value = "test@example.com", UserId = 1, Type = EmailType.Primary, State = EmailState.PendingVerification, User = new User() { Id = 1, Username = "temp", FirstName = "temp", LastName = "temp", PasswordHash = "temp", PasswordSalt = "temp", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification } };
+        _dbContext.EmailAddresses.Add(email);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedEmail = await _userRepository.GetEmailAdressByIdAsync(email.Id, includeUser: true);
+
+        // Assert
+        retrievedEmail.Should().NotBeNull();
+        retrievedEmail?.Id.Should().Be(email.Id);
+        retrievedEmail?.User.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetEmailAdressByEmailStringAsync_EmailExists_ReturnsEmailAddress()
     {
         // Arrange
@@ -315,6 +429,23 @@ public class UserRepositoryTests : TestBase
         // Assert
         retrievedEmail.Should().NotBeNull();
         retrievedEmail?.Value.Should().Be("test@example.com");
+    }
+
+    [Test]
+    public async Task GetEmailAdressByEmailStringAsync_EmailExists_ReturnsEmailAddressWithUser_IncludeUserTrue()
+    {
+        // Arrange
+        var email = new EmailAddress { Value = "test@example.com", UserId = 1, Type = EmailType.Primary, State = EmailState.PendingVerification, User = new User() { Id = 1, Username = "temp", FirstName = "temp", LastName = "temp", PasswordHash = "temp", PasswordSalt = "temp", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification } };
+        _dbContext.EmailAddresses.Add(email);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedEmail = await _userRepository.GetEmailAdressByEmailStringAsync("test@example.com", includeUser: true);
+
+        // Assert
+        retrievedEmail.Should().NotBeNull();
+        retrievedEmail?.Value.Should().Be("test@example.com");
+        retrievedEmail?.User.Should().NotBeNull();
     }
 
     [Test]

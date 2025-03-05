@@ -33,7 +33,7 @@ public class RegisterServiceTests : TestBase
             .Returns(new RequestEmailVerificationResult { 
                 IsSuccess = true, 
                 Status = "SUCCESS", 
-                EmailVerificationSessionId = "verification-session-id" 
+                RequestId = "verification-session-id" 
             });
     }
 
@@ -63,7 +63,7 @@ public class RegisterServiceTests : TestBase
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Status.Should().Be("SUCCESS");
-        result.EmailVerificationSessionId.Should().Be("verification-session-id");
+        result.RequestId.Should().Be("verification-session-id");
         
         // Verify interactions with repositories
         await MockUserRepository.Received(1).AddUserAsync(Arg.Is<User>(u => 
