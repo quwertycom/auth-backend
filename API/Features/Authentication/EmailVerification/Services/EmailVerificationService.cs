@@ -175,7 +175,8 @@ public class EmailVerificationService : IEmailVerificationService {
           }
 
           await _verificationRepository.MarkEmailVerificationRequestAsUsedAsync(long.Parse(requestId));
-          await _userRepository.UpdateUserStateAsync(request.User.Id, UserState.Active);
+          await _userRepository.UpdateUserStateAsync(request.UserId, UserState.Active);
+          await _userRepository.UpdateEmailStateAsync(request.EmailId, EmailState.Active);
 
           return new VerifyEmailResult {
             IsSuccess = true,
