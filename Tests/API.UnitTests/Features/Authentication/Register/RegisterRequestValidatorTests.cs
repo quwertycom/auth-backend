@@ -4,10 +4,10 @@ using API.Shared.Enums.Entities.User;
 
 namespace API.UnitTests.Features.Authentication.Register;
 
-public class RegisterValidatorTests : TestBase
+public class RegisterRequestValidatorTests : TestBase
 {
     [Test]
-    public async Task RegisterValidator_EmptyRequest_HasValidationErrors()
+    public async Task RegisterRequestValidator_EmptyRequest_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -41,7 +41,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_EmptyEmail_HasValidationErrors()
+    public async Task RegisterRequestValidator_EmptyEmail_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -67,7 +67,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_InvalidEmailFormat_HasValidationErrors()
+    public async Task RegisterRequestValidator_InvalidEmailFormat_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -92,7 +92,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_TooShortPhoneNumber_HasValidationErrors()
+    public async Task RegisterRequestValidator_TooShortPhoneNumber_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -118,7 +118,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_TooLongPhoneNumber_HasValidationErrors()
+    public async Task RegisterRequestValidator_TooLongPhoneNumber_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -144,7 +144,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_InvalidPhoneNumberFormat_HasValidationErrors()
+    public async Task RegisterRequestValidator_InvalidPhoneNumberFormat_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -170,7 +170,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_EmptyPassword_HasValidationErrors()
+    public async Task RegisterRequestValidator_EmptyPassword_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -199,7 +199,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_TooShortPassword_HasValidationErrors()
+    public async Task RegisterRequestValidator_TooShortPassword_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -224,7 +224,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_AllLowercasePassword_HasValidationErrors()
+    public async Task RegisterRequestValidator_AllLowercasePassword_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -249,7 +249,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_AllUppercasePassword_HasValidationErrors()
+    public async Task RegisterRequestValidator_AllUppercasePassword_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -274,7 +274,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_OnlyNumbersPassword_HasValidationErrors()
+    public async Task RegisterRequestValidator_OnlyNumbersPassword_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -300,7 +300,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_EmptyUsername_HasValidationErrors()
+    public async Task RegisterRequestValidator_EmptyUsername_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -327,7 +327,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_InvalidUsernameFormat_HasValidationErrors()
+    public async Task RegisterRequestValidator_InvalidUsernameFormat_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -352,7 +352,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_TooShortUsername_HasValidationErrors()
+    public async Task RegisterRequestValidator_TooShortUsername_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -377,7 +377,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_TooLongUsername_HasValidationErrors()
+    public async Task RegisterRequestValidator_TooLongUsername_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -402,7 +402,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_EmptyFirstName_HasValidationErrors()
+    public async Task RegisterRequestValidator_EmptyFirstName_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -428,7 +428,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_OnlyNumbersFirstName_HasValidationErrors()
+    public async Task RegisterRequestValidator_OnlyNumbersFirstName_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -453,7 +453,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_TooLongFirstName_HasValidationErrors()
+    public async Task RegisterRequestValidator_TooLongFirstName_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -478,7 +478,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_EmptyLastName_HasValidationErrors()
+    public async Task RegisterRequestValidator_EmptyLastName_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -504,7 +504,7 @@ public class RegisterValidatorTests : TestBase
     }
 
     [Test]
-    public async Task RegisterValidator_OnlyNumbersLastName_HasValidationErrors()
+    public async Task RegisterRequestValidator_OnlyNumbersLastName_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
@@ -530,7 +530,7 @@ public class RegisterValidatorTests : TestBase
 
 
     [Test]
-    public async Task RegisterValidator_TooLongLastName_HasValidationErrors()
+    public async Task RegisterRequestValidator_TooLongLastName_HasValidationErrors()
     {
         // Arrange
         var validator = new RegisterRequestValidator();
