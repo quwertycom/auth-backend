@@ -28,5 +28,5 @@ public class Token
     public Token? ParentToken { get; set; }
 
     public DateTime? ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(30);
-    public required DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
