@@ -39,11 +39,21 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByIdAsync(long emailVerificationRequestId)    
+    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByIdAsync(long emailVerificationRequestId, bool includeUser = false, bool includeEmailAddress = false)    
     {
         try
         {
-            return await _context.EmailVerificationRequests.FindAsync(emailVerificationRequestId);
+            var query = _context.EmailVerificationRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(e => e.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(e => e.EmailAddress);
+            }
+
+            return await query.FirstOrDefaultAsync(e => e.Id == emailVerificationRequestId);
         }
         catch (Exception ex)
         {
@@ -51,11 +61,21 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByCodeAsync(string code)
+    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByCodeAsync(string code, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.EmailVerificationRequests.FirstOrDefaultAsync(e => e.Code == code);
+            var query = _context.EmailVerificationRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(e => e.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(e => e.EmailAddress);
+            }
+
+            return await query.FirstOrDefaultAsync(e => e.Code == code);
         }
         catch (Exception ex)
         {
@@ -63,11 +83,21 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByEmailIdAsync(long emailId)
+    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByEmailIdAsync(long emailId, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.EmailVerificationRequests.FirstOrDefaultAsync(e => e.EmailId == emailId);
+            var query = _context.EmailVerificationRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(e => e.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(e => e.EmailAddress);
+            }
+
+            return await query.FirstOrDefaultAsync(e => e.EmailId == emailId);
         }
         catch (Exception ex)
         {
@@ -75,11 +105,21 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByEmailStringAsync(string email)
+    public async Task<EmailVerificationRequest?> GetEmailVerificationRequestByEmailStringAsync(string email, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.EmailVerificationRequests.Include(e => e.EmailAddress).FirstOrDefaultAsync(e => e.EmailAddress.Value == email);
+            var query = _context.EmailVerificationRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(e => e.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(e => e.EmailAddress);
+            }
+
+            return await query.FirstOrDefaultAsync(e => e.EmailAddress.Value == email);
         }
         catch (Exception ex)
         {
@@ -87,11 +127,21 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<PasswordResetRequest?> GetPasswordResetRequestByCodeHashAsync(string codeHash)
+    public async Task<PasswordResetRequest?> GetPasswordResetRequestByCodeHashAsync(string codeHash, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.PasswordResetRequests.FirstOrDefaultAsync(p => p.CodeHash == codeHash);
+            var query = _context.PasswordResetRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(p => p.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(p => p.EmailAddress);
+            }
+
+            return await query.FirstOrDefaultAsync(p => p.CodeHash == codeHash);
         }
         catch (Exception ex)
         {
@@ -99,11 +149,21 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<PasswordResetRequest?> GetPasswordResetRequestByEmailIdAsync(long emailId)
+    public async Task<PasswordResetRequest?> GetPasswordResetRequestByEmailIdAsync(long emailId, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.PasswordResetRequests.FirstOrDefaultAsync(p => p.EmailId == emailId);
+            var query = _context.PasswordResetRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(p => p.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(p => p.EmailAddress);
+            }
+
+            return await query.FirstOrDefaultAsync(p => p.EmailId == emailId);
         }
         catch (Exception ex)
         {
@@ -111,11 +171,20 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<PasswordResetRequest?> GetPasswordResetRequestByEmailStringAsync(string email)
+    public async Task<PasswordResetRequest?> GetPasswordResetRequestByEmailStringAsync(string email, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.PasswordResetRequests.Include(p => p.EmailAddress).FirstOrDefaultAsync(p => p.EmailAddress.Value == email);
+            var query = _context.PasswordResetRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(p => p.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(p => p.EmailAddress);
+            }
+            return await query.FirstOrDefaultAsync(p => p.EmailAddress.Value == email);
         }
         catch (Exception ex)
         {
@@ -123,11 +192,21 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<IEnumerable<PasswordResetRequest>> GetAllUserPasswordResetRequestsAsync(long userId)
+    public async Task<IEnumerable<PasswordResetRequest>> GetAllUserPasswordResetRequestsAsync(long userId, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.PasswordResetRequests.Where(p => p.UserId == userId).ToListAsync();
+            var query = _context.PasswordResetRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(p => p.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(p => p.EmailAddress);
+            }
+
+            return await query.Where(p => p.UserId == userId).ToListAsync();
         }
         catch (Exception ex)
         {
@@ -135,11 +214,20 @@ public class VerificationRepository : IVerificationRepository
         }
     }
 
-    public async Task<IEnumerable<PasswordResetRequest>> GetUserActivePasswordResetRequestsAsync(long userId)
+    public async Task<IEnumerable<PasswordResetRequest>> GetUserActivePasswordResetRequestsAsync(long userId, bool includeUser = false, bool includeEmailAddress = false)
     {
         try
         {
-            return await _context.PasswordResetRequests.Where(p => p.UserId == userId && p.IsUsed == false && p.ExpiresAt > DateTime.UtcNow).ToListAsync();
+            var query = _context.PasswordResetRequests.AsQueryable();
+            if (includeUser)
+            {
+                query = query.Include(p => p.User);
+            }
+            if (includeEmailAddress)
+            {
+                query = query.Include(p => p.EmailAddress);
+            }
+            return await query.Where(p => p.UserId == userId && p.IsUsed == false && p.ExpiresAt > DateTime.UtcNow).ToListAsync();
         }
         catch (Exception ex)
         {

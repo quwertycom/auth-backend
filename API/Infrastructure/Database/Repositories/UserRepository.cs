@@ -23,8 +23,8 @@ public class UserRepository : IUserRepository
         throw new Exception($"ERROR: {ex.Message}", ex);
       }
     }
-    
-   public async Task AddEmailAsync(EmailAddress email) {
+
+    public async Task AddEmailAsync(EmailAddress email) {
       try {
         await _context.EmailAddresses.AddAsync(email);
         await _context.SaveChangesAsync();
@@ -44,60 +44,132 @@ public class UserRepository : IUserRepository
       }
    }
 
-   public async Task<User?> GetUserByUsernameAsync(string username) {
+   public async Task<User?> GetUserByUsernameAsync(string username, bool includeEmails = false, bool includePhoneNumbers = false, bool includeSessions = false, bool includeAccounts = false) {
       try {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+        IQueryable<User> query = _context.Users;
+
+        if (includeEmails) {
+            query = query.Include(user => user.EmailAddresses);
+        }
+
+        if (includePhoneNumbers) {
+            query = query.Include(user => user.PhoneNumbers);
+        }
+
+        if (includeSessions) {
+            query = query.Include(user => user.Sessions);
+        }
+
+        if (includeAccounts) {
+            query = query.Include(user => user.Accounts);
+        }
+        
+        return await query.FirstOrDefaultAsync(u => u.Username == username);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get user by username: {ex.Message}", ex);
       }
    }
 
-   public async Task<User?> GetUserByEmailAsync(string email) {
+   public async Task<User?> GetUserByEmailAsync(string email, bool includeEmails = false, bool includePhoneNumbers = false, bool includeSessions = false, bool includeAccounts = false) {
       try {
-        return await _context.Users.FirstOrDefaultAsync(u => u.EmailAddresses.Any(e => e.Value == email));
+        IQueryable<User> query = _context.Users;
+
+        if (includeEmails) {
+            query = query.Include(user => user.EmailAddresses);
+        }
+
+        if (includePhoneNumbers) {
+            query = query.Include(user => user.PhoneNumbers);
+        }
+
+        if (includeSessions) {
+            query = query.Include(user => user.Sessions);
+        }
+
+        if (includeAccounts) {
+            query = query.Include(user => user.Accounts);
+        }
+        
+        return await query.FirstOrDefaultAsync(u => u.EmailAddresses.Any(e => e.Value == email));
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get user by email: {ex.Message}", ex);
       }
    }
 
-   public async Task<User?> GetUserByIdAsync(long id) {
+   public async Task<User?> GetUserByIdAsync(long id, bool includeEmails = false, bool includePhoneNumbers = false, bool includeSessions = false, bool includeAccounts = false) {
       try {
-        return await _context.Users.FindAsync(id);
+        IQueryable<User> query = _context.Users;
+
+        if (includeEmails) {
+            query = query.Include(user => user.EmailAddresses);
+        }
+
+        if (includePhoneNumbers) {
+            query = query.Include(user => user.PhoneNumbers);
+        }
+        
+        if (includeSessions) {
+            query = query.Include(user => user.Sessions);
+        }
+
+        if (includeAccounts) {
+            query = query.Include(user => user.Accounts);
+        }
+        
+        return await query.FirstOrDefaultAsync(u => u.Id == id);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get user by id: {ex.Message}", ex);
       }
    }
 
-   public async Task<EmailAddress?> GetUserPrimaryEmailAddressAsync(long userId) {
+   public async Task<EmailAddress?> GetUserPrimaryEmailAddressAsync(long userId, bool includeUser = false) {
       try {
-        return await _context.EmailAddresses.FirstOrDefaultAsync(e => e.UserId == userId && e.Type == EmailType.Primary);
+        IQueryable<EmailAddress> query = _context.EmailAddresses;
+
+        if (includeUser) {
+            query = query.Include(email => email.User);
+        }
+        
+        return await query.FirstOrDefaultAsync(e => e.UserId == userId && e.Type == EmailType.Primary);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get user primary email address: {ex.Message}", ex);
       }
    }
 
-   public async Task<EmailAddress?> GetEmailAdressByIdAsync(long id) {
+   public async Task<EmailAddress?> GetEmailAdressByIdAsync(long id, bool includeUser = false) {
       try {
-        return await _context.EmailAddresses.FindAsync(id);
+        IQueryable<EmailAddress> query = _context.EmailAddresses;
+
+        if (includeUser) {
+            query = query.Include(email => email.User);
+        }
+        
+        return await query.FirstOrDefaultAsync(e => e.Id == id);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get email address by id: {ex.Message}", ex);
       }
    }
 
-   public async Task<EmailAddress?> GetEmailAdressByEmailStringAsync(string email) {
+   public async Task<EmailAddress?> GetEmailAdressByEmailStringAsync(string email, bool includeUser = false) {
       try {
-        return await _context.EmailAddresses.FirstOrDefaultAsync(e => e.Value == email);
+        IQueryable<EmailAddress> query = _context.EmailAddresses;
+
+        if (includeUser) {
+            query = query.Include(email => email.User);
+        }
+        
+        return await query.FirstOrDefaultAsync(e => e.Value == email);
       }
       catch (Exception ex) {
         throw new Exception($"ERROR: Failed to get email address by email string: {ex.Message}", ex);
       }
    }
-
+   
    public async Task<bool> EmailAdressExistsAsync(string email) {
       try {
         return await _context.EmailAddresses.AnyAsync(e => e.Value == email);
@@ -106,7 +178,7 @@ public class UserRepository : IUserRepository
         throw new Exception($"ERROR: Failed to check if email address exists: {ex.Message}", ex);
       }
    }
-
+   
    public async Task<bool> UsernameExistsAsync(string username) {
       try {
         return await _context.Users.AnyAsync(u => u.Username == username);
