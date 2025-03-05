@@ -192,4 +192,65 @@ public class EmailVerificationService : IEmailVerificationService {
           };
         }
     }
+
+    public async Task<RequestNewCodeResult> RequestNewCodeAsync(string email, CancellationToken cancellationToken) {
+      try {
+        var userEmail = await _userRepository.GetEmailAdressByEmailStringAsync(email);
+
+        if (userEmail == null) {
+          return new RequestNewCodeResult {
+            IsSuccess = false,
+            Status = "EMAIL_NOT_FOUND",
+            Message = "Email address does not exist",
+            HttpStatusCode = 404
+          };
+        } else if (userEmail.State == EmailState.Active) {
+          return new RequestNewCodeResult {
+            IsSuccess = false,
+            Status = "EMAIL_ALREADY_VERIFIED",
+            Message = "This email address is already verified, you can already use it to login.",
+            HttpStatusCode = 400
+          };
+        } else if (userEmail.State == EmailState.Blacklisted) {
+          return new RequestNewCodeResult {
+            IsSuccess = false,
+            Status = "EMAIL_BLACKLISTED",
+            Message = "This email address is blacklisted, it cannot be used. Please contact support if you believe this is an error.",
+            HttpStatusCode = 400
+          };
+        } else if (userEmail.State == EmailState.Deleted || userEmail.State == EmailState.Disabled) {
+          return new RequestNewCodeResult {
+            IsSuccess = false,
+            Status = "EMAIL_DISABLED",
+            Message = "This email address is disabled by the user, it cannot be used. Please contact support if you believe this is an error.",
+            HttpStatusCode = 400
+          };
+        }
+
+        var createRequestResult = await RequestEmailVerificationAsync(email, cancellationToken);
+        if (!createRequestResult.IsSuccess || createRequestResult.RequestId == null || createRequestResult.RequestId == string.Empty || createRequestResult.Status != "SUCCESS") {
+          return new RequestNewCodeResult {
+            IsSuccess = false,
+            Status = createRequestResult.Status,
+            Message = createRequestResult.Message,
+            HttpStatusCode = 500
+          };
+        } else {
+          return new RequestNewCodeResult {
+            IsSuccess = true,
+            Status = "SUCCESS",
+            Message = "New verification request created",
+            NewRequestId = createRequestResult.RequestId,
+            HttpStatusCode = 200
+          };
+        }
+      } catch (Exception ex) {
+        return new RequestNewCodeResult {
+          IsSuccess = false,
+          Status = "ERROR",
+          Message = ex.Message,
+          HttpStatusCode = 500
+        };
+      }
+    }
 }
