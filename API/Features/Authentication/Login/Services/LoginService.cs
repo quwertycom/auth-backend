@@ -1,14 +1,14 @@
+using API.Infrastructure.Database.Entities;
 using API.Features.Authentication.Login.Interfaces;
 using API.Features.Authentication.Login.Models.Services;
 using API.Infrastructure.Database.Entities.Authentication;
 using API.Shared.Enums.Entities.Authentication;
 using API.Shared.Enums.Entities.User;
-using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Security;
-using API.Shared.Utilities;
-using k8s.Models;
-
+using API.Shared.Interfaces.Database.Repositories;
+using Session = API.Infrastructure.Database.Entities.Authentication.Session;
 namespace API.Features.Authentication.Login.Services;
+
 
 public class LoginService : ILoginService
 {
@@ -88,7 +88,7 @@ public class LoginService : ILoginService
                 };
             }
 
-            var newSession = new Session
+            var newSession = new Infrastructure.Database.Entities.Authentication.Session
             {
                 User = user,
                 Target = SessionTarget.User,

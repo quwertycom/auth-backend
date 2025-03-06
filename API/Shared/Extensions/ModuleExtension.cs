@@ -1,5 +1,5 @@
 using API.Features.Authentication;
-
+using API.Features.Session;
 namespace API.Shared.Extensions;
 
 /// <summary>
@@ -15,7 +15,7 @@ public static class ModuleExtensions
     public static IServiceCollection AddApplicationModules(this IServiceCollection services)
     {
         services.AddAuthenticationServices();
-
+        services.AddSessionServices();
         return services;
     }
 }
