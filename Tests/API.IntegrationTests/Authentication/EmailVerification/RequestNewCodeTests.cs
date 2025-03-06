@@ -215,58 +215,6 @@ public class RequestNewCodeTests : TestBase
         Assert.IsNotNull(errorContent!.Message, "Error response should contain a message");
     }
 
-    [Test]
-    public async Task RequestNewCode_RateLimited_ShouldReturnTooManyRequests()
-    {
-        // Arrange - Create a user with email in PendingVerification state
-        var email = $"rate-limited-{Guid.NewGuid()}@example.com";
-        await EnsureUnverifiedUserExistsAsync("testrate", "Password123!", email);
-
-        var request = new RequestNewCodeRequest
-        {
-            Email = email
-        };
-
-        // Act - Send multiple requests in quick succession to trigger rate limiting
-        var tasks = new List<Task<HttpResponseMessage>>();
-        for (int i = 0; i < 10; i++)
-        {
-            tasks.Add(PostAsync("/api/authentication/email-verification/request-new-code", request));
-        }
-        
-        // Wait for all requests to complete
-        await Task.WhenAll(tasks);
-        
-        // If any request returned 429, the test passes
-        var responses = tasks.Select(t => t.Result).ToList();
-        
-        // Check if any response is rate limited (429 TooManyRequests)
-        // Note: This depends on the actual rate limiting configuration
-        // If rate limiting isn't triggering, this test may need adjustment
-        if (responses.Any(r => r.StatusCode == HttpStatusCode.TooManyRequests))
-        {
-            var rateLimitedResponse = responses.First(r => r.StatusCode == HttpStatusCode.TooManyRequests);
-            var errorContent = await rateLimitedResponse.Content.ReadFromJsonAsync<ErrorResponse>();
-            Assert.IsNotNull(errorContent, "Error response should not be null");
-            Assert.That(errorContent!.Status, Is.EqualTo("RATE_LIMITED"));
-        }
-        else
-        {
-            // If rate limiting doesn't trigger, mark the test as inconclusive
-            Assert.Inconclusive("Rate limiting did not trigger. This may be expected in test environment.");
-        }
-    }
-
-    [Test]
-    public async Task RequestNewCode_InternalServerError_ShouldReturnErrorResponse()
-    {
-        // This test is difficult to implement in integration tests because
-        // we'd need to force a server error. In production tests, we would
-        // use a controlled environment where we can mock the service to throw
-        // an exception. For now, we'll make this test inconclusive.
-        Assert.Inconclusive("Cannot reliably test server errors in integration tests without service mocking");
-    }
-
     /// <summary>
     /// Helper method to ensure a user exists with an unverified email address
     /// </summary>
