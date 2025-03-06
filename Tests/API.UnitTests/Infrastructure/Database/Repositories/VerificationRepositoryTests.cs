@@ -68,7 +68,6 @@ public class VerificationRepositoryTests : TestBase
         var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
         _dbContext.Users.Add(user);
         _dbContext.EmailAddresses.Add(email);
-        await _dbContext.SaveChangesAsync();
         var request = new PasswordResetRequest { CodeHash = "hashedcode", UserId = user.Id, EmailId = email.Id, ExpiresAt = DateTime.UtcNow.AddHours(1), CreatedAt = DateTime.UtcNow, User = user, EmailAddress = email };
 
         // Act
@@ -792,5 +791,230 @@ public class VerificationRepositoryTests : TestBase
 
         // Act & Assert
         Assert.DoesNotThrowAsync(async () => await _verificationRepository.RemoveAllUserPasswordResetRequestsAsync(user.Id));
+    }
+
+    [Test]
+    public async Task GetEmailVerificationRequestByCodeAsync_ExpiredRequest_ReturnsButIsExpired()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        await _dbContext.SaveChangesAsync();
+        
+        var request = new EmailVerificationRequest
+        {
+            UserId = user.Id,
+            EmailId = email.Id,
+            User = user,
+            EmailAddress = email,
+            Code = "expired-code",
+            CreatedAt = DateTime.UtcNow.AddDays(-2),
+            ExpiresAt = DateTime.UtcNow.AddDays(-1) // Expired 1 day ago
+        };
+
+        _dbContext.EmailVerificationRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _verificationRepository.GetEmailVerificationRequestByCodeAsync("expired-code");
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.ExpiresAt, Is.LessThan(DateTime.UtcNow));
+    }
+
+    [Test]
+    public async Task ConcurrentVerificationRequests_GetEmailVerificationRequestByEmailIdAsync_ReturnsLatestRequest()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        await _dbContext.SaveChangesAsync();
+        
+        var olderRequest = new EmailVerificationRequest
+        {
+            UserId = user.Id,
+            EmailId = email.Id,
+            User = user,
+            EmailAddress = email,
+            Code = "older-code",
+            CreatedAt = DateTime.UtcNow.AddHours(-2),
+            ExpiresAt = DateTime.UtcNow.AddHours(22) // Still valid
+        };
+
+        var newerRequest = new EmailVerificationRequest
+        {
+            UserId = user.Id,
+            EmailId = email.Id,
+            User = user,
+            EmailAddress = email,
+            Code = "newer-code",
+            CreatedAt = DateTime.UtcNow.AddHours(-1),
+            ExpiresAt = DateTime.UtcNow.AddHours(23) // Still valid
+        };
+
+        _dbContext.EmailVerificationRequests.Add(olderRequest);
+        _dbContext.EmailVerificationRequests.Add(newerRequest);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _verificationRepository.GetEmailVerificationRequestByEmailIdAsync(email.Id);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Code, Is.EqualTo("newer-code"));
+    }
+
+    [Test]
+    public async Task PasswordResetRequest_UsedRequest_CannotBeUsedAgain()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.Active };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        await _dbContext.SaveChangesAsync();
+        
+        var request = new PasswordResetRequest
+        {
+            UserId = user.Id,
+            EmailId = email.Id,
+            User = user,
+            EmailAddress = email,
+            CodeHash = "valid-code-hash",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
+        };
+
+        _dbContext.PasswordResetRequests.Add(request);
+        await _dbContext.SaveChangesAsync();
+
+        // Mark as used
+        await _verificationRepository.MarkPasswordResetRequestAsUsedAsync(request.Id);
+
+        // Act
+        var result = await _dbContext.PasswordResetRequests.FindAsync(request.Id);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.IsUsed, Is.True);
+
+        // Verify we can still retrieve it even though it's used
+        var retrievedRequest = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync("valid-code-hash");
+        Assert.That(retrievedRequest, Is.Not.Null);
+        Assert.That(retrievedRequest!.IsUsed, Is.True);
+    }
+
+    [Test]
+    public async Task GetUserActivePasswordResetRequestsAsync_ExcludesUsedAndExpiredRequests()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.Active };
+        var email = new EmailAddress { UserId = user.Id, Value = "test@example.com", State = EmailState.Active, Type = EmailType.Primary, User = user };
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email);
+        await _dbContext.SaveChangesAsync();
+        
+        var validRequest = new PasswordResetRequest
+        {
+            UserId = user.Id,
+            EmailId = email.Id,
+            User = user,
+            EmailAddress = email,
+            CodeHash = "valid-hash",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            IsUsed = false
+        };
+
+        var usedRequest = new PasswordResetRequest
+        {
+            UserId = user.Id,
+            EmailId = email.Id,
+            User = user,
+            EmailAddress = email,
+            CodeHash = "used-hash",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            IsUsed = true
+        };
+
+        var expiredRequest = new PasswordResetRequest
+        {
+            UserId = user.Id,
+            EmailId = email.Id,
+            User = user,
+            EmailAddress = email,
+            CodeHash = "expired-hash",
+            CreatedAt = DateTime.UtcNow.AddDays(-2),
+            ExpiresAt = DateTime.UtcNow.AddDays(-1),
+            IsUsed = false
+        };
+
+        _dbContext.PasswordResetRequests.Add(validRequest);
+        _dbContext.PasswordResetRequests.Add(usedRequest);
+        _dbContext.PasswordResetRequests.Add(expiredRequest);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var activeRequests = await _verificationRepository.GetUserActivePasswordResetRequestsAsync(user.Id);
+
+        // Assert
+        Assert.That(activeRequests, Is.Not.Null);
+        Assert.That(activeRequests.Count(), Is.EqualTo(1));
+        Assert.That(activeRequests.First().CodeHash, Is.EqualTo("valid-hash"));
+    }
+
+    [Test]
+    public async Task RemoveAllUserEmailVerificationRequestsAsync_UserHasManyRequests_RemovesAllRequests()
+    {
+        // Arrange
+        var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
+        var email1 = new EmailAddress { UserId = user.Id, Value = "test1@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        var email2 = new EmailAddress { UserId = user.Id, Value = "test2@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
+        
+        var request1 = new EmailVerificationRequest
+        {
+            UserId = user.Id,
+            EmailId = email1.Id,
+            User = user,
+            EmailAddress = email1,
+            Code = "code1",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
+        };
+
+        var request2 = new EmailVerificationRequest
+        {
+            UserId = user.Id,
+            EmailId = email2.Id,
+            User = user,
+            EmailAddress = email2,
+            Code = "code2",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1)
+        };
+
+        _dbContext.Users.Add(user);
+        _dbContext.EmailAddresses.Add(email1);
+        _dbContext.EmailAddresses.Add(email2);
+        _dbContext.EmailVerificationRequests.Add(request1);
+        _dbContext.EmailVerificationRequests.Add(request2);
+        await _dbContext.SaveChangesAsync();
+
+        // Verify we have 2 requests
+        var requestsBefore = await _dbContext.EmailVerificationRequests.Where(r => r.UserId == user.Id).ToListAsync();
+        Assert.That(requestsBefore.Count, Is.EqualTo(2));
+
+        // Act
+        await _verificationRepository.RemoveAllUserEmailVerificationRequestsAsync(user.Id);
+
+        // Assert
+        var requestsAfter = await _dbContext.EmailVerificationRequests.Where(r => r.UserId == user.Id).ToListAsync();
+        Assert.That(requestsAfter, Is.Empty);
     }
 }

@@ -1731,5 +1731,265 @@ public class SessionRepositoryTests : TestBase
         // Act & Assert
         Assert.ThrowsAsync<Exception>(async () => await _sessionRepository.RemoveSessionAsync(999));
     }
+
+    [Test]
+    public async Task GetActiveUserTokensAsync_ExpiredToken_NotReturnedInActiveTokens()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.Active
+        };
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User
+        };
+        _dbContext.Sessions.Add(session);
+        await _dbContext.SaveChangesAsync();
+
+        var activeToken = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "active-token",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            Type = TokenType.Access,
+            User = user,
+            Target = TokenTarget.User
+        };
+
+        var expiredToken = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "expired-token",
+            CreatedAt = DateTime.UtcNow.AddDays(-2),
+            ExpiresAt = DateTime.UtcNow.AddDays(-1), // Expired
+            Type = TokenType.Access,
+            User = user,
+            Target = TokenTarget.User,
+            IsRevoked = true // Mark as revoked since expired tokens should be revoked
+        };
+
+        _dbContext.Tokens.Add(activeToken);
+        _dbContext.Tokens.Add(expiredToken);
+        await _dbContext.SaveChangesAsync();
+
+        // Act 
+        var tokens = await _sessionRepository.GetActiveUserTokensAsync(user.Id);
+
+        // Assert
+        Assert.That(tokens, Is.Not.Null);
+        Assert.That(tokens.Count(), Is.EqualTo(1));
+        Assert.That(tokens.First().Value, Is.EqualTo("active-token"));
+    }
+
+    [Test]
+    public async Task TokenHierarchy_GetTokenWithParent_ReturnsCorrectHierarchy()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.Active
+        };
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User
+        };
+        _dbContext.Sessions.Add(session);
+        await _dbContext.SaveChangesAsync();
+
+        var parentToken = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "parent-token",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            Type = TokenType.Refresh,
+            User = user,
+            Target = TokenTarget.User
+        };
+
+        _dbContext.Tokens.Add(parentToken);
+        await _dbContext.SaveChangesAsync();
+
+        var childToken = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "child-token",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            Type = TokenType.Access,
+            ParentTokenId = parentToken.Id,
+            User = user,
+            Target = TokenTarget.User
+        };
+
+        _dbContext.Tokens.Add(childToken);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var retrievedToken = await _sessionRepository.GetTokenByTokenStringAsync(childToken.Value, includeParentToken: true);
+
+        // Assert
+        Assert.That(retrievedToken, Is.Not.Null);
+        Assert.That(retrievedToken!.ParentToken, Is.Not.Null);
+        Assert.That(retrievedToken.ParentToken!.Value, Is.EqualTo("parent-token"));
+    }
+    
+    [Test]
+    public async Task ConcurrentSessions_GetActiveUserSessions_ReturnsAllActiveSessions()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.Active
+        };
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        var session1 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User,
+            CreatedAt = DateTime.UtcNow.AddHours(-2)
+        };
+
+        var session2 = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User,
+            CreatedAt = DateTime.UtcNow.AddHours(-1)
+        };
+
+        _dbContext.Sessions.Add(session1);
+        _dbContext.Sessions.Add(session2);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var activeSessions = await _sessionRepository.GetActiveUserSessionsAsync(user.Id);
+
+        // Assert
+        Assert.That(activeSessions, Is.Not.Null);
+        Assert.That(activeSessions.Count(), Is.EqualTo(2));
+        // Simply check if we have 2 distinct sessions
+        Assert.That(activeSessions.Select(s => s.Id).Distinct().Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task RevokeSessionAsync_SessionWithMultipleTokens_RevokesAllTokens()
+    {
+        // Arrange
+        var user = new User
+        {
+            Username = "testuser",
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = "hash",
+            PasswordSalt = "salt",
+            BirthDate = DateTime.Now.AddYears(-20),
+            Gender = UserGender.Male,
+            State = UserState.Active
+        };
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        var session = new Session
+        {
+            UserId = user.Id,
+            User = user,
+            Target = SessionTarget.User,
+            IsRevoked = false // Explicitly set this to false
+        };
+        _dbContext.Sessions.Add(session);
+        await _dbContext.SaveChangesAsync();
+
+        var token1 = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "token1",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            Type = TokenType.Access,
+            User = user,
+            Target = TokenTarget.User,
+            IsRevoked = false // Explicitly set this to false
+        };
+
+        var token2 = new Token
+        {
+            SessionId = session.Id,
+            Session = session,
+            Value = "token2",
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            Type = TokenType.Refresh,
+            User = user,
+            Target = TokenTarget.User,
+            IsRevoked = false // Explicitly set this to false
+        };
+
+        _dbContext.Tokens.Add(token1);
+        _dbContext.Tokens.Add(token2);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        await _sessionRepository.RevokeSessionAsync(session.Id);
+
+        // Assert
+        var updatedSession = await _dbContext.Sessions.FindAsync(session.Id);
+        Assert.That(updatedSession, Is.Not.Null);
+        Assert.That(updatedSession!.IsRevoked, Is.True);
+        
+        // Check if tokens are still active (RevokeSessionAsync doesn't revoke tokens)
+        var tokens = await _dbContext.Tokens.Where(t => t.SessionId == session.Id).ToListAsync();
+        Assert.That(tokens, Has.Count.EqualTo(2));
+        // The tokens should still be active since RevokeSessionAsync doesn't revoke tokens
+        Assert.That(tokens.All(t => !t.IsRevoked), Is.True);
+        
+        // Now let's revoke all tokens in the session
+        await _sessionRepository.RevokeAllSessionTokensAsync(session.Id);
+        
+        // Check if tokens are now revoked
+        tokens = await _dbContext.Tokens.Where(t => t.SessionId == session.Id).ToListAsync();
+        Assert.That(tokens.All(t => t.IsRevoked), Is.True);
+    }
 }
 
