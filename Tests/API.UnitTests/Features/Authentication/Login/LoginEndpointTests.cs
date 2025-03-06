@@ -47,8 +47,8 @@ public class LoginEndpointTests : TestBase
     }
 
     private LoginResult CreateFailureResult(
-        string status = "ERROR", 
-        string message = "Login failed", 
+        string status = "ERROR",
+        string message = "Login failed",
         int? httpStatusCode = StatusCodes.Status401Unauthorized)
     {
         return new LoginResult
@@ -72,13 +72,13 @@ public class LoginEndpointTests : TestBase
 
         // Assert - use reflection to check private field was initialized
         var fieldInfo = typeof(LoginEndpoint).GetField(
-            "_loginService", 
+            "_loginService",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        
+
         Assert.That(fieldInfo, Is.Not.Null, "Field _loginService should exist");
-        
+
         var fieldValue = fieldInfo!.GetValue(endpoint);
-        Assert.That(fieldValue, Is.EqualTo(_mockLoginService), 
+        Assert.That(fieldValue, Is.EqualTo(_mockLoginService),
             "Service should be initialized in constructor");
     }
 
@@ -90,9 +90,9 @@ public class LoginEndpointTests : TestBase
     public void Configure_SetsEndpointRouteAndOptions()
     {
         // Get the method info for inspection
-        var configureMethod = typeof(LoginEndpoint).GetMethod("Configure", 
+        var configureMethod = typeof(LoginEndpoint).GetMethod("Configure",
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-        
+
         // Verify method exists
         Assert.That(configureMethod, Is.Not.Null, "Configure method should exist");
     }
@@ -107,22 +107,24 @@ public class LoginEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var successResult = CreateSuccessResult();
-        
+
         _mockLoginService!
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>())
             .Returns(successResult);
 
         // Create endpoint
         var endpoint = new LoginEndpoint(_mockLoginService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockLoginService
             .Received(1)
@@ -135,7 +137,7 @@ public class LoginEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "INVALID_CREDENTIALS", 
+            status: "INVALID_CREDENTIALS",
             message: "Username or password is incorrect"
         );
 
@@ -145,15 +147,17 @@ public class LoginEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new LoginEndpoint(_mockLoginService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockLoginService
             .Received(1)
@@ -166,7 +170,7 @@ public class LoginEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "USER_NOT_FOUND", 
+            status: "USER_NOT_FOUND",
             message: "User not found"
         );
 
@@ -176,15 +180,17 @@ public class LoginEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new LoginEndpoint(_mockLoginService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockLoginService
             .Received(1)
@@ -197,7 +203,7 @@ public class LoginEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "ACCOUNT_LOCKED", 
+            status: "ACCOUNT_LOCKED",
             message: "Account is locked",
             httpStatusCode: StatusCodes.Status403Forbidden
         );
@@ -208,15 +214,17 @@ public class LoginEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new LoginEndpoint(_mockLoginService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockLoginService
             .Received(1)
@@ -229,7 +237,7 @@ public class LoginEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "ERROR", 
+            status: "ERROR",
             message: "An internal error occurred",
             httpStatusCode: StatusCodes.Status500InternalServerError
         );
@@ -240,15 +248,17 @@ public class LoginEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new LoginEndpoint(_mockLoginService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockLoginService
             .Received(1)
@@ -256,4 +266,4 @@ public class LoginEndpointTests : TestBase
     }
 
     #endregion
-} 
+}

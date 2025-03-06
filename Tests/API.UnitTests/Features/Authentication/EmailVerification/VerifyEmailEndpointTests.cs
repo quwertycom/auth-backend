@@ -44,8 +44,8 @@ public class VerifyEmailEndpointTests : TestBase
     }
 
     private VerifyEmailResult CreateFailureResult(
-        string status = "ERROR", 
-        string message = "Failed to verify email", 
+        string status = "ERROR",
+        string message = "Failed to verify email",
         int? httpStatusCode = StatusCodes.Status400BadRequest)
     {
         return new VerifyEmailResult
@@ -69,13 +69,13 @@ public class VerifyEmailEndpointTests : TestBase
 
         // Assert - use reflection to check private field was initialized
         var fieldInfo = typeof(VerifyEmailEndpoint).GetField(
-            "_emailVerificationService", 
+            "_emailVerificationService",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        
+
         Assert.That(fieldInfo, Is.Not.Null, "Field _emailVerificationService should exist");
-        
+
         var fieldValue = fieldInfo!.GetValue(endpoint);
-        Assert.That(fieldValue, Is.EqualTo(_mockEmailVerificationService), 
+        Assert.That(fieldValue, Is.EqualTo(_mockEmailVerificationService),
             "Service should be initialized in constructor");
     }
 
@@ -87,9 +87,9 @@ public class VerifyEmailEndpointTests : TestBase
     public void Configure_SetsEndpointRouteAndOptions()
     {
         // Get the method info for inspection
-        var configureMethod = typeof(VerifyEmailEndpoint).GetMethod("Configure", 
+        var configureMethod = typeof(VerifyEmailEndpoint).GetMethod("Configure",
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-        
+
         // Verify method exists
         Assert.That(configureMethod, Is.Not.Null, "Configure method should exist");
     }
@@ -104,22 +104,24 @@ public class VerifyEmailEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var successResult = CreateSuccessResult();
-        
+
         _mockEmailVerificationService!
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>())
             .Returns(successResult);
 
         // Create endpoint
         var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockEmailVerificationService
             .Received(1)
@@ -132,7 +134,7 @@ public class VerifyEmailEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "REQUEST_NOT_FOUND", 
+            status: "REQUEST_NOT_FOUND",
             message: "Verification request not found"
         );
 
@@ -142,15 +144,17 @@ public class VerifyEmailEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockEmailVerificationService
             .Received(1)
@@ -163,7 +167,7 @@ public class VerifyEmailEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "INVALID_CODE", 
+            status: "INVALID_CODE",
             message: "Verification code is invalid"
         );
 
@@ -173,15 +177,17 @@ public class VerifyEmailEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockEmailVerificationService
             .Received(1)
@@ -194,7 +200,7 @@ public class VerifyEmailEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "REQUEST_EXPIRED", 
+            status: "REQUEST_EXPIRED",
             message: "Verification request has expired"
         );
 
@@ -204,15 +210,17 @@ public class VerifyEmailEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockEmailVerificationService
             .Received(1)
@@ -225,7 +233,7 @@ public class VerifyEmailEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var failureResult = CreateFailureResult(
-            status: "ERROR", 
+            status: "ERROR",
             message: "An internal error occurred"
         );
 
@@ -235,15 +243,17 @@ public class VerifyEmailEndpointTests : TestBase
 
         // Create endpoint
         var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
-        
-        try {
+
+        try
+        {
             // Act - will throw exception due to FastEndpoints dependencies
             await endpoint.HandleAsync(request, CancellationToken.None);
         }
-        catch (Exception) {
+        catch (Exception)
+        {
             // Expected exception in unit test environment
         }
-        
+
         // Assert - verify the service was called with correct parameters
         await _mockEmailVerificationService
             .Received(1)
@@ -251,4 +261,4 @@ public class VerifyEmailEndpointTests : TestBase
     }
 
     #endregion
-} 
+}

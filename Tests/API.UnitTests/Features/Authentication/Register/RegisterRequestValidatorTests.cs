@@ -7,12 +7,12 @@ namespace API.UnitTests.Features.Authentication.Register;
 public class RegisterRequestValidatorTests : TestBase
 {
     #region Helper Methods
-    
+
     private RegisterRequestValidator CreateValidator()
     {
         return new RegisterRequestValidator();
     }
-    
+
     private RegisterRequest CreateDefaultRequest(
         string username = "testuser",
         string firstName = "Test",
@@ -35,11 +35,11 @@ public class RegisterRequestValidatorTests : TestBase
             Gender = gender
         };
     }
-    
+
     #endregion
-    
+
     #region General Validation Tests
-    
+
     [Test]
     public async Task RegisterRequestValidator_EmptyRequest_HasValidationErrors()
     {
@@ -71,9 +71,9 @@ public class RegisterRequestValidatorTests : TestBase
         validationResult.Errors.Should().Contain(error => error.PropertyName == "Password" && error.ErrorMessage == "Password is required!");
         validationResult.Errors.Should().Contain(error => error.PropertyName == "BirthDate" && error.ErrorMessage == "You must be at least 16 years old!");
     }
-    
+
     #endregion
-    
+
     #region Email Validation Tests
 
     [Test]
@@ -108,9 +108,9 @@ public class RegisterRequestValidatorTests : TestBase
         validationResult.Errors.Should().HaveCount(1);
         validationResult.Errors.Should().Contain(error => error.PropertyName == "Email" && error.ErrorMessage == "Email is invalid!");
     }
-    
+
     #endregion
-    
+
     #region Phone Number Validation Tests
 
     [Test]
@@ -160,9 +160,9 @@ public class RegisterRequestValidatorTests : TestBase
         validationResult.Errors.Should().HaveCount(1);
         validationResult.Errors.Should().Contain(error => error.PropertyName == "PhoneNumber" && error.ErrorMessage == "Phone number must start with '+' and contain only numbers and optional region code (e.g., +123)");
     }
-    
+
     #endregion
-    
+
     #region Password Validation Tests
 
     [Test]
@@ -249,9 +249,9 @@ public class RegisterRequestValidatorTests : TestBase
         validationResult.Errors.Should().Contain(error => error.PropertyName == "Password" && error.ErrorMessage == "Password must contain at least one lowercase letter!");
         validationResult.Errors.Should().Contain(error => error.PropertyName == "Password" && error.ErrorMessage == "Password must contain at least one uppercase letter!");
     }
-    
+
     #endregion
-    
+
     #region Username Validation Tests
 
     [Test]
@@ -319,9 +319,9 @@ public class RegisterRequestValidatorTests : TestBase
         validationResult.Errors.Should().HaveCount(1);
         validationResult.Errors.Should().Contain(error => error.PropertyName == "Username" && error.ErrorMessage == "Username must be less than 32 characters long!");
     }
-    
+
     #endregion
-    
+
     #region FirstName Validation Tests
 
     [Test]
@@ -372,9 +372,9 @@ public class RegisterRequestValidatorTests : TestBase
         validationResult.Errors.Should().HaveCount(1);
         validationResult.Errors.Should().Contain(error => error.PropertyName == "FirstName" && error.ErrorMessage == "First name must be less than 128 characters long!");
     }
-    
+
     #endregion
-    
+
     #region LastName Validation Tests
 
     [Test]
@@ -425,6 +425,6 @@ public class RegisterRequestValidatorTests : TestBase
         validationResult.Errors.Should().HaveCount(1);
         validationResult.Errors.Should().Contain(error => error.PropertyName == "LastName" && error.ErrorMessage == "Last name must be less than 128 characters long!");
     }
-    
+
     #endregion
 }

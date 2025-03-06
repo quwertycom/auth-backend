@@ -27,10 +27,13 @@ public class LoginService : ILoginService
 
     public async Task<LoginResult> LoginAsync(string username, string password, CancellationToken cancellationToken)
     {
-        try {
+        try
+        {
             var user = await _userRepository.GetUserByUsernameAsync(username);
-            if (user == null) {
-                return new LoginResult {
+            if (user == null)
+            {
+                return new LoginResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid credentials",
@@ -38,15 +41,20 @@ public class LoginService : ILoginService
                 };
             }
 
-            if (user.State != UserState.Active) {
-                return new LoginResult {
+            if (user.State != UserState.Active)
+            {
+                return new LoginResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "User is not active",
                     HttpStatusCode = 401
                 };
-            } else if (!_hasher.Compare(password, user.PasswordHash, user.PasswordSalt)) {
-                return new LoginResult {
+            }
+            else if (!_hasher.Compare(password, user.PasswordHash, user.PasswordSalt))
+            {
+                return new LoginResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid credentials",
@@ -56,8 +64,10 @@ public class LoginService : ILoginService
 
             var refreshTokenResult = _jwtService.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null));
 
-            if (!refreshTokenResult.isSuccess || refreshTokenResult.token == null) {
-                return new LoginResult {
+            if (!refreshTokenResult.isSuccess || refreshTokenResult.token == null)
+            {
+                return new LoginResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = refreshTokenResult.message ?? "Internal server error",
@@ -67,8 +77,10 @@ public class LoginService : ILoginService
 
             var accessTokenResult = _jwtService.GenerateAccessToken(refreshTokenResult.token);
 
-            if (!accessTokenResult.isSuccess || accessTokenResult.token == null) {
-                return new LoginResult {
+            if (!accessTokenResult.isSuccess || accessTokenResult.token == null)
+            {
+                return new LoginResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = accessTokenResult.message ?? "Internal server error",
@@ -76,13 +88,15 @@ public class LoginService : ILoginService
                 };
             }
 
-            var newSession = new Session {
+            var newSession = new Session
+            {
                 User = user,
                 Target = SessionTarget.User,
-                Tokens = new List<Token> {}
+                Tokens = new List<Token> { }
             };
 
-            var refreshToken = new Token {
+            var refreshToken = new Token
+            {
                 Value = refreshTokenResult.token,
                 Type = TokenType.Refresh,
                 Target = TokenTarget.User,
@@ -90,7 +104,8 @@ public class LoginService : ILoginService
                 Session = newSession
             };
 
-            var accessToken = new Token {
+            var accessToken = new Token
+            {
                 Value = accessTokenResult.token,
                 Type = TokenType.Access,
                 Target = TokenTarget.User,
@@ -102,8 +117,9 @@ public class LoginService : ILoginService
             await _sessionRepository.AddSessionAsync(newSession);
             await _sessionRepository.AddTokenAsync(refreshToken);
             await _sessionRepository.AddTokenAsync(accessToken);
-            
-            return new LoginResult {
+
+            return new LoginResult
+            {
                 IsSuccess = true,
                 Status = "SUCCESS",
                 Message = "User logged in successfully",
@@ -111,8 +127,11 @@ public class LoginService : ILoginService
                 RefreshToken = refreshTokenResult.token,
                 AccessToken = accessTokenResult.token
             };
-        } catch (Exception ex) {
-            return new LoginResult {
+        }
+        catch (Exception ex)
+        {
+            return new LoginResult
+            {
                 IsSuccess = false,
                 Status = "ERROR",
                 Message = ex.Message ?? "Internal server error",

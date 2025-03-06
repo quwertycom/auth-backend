@@ -17,7 +17,7 @@ public class RequestNewCodeTests : TestBase
         var response = await _client.GetAsync("/api/authentication/email-verification/request-new-code");
 
         // Assert: The endpoint exists even if it returns method not allowed
-        Assert.IsFalse(response.StatusCode == HttpStatusCode.NotFound, 
+        Assert.IsFalse(response.StatusCode == HttpStatusCode.NotFound,
             "RequestNewCode endpoint should exist and not return 404 Not Found");
         Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
             "RequestNewCode endpoint should return Method Not Allowed for GET requests");
@@ -75,11 +75,11 @@ public class RequestNewCodeTests : TestBase
         // Arrange - Create a user with verified email
         var email = $"verified-{Guid.NewGuid()}@example.com";
         await EnsureVerifiedUserExistsAsync("testverified", "Password123!");
-        
+
         // Get the verified email for this user
         var userRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IUserRepository>();
         var userEmail = await userRepository.GetEmailAdressByEmailStringAsync($"testverified@example.com");
-        
+
         var request = new RequestNewCodeRequest
         {
             Email = $"testverified@example.com"
@@ -104,7 +104,7 @@ public class RequestNewCodeTests : TestBase
         // Arrange - Create a user and set the email state to Blacklisted
         var email = $"blacklisted-{Guid.NewGuid()}@example.com";
         await EnsureEmailWithSpecificStateAsync(email, EmailState.Blacklisted);
-        
+
         var request = new RequestNewCodeRequest
         {
             Email = email
@@ -129,7 +129,7 @@ public class RequestNewCodeTests : TestBase
         // Arrange - Create a user and set the email state to Deleted
         var email = $"deleted-{Guid.NewGuid()}@example.com";
         await EnsureEmailWithSpecificStateAsync(email, EmailState.Deleted);
-        
+
         var request = new RequestNewCodeRequest
         {
             Email = email
@@ -154,7 +154,7 @@ public class RequestNewCodeTests : TestBase
         // Arrange - Create a user and set the email state to Disabled
         var email = $"disabled-{Guid.NewGuid()}@example.com";
         await EnsureEmailWithSpecificStateAsync(email, EmailState.Disabled);
-        
+
         var request = new RequestNewCodeRequest
         {
             Email = email
@@ -223,13 +223,13 @@ public class RequestNewCodeTests : TestBase
         // Get access to the required services directly
         var userRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IUserRepository>();
         var hasher = GetRequiredService<API.Shared.Interfaces.Security.IHasher>();
-        
+
         // Check if user already exists
         if (!await userRepository.UsernameExistsAsync(username))
         {
             // Create a hash for the password
             var hashedPassword = hasher.Hash(password);
-            
+
             // Create and add a new user with the PendingVerification state
             var newUser = new API.Infrastructure.Database.Entities.User.User
             {
@@ -242,9 +242,9 @@ public class RequestNewCodeTests : TestBase
                 Gender = UserGender.Male,
                 State = UserState.PendingVerification
             };
-            
+
             await userRepository.AddUserAsync(newUser);
-            
+
             // Add an unverified email for the user
             var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
             {
@@ -253,7 +253,7 @@ public class RequestNewCodeTests : TestBase
                 State = EmailState.PendingVerification,
                 Type = EmailType.Primary
             };
-            
+
             await userRepository.AddEmailAsync(newEmail);
         }
     }
@@ -266,13 +266,13 @@ public class RequestNewCodeTests : TestBase
         // Get access to the required services directly
         var userRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IUserRepository>();
         var hasher = GetRequiredService<API.Shared.Interfaces.Security.IHasher>();
-        
+
         // Create a unique username
         var username = $"test-{Guid.NewGuid()}";
-        
+
         // Create a hash for the password
         var hashedPassword = hasher.Hash("Password123!");
-        
+
         // Create and add a new user
         var newUser = new API.Infrastructure.Database.Entities.User.User
         {
@@ -285,9 +285,9 @@ public class RequestNewCodeTests : TestBase
             Gender = UserGender.Male,
             State = UserState.Active
         };
-        
+
         await userRepository.AddUserAsync(newUser);
-        
+
         // Add an email with the specified state for the user
         var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
         {
@@ -296,7 +296,7 @@ public class RequestNewCodeTests : TestBase
             State = state,
             Type = EmailType.Primary
         };
-        
+
         await userRepository.AddEmailAsync(newEmail);
     }
-} 
+}

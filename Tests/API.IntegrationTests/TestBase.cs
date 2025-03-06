@@ -59,11 +59,11 @@ public abstract class TestBase : IDisposable
 
                     // Also remove the entire database services registration
                     // This is important to prevent multiple registrations
-                    var dbServices = services.Where(s => 
+                    var dbServices = services.Where(s =>
                         s.ServiceType.Namespace?.StartsWith("Microsoft.EntityFrameworkCore") == true ||
                         s.ImplementationType?.Namespace?.StartsWith("Microsoft.EntityFrameworkCore") == true
                     ).ToList();
-                    
+
                     foreach (var service in dbServices)
                     {
                         services.Remove(service);
@@ -127,13 +127,13 @@ public abstract class TestBase : IDisposable
         // Get access to the required services directly
         var userRepository = GetRequiredService<IUserRepository>();
         var hasher = GetRequiredService<API.Shared.Interfaces.Security.IHasher>();
-        
+
         // Check if user already exists
         if (!await userRepository.UsernameExistsAsync(username))
         {
             // Create a hash for the password
             var hashedPassword = hasher.Hash(password);
-            
+
             // Create and add a new user with the Active state
             var newUser = new User
             {
@@ -146,9 +146,9 @@ public abstract class TestBase : IDisposable
                 Gender = API.Shared.Enums.Entities.User.UserGender.Male,
                 State = API.Shared.Enums.Entities.User.UserState.Active // Important: Set as Active, not PendingVerification
             };
-            
+
             await userRepository.AddUserAsync(newUser);
-            
+
             // Add a verified email for the user
             var newEmail = new EmailAddress
             {
@@ -157,7 +157,7 @@ public abstract class TestBase : IDisposable
                 State = EmailState.Active, // Important: Set as Verified
                 Type = EmailType.Primary
             };
-            
+
             await userRepository.AddEmailAsync(newEmail);
         }
     }

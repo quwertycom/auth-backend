@@ -8,11 +8,11 @@ namespace API.UnitTests.Features.Authentication.Register;
 public class RegisterEndpointTests : TestBase
 {
     #region Helper Methods
-    
+
     private RegisterRequest CreateDefaultRegisterRequest(
         string username = "testuser",
-        string firstName = "Test", 
-        string lastName = "User", 
+        string firstName = "Test",
+        string lastName = "User",
         string email = "test@example.com",
         string password = "Password123!",
         string? phoneNumber = null)
@@ -29,16 +29,16 @@ public class RegisterEndpointTests : TestBase
             Gender = API.Shared.Enums.Entities.User.UserGender.Male
         };
     }
-    
+
     private RegisterEndpoint CreateEndpoint()
     {
         return new RegisterEndpoint(MockRegisterService);
     }
-    
+
     #endregion
-    
+
     #region RegisterEndpoint Tests
-    
+
     [Test]
     public async Task RegisterEndpoint_ValidRequest_ReturnsOkResult()
     {
@@ -245,6 +245,6 @@ public class RegisterEndpointTests : TestBase
             .Received(1)
             .RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>());
     }
-    
+
     #endregion
 }

@@ -802,7 +802,7 @@ public class VerificationRepositoryTests : TestBase
         _dbContext.Users.Add(user);
         _dbContext.EmailAddresses.Add(email);
         await _dbContext.SaveChangesAsync();
-        
+
         var request = new EmailVerificationRequest
         {
             UserId = user.Id,
@@ -834,7 +834,7 @@ public class VerificationRepositoryTests : TestBase
         _dbContext.Users.Add(user);
         _dbContext.EmailAddresses.Add(email);
         await _dbContext.SaveChangesAsync();
-        
+
         var olderRequest = new EmailVerificationRequest
         {
             UserId = user.Id,
@@ -878,7 +878,7 @@ public class VerificationRepositoryTests : TestBase
         _dbContext.Users.Add(user);
         _dbContext.EmailAddresses.Add(email);
         await _dbContext.SaveChangesAsync();
-        
+
         var request = new PasswordResetRequest
         {
             UserId = user.Id,
@@ -918,7 +918,7 @@ public class VerificationRepositoryTests : TestBase
         _dbContext.Users.Add(user);
         _dbContext.EmailAddresses.Add(email);
         await _dbContext.SaveChangesAsync();
-        
+
         var validRequest = new PasswordResetRequest
         {
             UserId = user.Id,
@@ -976,7 +976,7 @@ public class VerificationRepositoryTests : TestBase
         var user = new User { Username = "testuser", FirstName = "Test", LastName = "User", PasswordHash = "hash", PasswordSalt = "salt", BirthDate = DateTime.Now.AddYears(-20), Gender = UserGender.Male, State = UserState.PendingVerification };
         var email1 = new EmailAddress { UserId = user.Id, Value = "test1@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
         var email2 = new EmailAddress { UserId = user.Id, Value = "test2@example.com", State = EmailState.PendingVerification, Type = EmailType.Primary, User = user };
-        
+
         var request1 = new EmailVerificationRequest
         {
             UserId = user.Id,

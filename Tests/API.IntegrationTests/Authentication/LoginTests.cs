@@ -29,10 +29,10 @@ public class LoginTests : TestBase
         // Arrange - Ensure we have a verified user in the database
         var username = "testverifieduser";
         var password = "TestPassword123!";
-        
+
         // Create a verified user directly in the database
         await EnsureVerifiedUserExistsAsync(username, password);
-        
+
         // Create login request
         var loginRequest = new LoginRequest
         {
@@ -99,7 +99,7 @@ public class LoginTests : TestBase
         // Note: This test depends on your ability to create an inactive user
         // In a real system, you might need special API access or database manipulation
         // For now, we'll simulate it with a special username that your system might recognize
-        
+
         // Arrange - Register a user that will be recognized as inactive
         var username = "inactive_user";
         var password = "Password123!";
@@ -116,8 +116,8 @@ public class LoginTests : TestBase
         var response = await PostAsync("/api/authentication/login", loginRequest);
 
         // Assert - Accept multiple status codes for flexibility
-        Assert.IsTrue(response.StatusCode == HttpStatusCode.Unauthorized || 
-                     response.StatusCode == HttpStatusCode.Forbidden || 
+        Assert.IsTrue(response.StatusCode == HttpStatusCode.Unauthorized ||
+                     response.StatusCode == HttpStatusCode.Forbidden ||
                      response.StatusCode == HttpStatusCode.BadRequest,
             $"Expected Unauthorized, Forbidden or BadRequest, but got {response.StatusCode}");
     }
@@ -128,7 +128,7 @@ public class LoginTests : TestBase
         // Note: This test depends on your ability to create a locked user
         // In a real system, you might need special API access or database manipulation
         // For now, we'll simulate it with a special username that your system might recognize
-        
+
         // Arrange - Register a user that will be recognized as locked
         var username = "locked_user";
         var password = "Password123!";
@@ -145,8 +145,8 @@ public class LoginTests : TestBase
         var response = await PostAsync("/api/authentication/login", loginRequest);
 
         // Assert - Accept multiple status codes for flexibility 
-        Assert.IsTrue(response.StatusCode == HttpStatusCode.Forbidden || 
-                     response.StatusCode == HttpStatusCode.Unauthorized || 
+        Assert.IsTrue(response.StatusCode == HttpStatusCode.Forbidden ||
+                     response.StatusCode == HttpStatusCode.Unauthorized ||
                      response.StatusCode == HttpStatusCode.BadRequest,
             $"Expected Forbidden, Unauthorized or BadRequest, but got {response.StatusCode}");
     }
@@ -199,7 +199,7 @@ public class LoginTests : TestBase
         var response = await PostAsync("/api/authentication/login", loginRequest);
 
         // Assert - Accept multiple status codes for flexibility
-        Assert.IsTrue(response.StatusCode == HttpStatusCode.InternalServerError || 
+        Assert.IsTrue(response.StatusCode == HttpStatusCode.InternalServerError ||
                      response.StatusCode == HttpStatusCode.BadRequest,
             $"Expected InternalServerError or BadRequest, but got {response.StatusCode}");
     }
@@ -220,4 +220,4 @@ public class LoginTests : TestBase
 
         return await PostAsync("/api/authentication/register", registerRequest);
     }
-} 
+}

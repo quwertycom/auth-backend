@@ -1863,7 +1863,7 @@ public class SessionRepositoryTests : TestBase
         Assert.That(retrievedToken!.ParentToken, Is.Not.Null);
         Assert.That(retrievedToken.ParentToken!.Value, Is.EqualTo("parent-token"));
     }
-    
+
     [Test]
     public async Task ConcurrentSessions_GetActiveUserSessions_ReturnsAllActiveSessions()
     {
@@ -1977,16 +1977,16 @@ public class SessionRepositoryTests : TestBase
         var updatedSession = await _dbContext.Sessions.FindAsync(session.Id);
         Assert.That(updatedSession, Is.Not.Null);
         Assert.That(updatedSession!.IsRevoked, Is.True);
-        
+
         // Check if tokens are still active (RevokeSessionAsync doesn't revoke tokens)
         var tokens = await _dbContext.Tokens.Where(t => t.SessionId == session.Id).ToListAsync();
         Assert.That(tokens, Has.Count.EqualTo(2));
         // The tokens should still be active since RevokeSessionAsync doesn't revoke tokens
         Assert.That(tokens.All(t => !t.IsRevoked), Is.True);
-        
+
         // Now let's revoke all tokens in the session
         await _sessionRepository.RevokeAllSessionTokensAsync(session.Id);
-        
+
         // Check if tokens are now revoked
         tokens = await _dbContext.Tokens.Where(t => t.SessionId == session.Id).ToListAsync();
         Assert.That(tokens.All(t => t.IsRevoked), Is.True);

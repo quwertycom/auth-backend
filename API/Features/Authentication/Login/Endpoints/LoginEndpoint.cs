@@ -29,7 +29,7 @@ public class LoginEndpoint : Endpoint<LoginRequest, LoginResponse>
     public override async Task HandleAsync(LoginRequest req, CancellationToken ct)
     {
         var result = await _loginService.LoginAsync(req.Username, req.Password, ct);
-        
+
         await SendAsync(new LoginResponse
         {
             Status = result.Status,

@@ -72,8 +72,8 @@ public class EmailVerificationServiceTests : TestBase
     }
 
     private EmailVerificationRequest CreateMockVerificationRequest(
-        string requestId, 
-        string code, 
+        string requestId,
+        string code,
         EmailAddress emailAddress,
         User user,
         bool isUsed = false,
@@ -151,7 +151,7 @@ public class EmailVerificationServiceTests : TestBase
         string emailAddress = "test@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
         _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(null));
 
@@ -238,11 +238,11 @@ public class EmailVerificationServiceTests : TestBase
         await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
         await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
-    
+
     #endregion
-    
+
     #region GetRequestStatusAsync Tests
-    
+
     [Test]
     public async Task GetRequestStatusAsync_ValidRequest_ReturnsSuccessResult()
     {
@@ -252,43 +252,43 @@ public class EmailVerificationServiceTests : TestBase
         var mockUser = CreateMockUser();
         var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
-            
+
         _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Status.Should().Be("SUCCESS");
         result.IsValid.Should().BeTrue();
     }
-    
+
     [Test]
     public async Task GetRequestStatusAsync_RequestNotFound_ReturnsRequestNotFoundResult()
     {
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(null));
-            
+
         // Act
         var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("REQUEST_NOT_FOUND");
         result.HttpStatusCode.Should().Be(404);
     }
-    
+
     [Test]
     public async Task GetRequestStatusAsync_EmailMismatch_ReturnsEmailMismatchResult()
     {
@@ -296,92 +296,92 @@ public class EmailVerificationServiceTests : TestBase
         string requestId = "123456789";
         string email = "test@example.com";
         string differentEmail = "different@example.com";
-        
+
         var mockUser = CreateMockUser();
         var emailAddressEntity = CreateMockEmailAddress(differentEmail, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
-            
+
         _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_MISMATCH");
     }
-    
+
     [Test]
     public async Task GetRequestStatusAsync_RequestUsed_ReturnsRequestUsedResult()
     {
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
-        
+
         var mockUser = CreateMockUser();
         var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isUsed: true);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
-            
+
         _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("REQUEST_USED");
     }
-    
+
     [Test]
     public async Task GetRequestStatusAsync_RequestExpired_ReturnsRequestExpiredResult()
     {
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
-        
+
         var mockUser = CreateMockUser();
         var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isExpired: true);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
-            
+
         _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("REQUEST_EXPIRED");
         result.HttpStatusCode.Should().Be(410);
     }
-    
+
     [Test]
     public async Task GetRequestStatusAsync_ExceptionThrown_ReturnsErrorResult()
     {
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromException<EmailVerificationRequest?>(new Exception("Database error")));
-            
+
         // Act
         var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
@@ -389,140 +389,140 @@ public class EmailVerificationServiceTests : TestBase
         result.Message.Should().Contain("Database error");
         result.HttpStatusCode.Should().Be(500);
     }
-    
+
     #endregion
-    
+
     #region VerifyEmailAsync Tests
-    
+
     [Test]
     public async Task VerifyEmailAsync_ValidRequest_ReturnsSuccessResult()
     {
         // Arrange
         string requestId = "123456789";
         string code = "12345678";
-        
+
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
-        
+
         var user = CreateMockUser();
         user.Id = userId;
-        
+
         var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
         emailAddress.Id = emailId;
-        
+
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
-            
+
         // Act
         var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Status.Should().Be("SUCCESS");
         result.RequestId.Should().Be(requestId);
-        
+
         await _mockVerificationRepository!.Received(1).MarkEmailVerificationRequestAsUsedAsync(long.Parse(requestId));
         await _mockUserRepository!.Received(1).UpdateUserStateAsync(userId, UserState.Active);
         await _mockUserRepository!.Received(1).UpdateEmailStateAsync(emailId, EmailState.Active);
     }
-    
+
     [Test]
     public async Task VerifyEmailAsync_RequestNotFound_ReturnsRequestNotFoundResult()
     {
         // Arrange
         string requestId = "123456789";
         string code = "12345678";
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(null));
-            
+
         // Act
         var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("REQUEST_NOT_FOUND");
         result.HttpStatusCode.Should().Be(404);
-        
+
         await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
         await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
         await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
-    
+
     [Test]
     public async Task VerifyEmailAsync_RequestUsed_ReturnsRequestUsedResult()
     {
         // Arrange
         string requestId = "123456789";
         string code = "12345678";
-        
+
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
-        
+
         var user = CreateMockUser();
         user.Id = userId;
-        
+
         var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
         emailAddress.Id = emailId;
-        
+
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isUsed: true);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
-            
+
         // Act
         var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("REQUEST_USED");
         result.HttpStatusCode.Should().Be(400);
-        
+
         await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
         await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
         await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
-    
+
     [Test]
     public async Task VerifyEmailAsync_RequestExpired_ReturnsRequestExpiredResult()
     {
         // Arrange
         string requestId = "123456789";
         string code = "12345678";
-        
+
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
-        
+
         var user = CreateMockUser();
         user.Id = userId;
-        
+
         var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
         emailAddress.Id = emailId;
-        
+
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isExpired: true);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
-            
+
         // Act
         var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("REQUEST_EXPIRED");
         result.HttpStatusCode.Should().Be(410);
-        
+
         await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
         await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
         await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
-    
+
     [Test]
     public async Task VerifyEmailAsync_CodeMismatch_ReturnsCodeMismatchResult()
     {
@@ -530,64 +530,64 @@ public class EmailVerificationServiceTests : TestBase
         string requestId = "123456789";
         string code = "12345678";
         string incorrectCode = "87654321";
-        
+
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
-        
+
         var user = CreateMockUser();
         user.Id = userId;
-        
+
         var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
         emailAddress.Id = emailId;
-        
+
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
-            
+
         // Act
         var result = await _emailVerificationService!.VerifyEmailAsync(requestId, incorrectCode, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("CODE_MISMATCH");
         result.HttpStatusCode.Should().Be(400);
-        
+
         await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
         await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
         await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
-    
+
     [Test]
     public async Task VerifyEmailAsync_ExceptionThrown_ReturnsErrorResult()
     {
         // Arrange
         string requestId = "123456789";
         string code = "12345678";
-        
+
         _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromException<EmailVerificationRequest?>(new Exception("Database error")));
-            
+
         // Act
         var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("ERROR");
         result.Message.Should().Contain("Database error");
         result.HttpStatusCode.Should().Be(500);
-        
+
         await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
         await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
         await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
-    
+
     #endregion
-    
+
     #region RequestNewCodeAsync Tests
-    
+
     [Test]
     public async Task RequestNewCodeAsync_ValidRequest_ReturnsSuccessResult()
     {
@@ -595,16 +595,16 @@ public class EmailVerificationServiceTests : TestBase
         string email = "test@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-            
+
         _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId)
             .Returns(Task.FromResult<User?>(mockEmailAddressEntity.User));
-            
+
         // Act
         var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
@@ -612,26 +612,26 @@ public class EmailVerificationServiceTests : TestBase
         result.NewRequestId.Should().NotBeNullOrEmpty();
         result.HttpStatusCode.Should().Be(200);
     }
-    
+
     [Test]
     public async Task RequestNewCodeAsync_EmailNotFound_ReturnsEmailNotFoundResult()
     {
         // Arrange
         string email = "nonexistent@example.com";
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(null));
-            
+
         // Act
         var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_NOT_FOUND");
         result.HttpStatusCode.Should().Be(404);
     }
-    
+
     [Test]
     public async Task RequestNewCodeAsync_EmailAlreadyVerified_ReturnsEmailAlreadyVerifiedResult()
     {
@@ -639,20 +639,20 @@ public class EmailVerificationServiceTests : TestBase
         string email = "verified@example.com";
         var mockUser = CreateMockUser(UserState.Active);
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Active, mockUser);
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_ALREADY_VERIFIED");
         result.HttpStatusCode.Should().Be(400);
     }
-    
+
     [Test]
     public async Task RequestNewCodeAsync_EmailBlacklisted_ReturnsEmailBlacklistedResult()
     {
@@ -660,20 +660,20 @@ public class EmailVerificationServiceTests : TestBase
         string email = "blacklisted@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Blacklisted, mockUser);
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_BLACKLISTED");
         result.HttpStatusCode.Should().Be(400);
     }
-    
+
     [Test]
     public async Task RequestNewCodeAsync_EmailDisabled_ReturnsEmailDisabledResult()
     {
@@ -681,20 +681,20 @@ public class EmailVerificationServiceTests : TestBase
         string email = "disabled@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Disabled, mockUser);
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_DISABLED");
         result.HttpStatusCode.Should().Be(400);
     }
-    
+
     [Test]
     public async Task RequestNewCodeAsync_EmailDeleted_ReturnsEmailDisabledResult()
     {
@@ -702,32 +702,32 @@ public class EmailVerificationServiceTests : TestBase
         string email = "deleted@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Deleted, mockUser);
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-            
+
         // Act
         var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("EMAIL_DISABLED");
         result.HttpStatusCode.Should().Be(400);
     }
-    
+
     [Test]
     public async Task RequestNewCodeAsync_ExceptionThrown_ReturnsErrorResult()
     {
         // Arrange
         string email = "test@example.com";
-        
+
         _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromException<EmailAddress?>(new Exception("Database error")));
-            
+
         // Act
         var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
@@ -735,6 +735,6 @@ public class EmailVerificationServiceTests : TestBase
         result.Message.Should().Contain("Database error");
         result.HttpStatusCode.Should().Be(500);
     }
-    
+
     #endregion
 }

@@ -17,7 +17,7 @@ public class RegisterTests : TestBase
         var response = await _client.GetAsync("/api/authentication/register");
 
         // Assert: The endpoint exists even if it returns method not allowed
-        Assert.IsFalse(response.StatusCode == HttpStatusCode.NotFound, 
+        Assert.IsFalse(response.StatusCode == HttpStatusCode.NotFound,
             "Register endpoint should exist and not return 404 Not Found");
         Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
             "Register endpoint should return Method Not Allowed for GET requests");
@@ -43,7 +43,7 @@ public class RegisterTests : TestBase
         var response = await PostAsync("/api/authentication/register", request);
 
         // Assert - strict check for OK status
-        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, 
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode,
             $"Expected OK status code for valid registration, but got {response.StatusCode}");
 
         // Verify the success response
@@ -74,7 +74,7 @@ public class RegisterTests : TestBase
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
             "Registration with invalid email format should return Bad Request");
-        
+
         // Verify error response contains a message without requiring specific text
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -102,7 +102,7 @@ public class RegisterTests : TestBase
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
             "Registration with password too short should return Bad Request");
-        
+
         // Verify error response contains a message without requiring specific text
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -130,7 +130,7 @@ public class RegisterTests : TestBase
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
             "Registration with missing required fields should return Bad Request");
-        
+
         // Verify error response contains a message
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -159,7 +159,7 @@ public class RegisterTests : TestBase
         // Assert - we check that we either get success or a clear error
         Assert.That(response.StatusCode, Is.AnyOf(HttpStatusCode.OK, HttpStatusCode.BadRequest),
             "Registration should return either OK or BadRequest");
-            
+
         // Verify that we can deserialize the response
         if (response.StatusCode == HttpStatusCode.OK)
         {
@@ -172,4 +172,4 @@ public class RegisterTests : TestBase
             Assert.IsNotNull(errorContent, "Error response should not be null");
         }
     }
-} 
+}

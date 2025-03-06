@@ -142,7 +142,7 @@ public class RegisterServiceTests : TestBase
     #endregion
 
     #region Registration Failure Tests
-    
+
     [Test]
     public async Task RegisterUserAsync_UsernameExists_ReturnsFailureResult()
     {
@@ -239,7 +239,7 @@ public class RegisterServiceTests : TestBase
         result.Status.Should().Be("EMAIL_VERIFICATION_FAILED");
         result.Message.Should().Be("Could not send verification email");
     }
-    
+
     #endregion
 
     #region Exception Handling Tests
@@ -320,6 +320,6 @@ public class RegisterServiceTests : TestBase
         result.Status.Should().Be("ERROR");
         result.Message.Should().Contain("Failed to add phone number to database");
     }
-    
+
     #endregion
 }
