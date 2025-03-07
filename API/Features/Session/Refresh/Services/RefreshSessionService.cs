@@ -59,14 +59,6 @@ public class RefreshSessionService : IRefreshSessionService
                     Message = "Token is not a refresh token",
                     HttpStatusCode = 400
                 };
-            } else if (token.IsRefreshed)
-            {
-                return new RefreshSessionResult {
-                    IsSuccess = false,
-                    Status = "ERROR",
-                    Message = "Token has already been refreshed",
-                    HttpStatusCode = 400
-                };
             } else if (token.IsRevoked)
             {
                 return new RefreshSessionResult {

@@ -365,11 +365,6 @@ public class AuthDbContext : DbContext
           .HasMaxLength(512);
 
         modelBuilder.Entity<Token>()
-          .Property(t => t.IsRefreshed)
-          .IsRequired()
-          .HasDefaultValue(false);
-
-        modelBuilder.Entity<Token>()
           .Property(t => t.IsRevoked)
           .IsRequired()
           .HasDefaultValue(false);
