@@ -8,19 +8,6 @@ namespace API.UnitTests.Features.Authentication.EmailVerification;
 
 public class VerifyEmailEndpointTests : TestBase
 {
-    private API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService? _mockEmailVerificationService;
-
-    #region Setup
-
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
-        _mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
-    }
-
-    #endregion
-
     #region Helper Methods
 
     private VerifyEmailRequest CreateDefaultRequest(string requestId = "123456", string code = "123456")
@@ -65,7 +52,8 @@ public class VerifyEmailEndpointTests : TestBase
     public void Constructor_InitializesProperties()
     {
         // Arrange & Act
-        var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService!);
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var endpoint = new VerifyEmailEndpoint(mockEmailVerificationService!);
 
         // Assert - use reflection to check private field was initialized
         var fieldInfo = typeof(VerifyEmailEndpoint).GetField(
@@ -75,7 +63,7 @@ public class VerifyEmailEndpointTests : TestBase
         Assert.That(fieldInfo, Is.Not.Null, "Field _emailVerificationService should exist");
 
         var fieldValue = fieldInfo!.GetValue(endpoint);
-        Assert.That(fieldValue, Is.EqualTo(_mockEmailVerificationService),
+        Assert.That(fieldValue, Is.EqualTo(mockEmailVerificationService),
             "Service should be initialized in constructor");
     }
 
@@ -104,13 +92,14 @@ public class VerifyEmailEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var successResult = CreateSuccessResult();
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
 
-        _mockEmailVerificationService!
+        mockEmailVerificationService!
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>())
             .Returns(successResult);
 
         // Create endpoint
-        var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
+        var endpoint = new VerifyEmailEndpoint(mockEmailVerificationService);
 
         try
         {
@@ -123,7 +112,7 @@ public class VerifyEmailEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockEmailVerificationService
+        await mockEmailVerificationService
             .Received(1)
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>());
     }
@@ -137,13 +126,14 @@ public class VerifyEmailEndpointTests : TestBase
             status: "REQUEST_NOT_FOUND",
             message: "Verification request not found"
         );
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
 
-        _mockEmailVerificationService!
+        mockEmailVerificationService!
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
+        var endpoint = new VerifyEmailEndpoint(mockEmailVerificationService);
 
         try
         {
@@ -156,7 +146,7 @@ public class VerifyEmailEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockEmailVerificationService
+        await mockEmailVerificationService
             .Received(1)
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>());
     }
@@ -170,13 +160,14 @@ public class VerifyEmailEndpointTests : TestBase
             status: "INVALID_CODE",
             message: "Verification code is invalid"
         );
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
 
-        _mockEmailVerificationService!
+        mockEmailVerificationService!
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
+        var endpoint = new VerifyEmailEndpoint(mockEmailVerificationService);
 
         try
         {
@@ -189,7 +180,7 @@ public class VerifyEmailEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockEmailVerificationService
+        await mockEmailVerificationService
             .Received(1)
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>());
     }
@@ -203,13 +194,14 @@ public class VerifyEmailEndpointTests : TestBase
             status: "REQUEST_EXPIRED",
             message: "Verification request has expired"
         );
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
 
-        _mockEmailVerificationService!
+        mockEmailVerificationService!
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
+        var endpoint = new VerifyEmailEndpoint(mockEmailVerificationService);
 
         try
         {
@@ -222,7 +214,7 @@ public class VerifyEmailEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockEmailVerificationService
+        await mockEmailVerificationService
             .Received(1)
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>());
     }
@@ -236,13 +228,14 @@ public class VerifyEmailEndpointTests : TestBase
             status: "ERROR",
             message: "An internal error occurred"
         );
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
 
-        _mockEmailVerificationService!
+        mockEmailVerificationService!
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new VerifyEmailEndpoint(_mockEmailVerificationService);
+        var endpoint = new VerifyEmailEndpoint(mockEmailVerificationService);
 
         try
         {
@@ -255,7 +248,7 @@ public class VerifyEmailEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockEmailVerificationService
+        await mockEmailVerificationService
             .Received(1)
             .VerifyEmailAsync(request.RequestId, request.Code, Arg.Any<CancellationToken>());
     }

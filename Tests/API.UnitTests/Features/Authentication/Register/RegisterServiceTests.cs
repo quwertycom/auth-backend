@@ -8,41 +8,6 @@ namespace API.UnitTests.Features.Authentication.Register;
 
 public class RegisterServiceTests : TestBase
 {
-    private RegisterService? _registerService;
-    private API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService? _mockEmailVerificationService;
-
-    #region Setup
-
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
-
-        // Create instance of the service with mocked dependencies
-        _mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
-
-        _registerService = new RegisterService(
-            MockUserRepository,
-            MockHasher,
-            _mockEmailVerificationService
-        );
-
-        // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
-
-        // Setup default behavior for email verification service
-        _mockEmailVerificationService
-            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new RequestEmailVerificationResult
-            {
-                IsSuccess = true,
-                Status = "SUCCESS",
-                RequestId = "verification-session-id"
-            });
-    }
-
-    #endregion
-
     #region Helper Methods
 
     private RegisterRequest CreateDefaultRegisterRequest(
@@ -85,9 +50,28 @@ public class RegisterServiceTests : TestBase
         // Arrange
         var request = CreateDefaultRegisterRequest();
         SetupRepositoriesForSuccess();
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -123,9 +107,28 @@ public class RegisterServiceTests : TestBase
         // Arrange
         var request = CreateDefaultRegisterRequest(phoneNumber: "+1234567890");
         SetupRepositoriesForSuccess();
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -149,9 +152,28 @@ public class RegisterServiceTests : TestBase
         // Arrange
         var request = CreateDefaultRegisterRequest(username: "existinguser");
         MockUserRepository.UsernameExistsAsync("existinguser").Returns(true);
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -170,9 +192,28 @@ public class RegisterServiceTests : TestBase
         var request = CreateDefaultRegisterRequest(email: "existing@example.com");
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync("existing@example.com").Returns(true);
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -192,9 +233,28 @@ public class RegisterServiceTests : TestBase
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.EmailAdressExistsAsync(Arg.Any<string>()).Returns(false);
         MockUserRepository.PhoneNumberExistsAsync("+1234567890").Returns(true);
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -212,9 +272,17 @@ public class RegisterServiceTests : TestBase
         // Arrange
         var request = CreateDefaultRegisterRequest();
         SetupRepositoriesForSuccess();
-
-        // Setup email verification to fail
         var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
         mockEmailVerificationService
             .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new RequestEmailVerificationResult
@@ -224,14 +292,8 @@ public class RegisterServiceTests : TestBase
                 Message = "Could not send verification email"
             });
 
-        var serviceWithFailingVerification = new RegisterService(
-            MockUserRepository,
-            MockHasher,
-            mockEmailVerificationService
-        );
-
         // Act
-        var result = await serviceWithFailingVerification.RegisterUserAsync(request, CancellationToken.None)!;
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -249,13 +311,30 @@ public class RegisterServiceTests : TestBase
     {
         // Arrange
         var request = CreateDefaultRegisterRequest();
-
-        // Setup repository to throw an exception
         MockUserRepository.UsernameExistsAsync(Arg.Any<string>())
             .Returns(Task.FromException<bool>(new Exception("Database connection failed")));
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -270,11 +349,31 @@ public class RegisterServiceTests : TestBase
         // Arrange
         var request = CreateDefaultRegisterRequest();
         SetupRepositoriesForSuccess();
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
+
         MockUserRepository.AddUserAsync(Arg.Any<User>())
             .Returns(Task.FromException(new Exception("Failed to add user to database")));
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -289,11 +388,31 @@ public class RegisterServiceTests : TestBase
         // Arrange
         var request = CreateDefaultRegisterRequest();
         SetupRepositoriesForSuccess();
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
+
         MockUserRepository.AddEmailAsync(Arg.Any<EmailAddress>())
             .Returns(Task.FromException(new Exception("Failed to add email to database")));
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -308,11 +427,31 @@ public class RegisterServiceTests : TestBase
         // Arrange
         var request = CreateDefaultRegisterRequest(phoneNumber: "+1234567890");
         SetupRepositoriesForSuccess();
+        var mockEmailVerificationService = Substitute.For<API.Features.Authentication.EmailVerification.Interfaces.IEmailVerificationService>();
+        var registerService = new RegisterService(
+            MockUserRepository,
+            MockHasher,
+            mockEmailVerificationService
+        );
+
+        // Setup default behavior for the Hasher
+        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+
+        // Setup default behavior for email verification service
+        mockEmailVerificationService
+            .RequestEmailVerificationAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new RequestEmailVerificationResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                RequestId = "verification-session-id"
+            });
+
         MockUserRepository.AddPhoneNumberAsync(Arg.Any<PhoneNumber>())
             .Returns(Task.FromException(new Exception("Failed to add phone number to database")));
 
         // Act
-        var result = await _registerService!.RegisterUserAsync(request, CancellationToken.None);
+        var result = await registerService!.RegisterUserAsync(request, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();

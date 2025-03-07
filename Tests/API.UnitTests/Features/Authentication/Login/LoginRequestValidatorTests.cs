@@ -6,16 +6,7 @@ namespace API.UnitTests.Features.Authentication.Login;
 
 public class LoginRequestValidatorTests : TestBase
 {
-    private LoginRequestValidator? _validator;
-
     #region Setup
-
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
-        _validator = new LoginRequestValidator();
-    }
 
     #endregion
 
@@ -39,9 +30,10 @@ public class LoginRequestValidatorTests : TestBase
     {
         // Arrange
         var request = CreateValidRequest();
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldNotHaveValidationErrorFor(x => x.Username);
     }
 
@@ -51,9 +43,10 @@ public class LoginRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Username = string.Empty;
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Username)
             .WithErrorMessage("Username is required!");
     }
@@ -64,9 +57,10 @@ public class LoginRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Username = null!;
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Username)
             .WithErrorMessage("Username is required!");
     }
@@ -77,9 +71,10 @@ public class LoginRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Username = "test-user@123";
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Username)
             .WithErrorMessage("Username must contain only letters and numbers!");
     }
@@ -90,9 +85,10 @@ public class LoginRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Username = "testUser123";
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldNotHaveValidationErrorFor(x => x.Username);
     }
 
@@ -105,9 +101,10 @@ public class LoginRequestValidatorTests : TestBase
     {
         // Arrange
         var request = CreateValidRequest();
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldNotHaveValidationErrorFor(x => x.Password);
     }
 
@@ -117,9 +114,10 @@ public class LoginRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Password = string.Empty;
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password is required!");
     }
@@ -130,9 +128,10 @@ public class LoginRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Password = null!;
+        var validator = new LoginRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator!.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Password)
             .WithErrorMessage("Password is required!");
     }

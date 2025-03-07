@@ -6,19 +6,6 @@ namespace API.UnitTests.Features.Authentication.EmailVerification;
 
 public class RequestStatusRequestValidatorTests : TestBase
 {
-    private RequestStatusRequestValidator? _validator;
-
-    #region Setup
-
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
-        _validator = new RequestStatusRequestValidator();
-    }
-
-    #endregion
-
     #region Helper Methods
 
     private RequestStatusRequest CreateValidRequest()
@@ -39,9 +26,10 @@ public class RequestStatusRequestValidatorTests : TestBase
     {
         // Arrange
         var request = CreateValidRequest();
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldNotHaveValidationErrorFor(x => x.RequestId);
     }
 
@@ -51,9 +39,10 @@ public class RequestStatusRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.RequestId = string.Empty;
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.RequestId)
             .WithErrorMessage("RequestId is required!");
     }
@@ -64,9 +53,10 @@ public class RequestStatusRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.RequestId = null!;
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.RequestId)
             .WithErrorMessage("RequestId is required!");
     }
@@ -77,9 +67,10 @@ public class RequestStatusRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.RequestId = "abc123";
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.RequestId)
             .WithErrorMessage("RequestId must be a number!");
     }
@@ -93,9 +84,10 @@ public class RequestStatusRequestValidatorTests : TestBase
     {
         // Arrange
         var request = CreateValidRequest();
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldNotHaveValidationErrorFor(x => x.Email);
     }
 
@@ -105,9 +97,10 @@ public class RequestStatusRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Email = string.Empty;
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("Email is required!");
     }
@@ -118,9 +111,10 @@ public class RequestStatusRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Email = null!;
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("Email is required!");
     }
@@ -131,9 +125,10 @@ public class RequestStatusRequestValidatorTests : TestBase
         // Arrange
         var request = CreateValidRequest();
         request.Email = "invalid-email";
+        var validator = new RequestStatusRequestValidator();
 
         // Act & Assert
-        var result = _validator!.TestValidate(request);
+        var result = validator.TestValidate(request);
         result.ShouldHaveValidationErrorFor(x => x.Email)
             .WithErrorMessage("Email is invalid!");
     }

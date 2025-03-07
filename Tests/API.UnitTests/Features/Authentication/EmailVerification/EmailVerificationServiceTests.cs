@@ -11,34 +11,6 @@ namespace API.UnitTests.Features.Authentication.EmailVerification;
 
 public class EmailVerificationServiceTests : TestBase
 {
-    private EmailVerificationService? _emailVerificationService;
-    private IUserRepository? _mockUserRepository;
-    private IVerificationRepository? _mockVerificationRepository;
-    private IRandomGenerator? _mockRandomGenerator;
-    private IEmailSender? _mockEmailSender;
-
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
-
-        _mockUserRepository = Substitute.For<IUserRepository>();
-        _mockVerificationRepository = Substitute.For<IVerificationRepository>();
-        _mockRandomGenerator = Substitute.For<IRandomGenerator>();
-        _mockEmailSender = Substitute.For<IEmailSender>();
-
-        _emailVerificationService = new EmailVerificationService(
-            _mockUserRepository,
-            _mockVerificationRepository,
-            _mockRandomGenerator,
-            _mockEmailSender
-        );
-
-        // Default mock setups for success case
-        _mockRandomGenerator.GenerateNumberCode(8).Returns("12345678");
-        _mockEmailSender.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
-    }
-
     #region Helper Methods
 
     private User CreateMockUser(UserState state = UserState.PendingVerification)
@@ -102,11 +74,26 @@ public class EmailVerificationServiceTests : TestBase
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
+        mockRandomGenerator.GenerateNumberCode(8).Returns("12345678");
+        mockEmailSender.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+
 
         // Act
-        var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
+        var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -114,14 +101,14 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("SUCCESS");
         result.RequestId.Should().NotBeNullOrEmpty();
 
-        await _mockVerificationRepository!.Received(1).AddEmailVerificationRequestAsync(Arg.Is<EmailVerificationRequest>(req =>
+        await mockVerificationRepository!.Received(1).AddEmailVerificationRequestAsync(Arg.Is<EmailVerificationRequest>(req =>
             req.Code == "12345678" &&
             req.EmailAddress == mockEmailAddressEntity &&
             req.User == mockUser &&
             req.ExpiresAt > DateTime.UtcNow &&
             req.CreatedAt <= DateTime.UtcNow
         ));
-        await _mockEmailSender!.Received(1).SendOtpEmailAsync(emailAddress, "12345678", "Test", "en");
+        await mockEmailSender!.Received(1).SendOtpEmailAsync(emailAddress, "12345678", "Test", "en");
     }
 
     [Test]
@@ -129,10 +116,21 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "nonexistent@example.com";
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(null));
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(null));
 
         // Act
-        var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
+        var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -140,8 +138,8 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("EMAIL_NOT_FOUND");
         result.RequestId.Should().BeNull();
 
-        await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
-        await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
+        await mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
@@ -152,11 +150,23 @@ public class EmailVerificationServiceTests : TestBase
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(null));
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(null));
 
         // Act
-        var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
+        var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -164,8 +174,8 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("USER_NOT_FOUND");
         result.RequestId.Should().BeNull();
 
-        await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
-        await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
+        await mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
@@ -176,11 +186,23 @@ public class EmailVerificationServiceTests : TestBase
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.Active, mockUser);
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
 
         // Act
-        var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
+        var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -188,8 +210,8 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("EMAIL_NOT_VERIFIED");
         result.RequestId.Should().BeNull();
 
-        await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
-        await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
+        await mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
@@ -200,12 +222,25 @@ public class EmailVerificationServiceTests : TestBase
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
-        _mockEmailSender!.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(false);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
+        mockRandomGenerator.GenerateNumberCode(8).Returns("12345678");
+        mockEmailSender!.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(false);
 
         // Act
-        var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
+        var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -213,8 +248,8 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("EMAIL_SENDING_FAILED");
         result.RequestId.Should().BeNull();
 
-        await _mockVerificationRepository!.Received(1).AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
-        await _mockEmailSender!.Received(1).SendOtpEmailAsync(emailAddress, "12345678", "Test", "en");
+        await mockVerificationRepository!.Received(1).AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
+        await mockEmailSender!.Received(1).SendOtpEmailAsync(emailAddress, "12345678", "Test", "en");
     }
 
     [Test]
@@ -222,11 +257,23 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress)
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress)
             .Returns(Task.FromException<EmailAddress?>(new Exception("Database error")));
 
         // Act
-        var result = await _emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
+        var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -235,8 +282,8 @@ public class EmailVerificationServiceTests : TestBase
         result.Message.Should().Contain("Database error");
         result.RequestId.Should().BeNull();
 
-        await _mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
-        await _mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await mockVerificationRepository!.DidNotReceive().AddEmailVerificationRequestAsync(Arg.Any<EmailVerificationRequest>());
+        await mockEmailSender!.DidNotReceive().SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     #endregion
@@ -253,14 +300,26 @@ public class EmailVerificationServiceTests : TestBase
         var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
 
-        _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
+        mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
+        var result = await emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -275,12 +334,23 @@ public class EmailVerificationServiceTests : TestBase
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(null));
 
         // Act
-        var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
+        var result = await emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -301,14 +371,26 @@ public class EmailVerificationServiceTests : TestBase
         var emailAddressEntity = CreateMockEmailAddress(differentEmail, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
 
-        _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
+        mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
+        var result = await emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -327,14 +409,26 @@ public class EmailVerificationServiceTests : TestBase
         var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isUsed: true);
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
 
-        _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
+        mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
+        var result = await emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -353,14 +447,26 @@ public class EmailVerificationServiceTests : TestBase
         var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
         var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isExpired: true);
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(verificationRequest));
 
-        _mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
+        mockUserRepository!.GetEmailAdressByIdAsync(emailAddressEntity.Id)
             .Returns(Task.FromResult<EmailAddress?>(emailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
+        var result = await emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -375,12 +481,23 @@ public class EmailVerificationServiceTests : TestBase
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeEmailAddress: true)
             .Returns(Task.FromException<EmailVerificationRequest?>(new Exception("Database error")));
 
         // Act
-        var result = await _emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
+        var result = await emailVerificationService!.GetRequestStatusAsync(requestId, email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -412,11 +529,23 @@ public class EmailVerificationServiceTests : TestBase
 
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
 
         // Act
-        var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
+        var result = await emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -424,9 +553,9 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("SUCCESS");
         result.RequestId.Should().Be(requestId);
 
-        await _mockVerificationRepository!.Received(1).MarkEmailVerificationRequestAsUsedAsync(long.Parse(requestId));
-        await _mockUserRepository!.Received(1).UpdateUserStateAsync(userId, UserState.Active);
-        await _mockUserRepository!.Received(1).UpdateEmailStateAsync(emailId, EmailState.Active);
+        await mockVerificationRepository!.Received(1).MarkEmailVerificationRequestAsUsedAsync(long.Parse(requestId));
+        await mockUserRepository!.Received(1).UpdateUserStateAsync(userId, UserState.Active);
+        await mockUserRepository!.Received(1).UpdateEmailStateAsync(emailId, EmailState.Active);
     }
 
     [Test]
@@ -435,12 +564,23 @@ public class EmailVerificationServiceTests : TestBase
         // Arrange
         string requestId = "123456789";
         string code = "12345678";
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(null));
 
         // Act
-        var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
+        var result = await emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -448,9 +588,9 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("REQUEST_NOT_FOUND");
         result.HttpStatusCode.Should().Be(404);
 
-        await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
-        await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
-        await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
+        await mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
+        await mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
+        await mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
 
     [Test]
@@ -470,12 +610,23 @@ public class EmailVerificationServiceTests : TestBase
         emailAddress.Id = emailId;
 
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isUsed: true);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
 
         // Act
-        var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
+        var result = await emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -483,9 +634,9 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("REQUEST_USED");
         result.HttpStatusCode.Should().Be(400);
 
-        await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
-        await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
-        await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
+        await mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
+        await mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
+        await mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
 
     [Test]
@@ -505,12 +656,23 @@ public class EmailVerificationServiceTests : TestBase
         emailAddress.Id = emailId;
 
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isExpired: true);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
 
         // Act
-        var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
+        var result = await emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -518,9 +680,9 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("REQUEST_EXPIRED");
         result.HttpStatusCode.Should().Be(410);
 
-        await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
-        await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
-        await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
+        await mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
+        await mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
+        await mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
 
     [Test]
@@ -541,12 +703,23 @@ public class EmailVerificationServiceTests : TestBase
         emailAddress.Id = emailId;
 
         var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromResult<EmailVerificationRequest?>(request));
 
         // Act
-        var result = await _emailVerificationService!.VerifyEmailAsync(requestId, incorrectCode, CancellationToken.None);
+        var result = await emailVerificationService!.VerifyEmailAsync(requestId, incorrectCode, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -554,9 +727,9 @@ public class EmailVerificationServiceTests : TestBase
         result.Status.Should().Be("CODE_MISMATCH");
         result.HttpStatusCode.Should().Be(400);
 
-        await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
-        await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
-        await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
+        await mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
+        await mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
+        await mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
 
     [Test]
@@ -565,12 +738,23 @@ public class EmailVerificationServiceTests : TestBase
         // Arrange
         string requestId = "123456789";
         string code = "12345678";
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockVerificationRepository!.GetEmailVerificationRequestByIdAsync(long.Parse(requestId), includeUser: true, includeEmailAddress: true)
             .Returns(Task.FromException<EmailVerificationRequest?>(new Exception("Database error")));
 
         // Act
-        var result = await _emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
+        var result = await emailVerificationService!.VerifyEmailAsync(requestId, code, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -579,9 +763,9 @@ public class EmailVerificationServiceTests : TestBase
         result.Message.Should().Contain("Database error");
         result.HttpStatusCode.Should().Be(500);
 
-        await _mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
-        await _mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
-        await _mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
+        await mockVerificationRepository!.DidNotReceive().MarkEmailVerificationRequestAsUsedAsync(Arg.Any<long>());
+        await mockUserRepository!.DidNotReceive().UpdateUserStateAsync(Arg.Any<long>(), Arg.Any<UserState>());
+        await mockUserRepository!.DidNotReceive().UpdateEmailStateAsync(Arg.Any<long>(), Arg.Any<EmailState>());
     }
 
     #endregion
@@ -596,14 +780,29 @@ public class EmailVerificationServiceTests : TestBase
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
+
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
 
-        _mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId)
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId)
             .Returns(Task.FromResult<User?>(mockEmailAddressEntity.User));
 
+        mockRandomGenerator.GenerateNumberCode(8).Returns("12345678");
+        mockEmailSender.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+
         // Act
-        var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
+        var result = await emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -618,12 +817,23 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "nonexistent@example.com";
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(null));
 
         // Act
-        var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
+        var result = await emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -639,12 +849,23 @@ public class EmailVerificationServiceTests : TestBase
         string email = "verified@example.com";
         var mockUser = CreateMockUser(UserState.Active);
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Active, mockUser);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
+        var result = await emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -660,12 +881,23 @@ public class EmailVerificationServiceTests : TestBase
         string email = "blacklisted@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Blacklisted, mockUser);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
+        var result = await emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -681,12 +913,23 @@ public class EmailVerificationServiceTests : TestBase
         string email = "disabled@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Disabled, mockUser);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
+        var result = await emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -702,12 +945,23 @@ public class EmailVerificationServiceTests : TestBase
         string email = "deleted@example.com";
         var mockUser = CreateMockUser();
         var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Deleted, mockUser);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
 
         // Act
-        var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
+        var result = await emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -721,12 +975,23 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "test@example.com";
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockVerificationRepository = Substitute.For<IVerificationRepository>();
+        var mockRandomGenerator = Substitute.For<IRandomGenerator>();
+        var mockEmailSender = Substitute.For<IEmailSender>();
 
-        _mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
+        var emailVerificationService = new EmailVerificationService(
+            mockUserRepository,
+            mockVerificationRepository,
+            mockRandomGenerator,
+            mockEmailSender
+        );
+
+        mockUserRepository!.GetEmailAdressByEmailStringAsync(email)
             .Returns(Task.FromException<EmailAddress?>(new Exception("Database error")));
 
         // Act
-        var result = await _emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
+        var result = await emailVerificationService!.RequestNewCodeAsync(email, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();

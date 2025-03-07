@@ -12,34 +12,6 @@ namespace API.UnitTests.Features.Authentication.Login;
 
 public class LoginServiceTests : TestBase
 {
-    private IUserRepository? _mockUserRepository;
-    private ISessionRepository? _mockSessionRepository;
-    private IHasher? _mockHasher;
-    private IJwtService? _mockJwtService;
-    private LoginService? _loginService;
-
-    #region Setup
-
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
-
-        _mockUserRepository = Substitute.For<IUserRepository>();
-        _mockSessionRepository = Substitute.For<ISessionRepository>();
-        _mockHasher = Substitute.For<IHasher>();
-        _mockJwtService = Substitute.For<IJwtService>();
-
-        _loginService = new LoginService(
-            _mockUserRepository,
-            _mockSessionRepository,
-            _mockHasher,
-            _mockJwtService
-        );
-    }
-
-    #endregion
-
     #region Helper Methods
 
     private User CreateTestUser(
@@ -67,12 +39,12 @@ public class LoginServiceTests : TestBase
         };
     }
 
-    private Session CreateTestSession(
+    private API.Infrastructure.Database.Entities.Authentication.Session CreateTestSession(
         long userId = 123)
     {
         var user = CreateTestUser(id: userId);
 
-        return new Session
+        return new API.Infrastructure.Database.Entities.Authentication.Session
         {
             User = user,
             Target = SessionTarget.User,
@@ -95,14 +67,24 @@ public class LoginServiceTests : TestBase
         var refreshToken = "refresh-token-123";
         var accessToken = "access-token-123";
         var user = CreateTestUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockSessionRepository = Substitute.For<ISessionRepository>();
+        var mockHasher = Substitute.For<IHasher>();
+        var mockJwtService = Substitute.For<IJwtService>();
+        var loginService = new LoginService(
+            mockUserRepository,
+            mockSessionRepository,
+            mockHasher,
+            mockJwtService
+        );
 
-        _mockUserRepository!.GetUserByUsernameAsync(username)
+        mockUserRepository!.GetUserByUsernameAsync(username)
             .Returns(user);
 
-        _mockHasher!.Compare(password, passwordHash, passwordSalt)
+        mockHasher!.Compare(password, passwordHash, passwordSalt)
             .Returns(true);
 
-        _mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
+        mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
             .Returns(new GenerateRefreshTokenResponse
             {
                 IsSuccess = true,
@@ -111,7 +93,7 @@ public class LoginServiceTests : TestBase
                 RefreshToken = refreshToken
             });
 
-        _mockJwtService!.GenerateAccessToken(refreshToken)
+        mockJwtService!.GenerateAccessToken(refreshToken)
             .Returns(new GenerateAccessTokenResponse
             {
                 IsSuccess = true,
@@ -120,14 +102,14 @@ public class LoginServiceTests : TestBase
                 AccessToken = accessToken
             });
 
-        _mockSessionRepository!.AddSessionAsync(Arg.Any<Session>())
+        mockSessionRepository!.AddSessionAsync(Arg.Any<API.Infrastructure.Database.Entities.Authentication.Session>())
             .Returns(Task.CompletedTask);
 
-        _mockSessionRepository!.AddTokenAsync(Arg.Any<Token>())
+        mockSessionRepository!.AddTokenAsync(Arg.Any<Token>())
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
+        var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>
@@ -139,10 +121,10 @@ public class LoginServiceTests : TestBase
             Assert.That(result.HttpStatusCode, Is.EqualTo(200));
         });
 
-        await _mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
-        _mockHasher!.Received(1).Compare(password, passwordHash, passwordSalt);
-        await _mockSessionRepository!.Received(1).AddSessionAsync(Arg.Any<Session>());
-        await _mockSessionRepository!.Received(2).AddTokenAsync(Arg.Any<Token>());
+        await mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
+        mockHasher!.Received(1).Compare(password, passwordHash, passwordSalt);
+        await mockSessionRepository!.Received(1).AddSessionAsync(Arg.Any<API.Infrastructure.Database.Entities.Authentication.Session>());
+        await mockSessionRepository!.Received(2).AddTokenAsync(Arg.Any<Token>());
     }
 
     [Test]
@@ -151,12 +133,22 @@ public class LoginServiceTests : TestBase
         // Arrange
         var username = "nonexistentuser";
         var password = "Password123!";
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockSessionRepository = Substitute.For<ISessionRepository>();
+        var mockHasher = Substitute.For<IHasher>();
+        var mockJwtService = Substitute.For<IJwtService>();
+        var loginService = new LoginService(
+            mockUserRepository,
+            mockSessionRepository,
+            mockHasher,
+            mockJwtService
+        );
 
-        _mockUserRepository!.GetUserByUsernameAsync(username)
+        mockUserRepository!.GetUserByUsernameAsync(username)
             .Returns((User?)null);
 
         // Act
-        var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
+        var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>
@@ -167,9 +159,9 @@ public class LoginServiceTests : TestBase
             Assert.That(result.HttpStatusCode, Is.EqualTo(401));
         });
 
-        await _mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
-        _mockHasher!.DidNotReceive().Compare(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        await _mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<Session>());
+        await mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
+        mockHasher!.DidNotReceive().Compare(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<API.Infrastructure.Database.Entities.Authentication.Session>());
     }
 
     [Test]
@@ -181,15 +173,25 @@ public class LoginServiceTests : TestBase
         var passwordHash = "hashed-password";
         var passwordSalt = "salt";
         var user = CreateTestUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockSessionRepository = Substitute.For<ISessionRepository>();
+        var mockHasher = Substitute.For<IHasher>();
+        var mockJwtService = Substitute.For<IJwtService>();
+        var loginService = new LoginService(
+            mockUserRepository,
+            mockSessionRepository,
+            mockHasher,
+            mockJwtService
+        );
 
-        _mockUserRepository!.GetUserByUsernameAsync(username)
+        mockUserRepository!.GetUserByUsernameAsync(username)
             .Returns(user);
 
-        _mockHasher!.Compare(password, passwordHash, passwordSalt)
+        mockHasher!.Compare(password, passwordHash, passwordSalt)
             .Returns(false);
 
         // Act
-        var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
+        var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>
@@ -200,9 +202,9 @@ public class LoginServiceTests : TestBase
             Assert.That(result.HttpStatusCode, Is.EqualTo(401));
         });
 
-        await _mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
-        _mockHasher!.Received(1).Compare(password, passwordHash, passwordSalt);
-        await _mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<Session>());
+        await mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
+        mockHasher!.Received(1).Compare(password, passwordHash, passwordSalt);
+        await mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<API.Infrastructure.Database.Entities.Authentication.Session>());
     }
 
     [Test]
@@ -217,12 +219,22 @@ public class LoginServiceTests : TestBase
             passwordHash: passwordHash,
             passwordSalt: passwordSalt,
             state: UserState.PendingVerification);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockSessionRepository = Substitute.For<ISessionRepository>();
+        var mockHasher = Substitute.For<IHasher>();
+        var mockJwtService = Substitute.For<IJwtService>();
+        var loginService = new LoginService(
+            mockUserRepository,
+            mockSessionRepository,
+            mockHasher,
+            mockJwtService
+        );
 
-        _mockUserRepository!.GetUserByUsernameAsync(username)
+        mockUserRepository!.GetUserByUsernameAsync(username)
             .Returns(user);
 
         // Act
-        var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
+        var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>
@@ -233,9 +245,9 @@ public class LoginServiceTests : TestBase
             Assert.That(result.HttpStatusCode, Is.EqualTo(401));
         });
 
-        await _mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
-        _mockHasher!.DidNotReceive().Compare(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        await _mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<Session>());
+        await mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
+        mockHasher!.DidNotReceive().Compare(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<API.Infrastructure.Database.Entities.Authentication.Session>());
     }
 
     [Test]
@@ -250,12 +262,22 @@ public class LoginServiceTests : TestBase
             passwordHash: passwordHash,
             passwordSalt: passwordSalt,
             state: UserState.Suspended);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockSessionRepository = Substitute.For<ISessionRepository>();
+        var mockHasher = Substitute.For<IHasher>();
+        var mockJwtService = Substitute.For<IJwtService>();
+        var loginService = new LoginService(
+            mockUserRepository,
+            mockSessionRepository,
+            mockHasher,
+            mockJwtService
+        );
 
-        _mockUserRepository!.GetUserByUsernameAsync(username)
+        mockUserRepository!.GetUserByUsernameAsync(username)
             .Returns(user);
 
         // Act
-        var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
+        var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>
@@ -266,9 +288,9 @@ public class LoginServiceTests : TestBase
             Assert.That(result.HttpStatusCode, Is.EqualTo(401));
         });
 
-        await _mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
-        _mockHasher!.DidNotReceive().Compare(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        await _mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<Session>());
+        await mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
+        mockHasher!.DidNotReceive().Compare(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<API.Infrastructure.Database.Entities.Authentication.Session>());
     }
 
     [Test]
@@ -280,14 +302,24 @@ public class LoginServiceTests : TestBase
         var passwordHash = "hashed-password";
         var passwordSalt = "salt";
         var user = CreateTestUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockSessionRepository = Substitute.For<ISessionRepository>();
+        var mockHasher = Substitute.For<IHasher>();
+        var mockJwtService = Substitute.For<IJwtService>();
+        var loginService = new LoginService(
+            mockUserRepository,
+            mockSessionRepository,
+            mockHasher,
+            mockJwtService
+        );
 
-        _mockUserRepository!.GetUserByUsernameAsync(username)
+        mockUserRepository!.GetUserByUsernameAsync(username)
             .Returns(user);
 
-        _mockHasher!.Compare(password, passwordHash, passwordSalt)
+        mockHasher!.Compare(password, passwordHash, passwordSalt)
             .Returns(true);
 
-        _mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
+        mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
             .Returns(new GenerateRefreshTokenResponse
             {
                 IsSuccess = false,
@@ -297,7 +329,7 @@ public class LoginServiceTests : TestBase
             });
 
         // Act
-        var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
+        var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>
@@ -308,9 +340,9 @@ public class LoginServiceTests : TestBase
             Assert.That(result.HttpStatusCode, Is.EqualTo(500));
         });
 
-        await _mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
-        _mockHasher!.Received(1).Compare(password, passwordHash, passwordSalt);
-        await _mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<Session>());
+        await mockUserRepository!.Received(1).GetUserByUsernameAsync(username);
+        mockHasher!.Received(1).Compare(password, passwordHash, passwordSalt);
+        await mockSessionRepository!.DidNotReceive().AddSessionAsync(Arg.Any<API.Infrastructure.Database.Entities.Authentication.Session>());
     }
 
     [Test]
@@ -320,12 +352,22 @@ public class LoginServiceTests : TestBase
         var username = "testuser";
         var password = "Password123!";
         var exception = new Exception("Unexpected error");
+        var mockUserRepository = Substitute.For<IUserRepository>();
+        var mockSessionRepository = Substitute.For<ISessionRepository>();
+        var mockHasher = Substitute.For<IHasher>();
+        var mockJwtService = Substitute.For<IJwtService>();
+        var loginService = new LoginService(
+            mockUserRepository,
+            mockSessionRepository,
+            mockHasher,
+            mockJwtService
+        );
 
-        _mockUserRepository!.GetUserByUsernameAsync(username)
+        mockUserRepository!.GetUserByUsernameAsync(username)
             .Throws(exception);
 
         // Act
-        var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
+        var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>

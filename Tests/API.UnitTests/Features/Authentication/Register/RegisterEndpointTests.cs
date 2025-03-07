@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using API.Features.Authentication.Register.Endpoints;
 using API.Features.Authentication.Register.Models.Contracts;
 using API.Features.Authentication.Register.Models.Services;
+using API.Features.Authentication.Register.Interfaces;
 
 namespace API.UnitTests.Features.Authentication.Register;
 
@@ -30,9 +31,9 @@ public class RegisterEndpointTests : TestBase
         };
     }
 
-    private RegisterEndpoint CreateEndpoint()
+    private RegisterEndpoint CreateEndpoint(IRegisterService registerService)
     {
-        return new RegisterEndpoint(MockRegisterService);
+        return new RegisterEndpoint(registerService);
     }
 
     #endregion
@@ -44,11 +45,12 @@ public class RegisterEndpointTests : TestBase
     {
         // Arrange
         var request = CreateDefaultRegisterRequest();
+        var mockRegisterService = Substitute.For<IRegisterService>();
 
-        MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
+        mockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = true, Status = "SUCCESS", RequestId = "1234567890" });
 
-        var endpoint = CreateEndpoint();
+        var endpoint = CreateEndpoint(mockRegisterService);
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -73,7 +75,7 @@ public class RegisterEndpointTests : TestBase
         okResult.Value?.RequestId.Should().NotBeEmpty();
         okResult.Value?.RequestId.Should().Be("1234567890");
 
-        await MockRegisterService
+        await mockRegisterService
             .Received(1)
             .RegisterUserAsync(Arg.Is<RegisterRequest>(r =>
                                r.Username == request.Username &&
@@ -87,11 +89,12 @@ public class RegisterEndpointTests : TestBase
     {
         // Arrange
         var request = CreateDefaultRegisterRequest(username: "existinguser");
+        var mockRegisterService = Substitute.For<IRegisterService>();
 
-        MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
+        mockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "USERNAME_EXISTS", Message = "Username already exists" });
 
-        var endpoint = CreateEndpoint();
+        var endpoint = CreateEndpoint(mockRegisterService);
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -117,7 +120,7 @@ public class RegisterEndpointTests : TestBase
         badRequestResult.Value?.Details.Should().ContainKey("username");
         badRequestResult.Value?.Details?["username"].Should().Contain("Username already exists");
 
-        await MockRegisterService
+        await mockRegisterService
             .Received(1)
             .RegisterUserAsync(Arg.Is<RegisterRequest>(r =>
                                r.Username == request.Username),
@@ -129,11 +132,12 @@ public class RegisterEndpointTests : TestBase
     {
         // Arrange
         var request = CreateDefaultRegisterRequest(email: "existing@example.com");
+        var mockRegisterService = Substitute.For<IRegisterService>();
 
-        MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
+        mockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "EMAIL_EXISTS", Message = "Email already exists" });
 
-        var endpoint = CreateEndpoint();
+        var endpoint = CreateEndpoint(mockRegisterService);
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -159,7 +163,7 @@ public class RegisterEndpointTests : TestBase
         badRequestResult.Value?.Details.Should().ContainKey("email");
         badRequestResult.Value?.Details?["email"].Should().Contain("Email already exists");
 
-        await MockRegisterService
+        await mockRegisterService
             .Received(1)
             .RegisterUserAsync(Arg.Is<RegisterRequest>(r =>
                                r.Email == request.Email),
@@ -171,11 +175,12 @@ public class RegisterEndpointTests : TestBase
     {
         // Arrange
         var request = CreateDefaultRegisterRequest(phoneNumber: "+1234567890");
+        var mockRegisterService = Substitute.For<IRegisterService>();
 
-        MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
+        mockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "PHONE_NUMBER_EXISTS", Message = "Phone number already exists" });
 
-        var endpoint = CreateEndpoint();
+        var endpoint = CreateEndpoint(mockRegisterService);
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -201,7 +206,7 @@ public class RegisterEndpointTests : TestBase
         badRequestResult.Value?.Details.Should().ContainKey("phoneNumber");
         badRequestResult.Value?.Details?["phoneNumber"].Should().Contain("Phone number already exists");
 
-        await MockRegisterService
+        await mockRegisterService
             .Received(1)
             .RegisterUserAsync(Arg.Is<RegisterRequest>(r =>
                                r.PhoneNumber == request.PhoneNumber),
@@ -213,11 +218,12 @@ public class RegisterEndpointTests : TestBase
     {
         // Arrange
         var request = CreateDefaultRegisterRequest();
+        var mockRegisterService = Substitute.For<IRegisterService>();
 
-        MockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
+        mockRegisterService.RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>())
            .Returns(new RegisterResult { IsSuccess = false, Status = "INTERNAL_SERVER_ERROR", Message = "Something went wrong, please try again later." });
 
-        var endpoint = CreateEndpoint();
+        var endpoint = CreateEndpoint(mockRegisterService);
 
         // Act
         var result = await endpoint.ExecuteAsync(request, CancellationToken.None);
@@ -241,7 +247,7 @@ public class RegisterEndpointTests : TestBase
         badRequestResult.Value?.Message.Should().Be("Something went wrong, please try again later.");
         badRequestResult.Value?.Details.Should().BeEmpty();
 
-        await MockRegisterService
+        await mockRegisterService
             .Received(1)
             .RegisterUserAsync(Arg.Any<RegisterRequest>(), Arg.Any<CancellationToken>());
     }

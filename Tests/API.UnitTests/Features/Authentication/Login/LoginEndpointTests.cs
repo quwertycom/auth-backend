@@ -9,16 +9,7 @@ namespace API.UnitTests.Features.Authentication.Login;
 
 public class LoginEndpointTests : TestBase
 {
-    private ILoginService? _mockLoginService;
-
     #region Setup
-
-    [SetUp]
-    public override void Setup()
-    {
-        base.Setup();
-        _mockLoginService = Substitute.For<ILoginService>();
-    }
 
     #endregion
 
@@ -68,7 +59,8 @@ public class LoginEndpointTests : TestBase
     public void Constructor_InitializesProperties()
     {
         // Arrange & Act
-        var endpoint = new LoginEndpoint(_mockLoginService!);
+        var mockLoginService = Substitute.For<ILoginService>();
+        var endpoint = new LoginEndpoint(mockLoginService!);
 
         // Assert - use reflection to check private field was initialized
         var fieldInfo = typeof(LoginEndpoint).GetField(
@@ -78,7 +70,7 @@ public class LoginEndpointTests : TestBase
         Assert.That(fieldInfo, Is.Not.Null, "Field _loginService should exist");
 
         var fieldValue = fieldInfo!.GetValue(endpoint);
-        Assert.That(fieldValue, Is.EqualTo(_mockLoginService),
+        Assert.That(fieldValue, Is.EqualTo(mockLoginService),
             "Service should be initialized in constructor");
     }
 
@@ -107,13 +99,14 @@ public class LoginEndpointTests : TestBase
         // Arrange
         var request = CreateDefaultRequest();
         var successResult = CreateSuccessResult();
+        var mockLoginService = Substitute.For<ILoginService>();
 
-        _mockLoginService!
+        mockLoginService!
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>())
             .Returns(successResult);
 
         // Create endpoint
-        var endpoint = new LoginEndpoint(_mockLoginService);
+        var endpoint = new LoginEndpoint(mockLoginService);
 
         try
         {
@@ -126,7 +119,7 @@ public class LoginEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockLoginService
+        await mockLoginService
             .Received(1)
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>());
     }
@@ -140,13 +133,14 @@ public class LoginEndpointTests : TestBase
             status: "INVALID_CREDENTIALS",
             message: "Username or password is incorrect"
         );
+        var mockLoginService = Substitute.For<ILoginService>();
 
-        _mockLoginService!
+        mockLoginService!
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new LoginEndpoint(_mockLoginService);
+        var endpoint = new LoginEndpoint(mockLoginService);
 
         try
         {
@@ -159,7 +153,7 @@ public class LoginEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockLoginService
+        await mockLoginService
             .Received(1)
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>());
     }
@@ -173,13 +167,14 @@ public class LoginEndpointTests : TestBase
             status: "USER_NOT_FOUND",
             message: "User not found"
         );
+        var mockLoginService = Substitute.For<ILoginService>();
 
-        _mockLoginService!
+        mockLoginService!
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new LoginEndpoint(_mockLoginService);
+        var endpoint = new LoginEndpoint(mockLoginService);
 
         try
         {
@@ -192,7 +187,7 @@ public class LoginEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockLoginService
+        await mockLoginService
             .Received(1)
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>());
     }
@@ -207,13 +202,14 @@ public class LoginEndpointTests : TestBase
             message: "Account is locked",
             httpStatusCode: StatusCodes.Status403Forbidden
         );
+        var mockLoginService = Substitute.For<ILoginService>();
 
-        _mockLoginService!
+        mockLoginService!
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new LoginEndpoint(_mockLoginService);
+        var endpoint = new LoginEndpoint(mockLoginService);
 
         try
         {
@@ -226,7 +222,7 @@ public class LoginEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockLoginService
+        await mockLoginService
             .Received(1)
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>());
     }
@@ -241,13 +237,14 @@ public class LoginEndpointTests : TestBase
             message: "An internal error occurred",
             httpStatusCode: StatusCodes.Status500InternalServerError
         );
+        var mockLoginService = Substitute.For<ILoginService>();
 
-        _mockLoginService!
+        mockLoginService!
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
         // Create endpoint
-        var endpoint = new LoginEndpoint(_mockLoginService);
+        var endpoint = new LoginEndpoint(mockLoginService);
 
         try
         {
@@ -260,7 +257,7 @@ public class LoginEndpointTests : TestBase
         }
 
         // Assert - verify the service was called with correct parameters
-        await _mockLoginService
+        await mockLoginService
             .Received(1)
             .LoginAsync(request.Username, request.Password, Arg.Any<CancellationToken>());
     }
