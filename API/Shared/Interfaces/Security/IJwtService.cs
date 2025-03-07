@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using API.Shared.Enums.Entities.Authentication;
+using API.Shared.Models.Infrastructure.Security.JwtService;
 
 namespace API.Shared.Interfaces.Security;
 
@@ -14,14 +15,21 @@ public interface IJwtService
     /// <param name="target">The token target.</param>
     /// <param name="ids">The IDs associated with the token.</param>
     /// <returns>A tuple indicating success, status, message, and the token (if successful).</returns>
-    (bool isSuccess, string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids);
+    GenerateRefreshTokenResponse GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids);
 
     /// <summary>
     /// Generates an access token from a refresh token.
     /// </summary>
     /// <param name="refreshToken">The refresh token.</param>
     /// <returns>A tuple indicating success, status, message, and the access token (if successful).</returns>
-    (bool isSuccess, string status, string message, string? token) GenerateAccessToken(string refreshToken);
+    GenerateAccessTokenResponse GenerateAccessToken(string refreshToken);
+
+    /// <summary>
+    /// Refreshes a token.
+    /// </summary>
+    /// <param name="refreshToken">The refresh token.</param>
+    /// <returns>A tuple indicating success, status, message, and the new refresh token (if successful).</returns>
+    RefreshTokensResponse RefreshTokens(string refreshToken);
 
     /// <summary>
     /// Validates a token.

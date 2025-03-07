@@ -64,26 +64,26 @@ public class LoginService : ILoginService
 
             var refreshTokenResult = _jwtService.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null));
 
-            if (!refreshTokenResult.isSuccess || refreshTokenResult.token == null)
+            if (!refreshTokenResult.IsSuccess || refreshTokenResult.RefreshToken == null)
             {
                 return new LoginResult
                 {
                     IsSuccess = false,
                     Status = "ERROR",
-                    Message = refreshTokenResult.message ?? "Internal server error",
+                    Message = refreshTokenResult.Message ?? "Internal server error",
                     HttpStatusCode = 500
                 };
             }
 
-            var accessTokenResult = _jwtService.GenerateAccessToken(refreshTokenResult.token);
+            var accessTokenResult = _jwtService.GenerateAccessToken(refreshTokenResult.RefreshToken);
 
-            if (!accessTokenResult.isSuccess || accessTokenResult.token == null)
+            if (!accessTokenResult.IsSuccess || accessTokenResult.AccessToken == null)
             {
                 return new LoginResult
                 {
                     IsSuccess = false,
                     Status = "ERROR",
-                    Message = accessTokenResult.message ?? "Internal server error",
+                    Message = accessTokenResult.Message ?? "Internal server error",
                     HttpStatusCode = 500
                 };
             }
@@ -97,7 +97,7 @@ public class LoginService : ILoginService
 
             var refreshToken = new Token
             {
-                Value = refreshTokenResult.token,
+                Value = refreshTokenResult.RefreshToken,
                 Type = TokenType.Refresh,
                 Target = TokenTarget.User,
                 User = user,
@@ -106,7 +106,7 @@ public class LoginService : ILoginService
 
             var accessToken = new Token
             {
-                Value = accessTokenResult.token,
+                Value = accessTokenResult.AccessToken,
                 Type = TokenType.Access,
                 Target = TokenTarget.User,
                 User = user,
@@ -124,8 +124,8 @@ public class LoginService : ILoginService
                 Status = "SUCCESS",
                 Message = "User logged in successfully",
                 HttpStatusCode = 200,
-                RefreshToken = refreshTokenResult.token,
-                AccessToken = accessTokenResult.token
+                RefreshToken = refreshTokenResult.RefreshToken,
+                AccessToken = accessTokenResult.AccessToken
             };
         }
         catch (Exception ex)

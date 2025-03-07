@@ -8,6 +8,7 @@ using API.Shared.Enums.Entities.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
 using API.Shared.Interfaces.Security;
+using API.Shared.Models.Infrastructure.Security.JwtService;
 
 namespace API.Infrastructure.Security;
 
@@ -30,7 +31,7 @@ public class JwtService : IJwtService
     /// <summary>
     /// Generates a refresh token for the given target and IDs.
     /// </summary>
-    public virtual (bool isSuccess, string status, string message, string? token) GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
+    public virtual GenerateRefreshTokenResponse GenerateRefreshToken(TokenTarget target, (long userId, long? accountId, long? applicationId) ids)
     {
         try
         {
@@ -38,13 +39,28 @@ public class JwtService : IJwtService
             switch (target)
             {
                 case TokenTarget.User when string.IsNullOrEmpty(ids.userId.ToString()):
-                    return (false, "ERROR", "Missing user id", null);
+                    return new GenerateRefreshTokenResponse {
+                        IsSuccess = false,
+                        Status = "ERROR",
+                        Message = "Missing user id",
+                        RefreshToken = null
+                    };
 
                 case TokenTarget.Account when !ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()):
-                    return (false, "ERROR", "Missing account id or user id", null);
+                    return new GenerateRefreshTokenResponse {
+                        IsSuccess = false,
+                        Status = "ERROR",
+                        Message = "Missing account id or user id",
+                        RefreshToken = null
+                    };
 
                 case TokenTarget.Application when !ids.applicationId.HasValue || !ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()):
-                    return (false, "ERROR", "Missing application id, account id, or user id", null);
+                    return new GenerateRefreshTokenResponse {
+                        IsSuccess = false,
+                        Status = "ERROR",
+                        Message = "Missing application id, account id, or user id",
+                        RefreshToken = null
+                    };
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -84,7 +100,12 @@ public class JwtService : IJwtService
                     break;
 
                 default:
-                    return (false, "ERROR", "Invalid token target", null);
+                    return new GenerateRefreshTokenResponse {
+                        IsSuccess = false,
+                        Status = "ERROR",
+                        Message = "Invalid token target",
+                        RefreshToken = null
+                    };
             }
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -100,35 +121,58 @@ public class JwtService : IJwtService
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return (true, "SUCCESS", "Token generated successfully", tokenHandler.WriteToken(token));
+            return new GenerateRefreshTokenResponse {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                Message = "Token generated successfully",
+                RefreshToken = tokenHandler.WriteToken(token)
+            };
         }
         catch (Exception ex)
         {
-            return (false, "ERROR", $"Failed to generate refresh token: {ex.Message}", null);
+            return new GenerateRefreshTokenResponse {
+                IsSuccess = false,
+                Status = "ERROR",
+                Message = $"Failed to generate refresh token: {ex.Message}", RefreshToken = null };
         }
     }
 
-    public virtual (bool isSuccess, string status, string message, string? token) GenerateAccessToken(string refreshToken)
+    public virtual GenerateAccessTokenResponse GenerateAccessToken(string refreshToken)
     {
         try
         {
             var claims = GetTokenClaims(refreshToken);
             if (claims == null)
             {
-                return (false, "ERROR", "Invalid refresh token", null);
+                return new GenerateAccessTokenResponse {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Invalid refresh token",
+                    AccessToken = null
+                };
             }
 
             // Verify it's a refresh token
             if (!claims.TryGetValue("token_type", out var tokenType) || tokenType != "refresh")
             {
-                return (false, "ERROR", "Invalid token type", null);
+                return new GenerateAccessTokenResponse {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Invalid token type",
+                    AccessToken = null
+                };
             }
 
             // Get token target
             if (!claims.TryGetValue("token_target", out var targetStr) ||
                 !Enum.TryParse<TokenTarget>(targetStr, out var target))
             {
-                return (false, "ERROR", "Invalid token target", null);
+                return new GenerateAccessTokenResponse {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Invalid token target",
+                    AccessToken = null
+                };
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -182,11 +226,21 @@ public class JwtService : IJwtService
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return (true, "SUCCESS", "Access token generated successfully", tokenHandler.WriteToken(token));
+            return new GenerateAccessTokenResponse {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                Message = "Access token generated successfully",
+                AccessToken = tokenHandler.WriteToken(token)
+            };
         }
         catch (Exception ex)
         {
-            return (false, "ERROR", $"Failed to generate access token: {ex.Message}", null);
+            return new GenerateAccessTokenResponse {
+                IsSuccess = false,
+                Status = "ERROR",
+                Message = $"Failed to generate access token: {ex.Message}",
+                AccessToken = null
+            };
         }
     }
 
@@ -216,6 +270,93 @@ public class JwtService : IJwtService
         {
             claimsPrincipal = null;
             return false;
+        }
+    }
+
+    public virtual RefreshTokensResponse RefreshTokens(string oldRefreshToken)
+    {
+        try
+        {
+            var claims = GetTokenClaims(oldRefreshToken);
+            if (claims == null)
+            {
+                return new RefreshTokensResponse {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Invalid refresh token",
+                    RefreshToken = null,
+                    AccessToken = null
+                };
+            }
+
+            if (!claims.TryGetValue("token_type", out var tokenType) || tokenType != "refresh")
+            {
+                return new RefreshTokensResponse {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Invalid token type",
+                    RefreshToken = null,
+                    AccessToken = null
+                };
+            }
+
+            if (!claims.TryGetValue("token_target", out var targetStr) ||
+                !Enum.TryParse<TokenTarget>(targetStr, out var target))
+            {
+                return new RefreshTokensResponse {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Invalid token target",
+                    RefreshToken = null,
+                    AccessToken = null
+                };
+            }
+
+            var userId = long.Parse(claims["user_id"]);
+            long? accountId = claims.ContainsKey("account_id") ? long.Parse(claims["account_id"]) : null;
+            long? applicationId = target == TokenTarget.Application ? long.Parse(claims[JwtRegisteredClaimNames.Sub]) : null;
+
+            var refreshResult = GenerateRefreshToken(target, (userId: userId, accountId: accountId, applicationId: applicationId));
+            if (!refreshResult.IsSuccess)
+            {
+                return new RefreshTokensResponse {
+                    IsSuccess = false,
+                    Status = refreshResult.Status,
+                    Message = refreshResult.Message,
+                    RefreshToken = null,
+                    AccessToken = null
+                };
+            }
+
+            var accessResult = GenerateAccessToken(refreshResult.RefreshToken!);
+            if (!accessResult.IsSuccess)
+            {
+                return new RefreshTokensResponse {
+                    IsSuccess = false,
+                    Status = accessResult.Status,
+                    Message = accessResult.Message,
+                    RefreshToken = null,
+                    AccessToken = null
+                };
+            }
+
+            return new RefreshTokensResponse {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                Message = "Tokens refreshed successfully",
+                RefreshToken = refreshResult.RefreshToken,
+                AccessToken = accessResult.AccessToken
+            };
+        }
+        catch (Exception ex)
+        {
+            return new RefreshTokensResponse {
+                IsSuccess = false,
+                Status = "ERROR",
+                Message = $"Failed to refresh tokens: {ex.Message}",
+                RefreshToken = null,
+                AccessToken = null
+            };
         }
     }
 
