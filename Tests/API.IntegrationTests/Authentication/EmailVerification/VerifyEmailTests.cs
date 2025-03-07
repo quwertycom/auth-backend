@@ -226,8 +226,8 @@ public class VerifyEmailTests : TestBase
             Username = username,
             FirstName = "Test",
             LastName = "User",
-            PasswordHash = hashedPassword.hash,
-            PasswordSalt = hashedPassword.salt,
+            PasswordHash = hashedPassword.Hash,
+            PasswordSalt = hashedPassword.Salt,
             BirthDate = new DateTime(1990, 1, 1),
             Gender = UserGender.Male,
             State = UserState.PendingVerification
@@ -289,8 +289,8 @@ public class VerifyEmailTests : TestBase
             Username = username,
             FirstName = "Test",
             LastName = "User",
-            PasswordHash = hashedPassword.hash,
-            PasswordSalt = hashedPassword.salt,
+            PasswordHash = hashedPassword.Hash,
+            PasswordSalt = hashedPassword.Salt,
             BirthDate = new DateTime(1990, 1, 1),
             Gender = UserGender.Male,
             State = UserState.PendingVerification
