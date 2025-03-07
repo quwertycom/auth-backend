@@ -3,6 +3,7 @@ using API.Features.Authentication.Register.Models.Contracts;
 using API.Features.Authentication.EmailVerification.Models.Services;
 using API.Infrastructure.Database.Entities.User;
 using API.Shared.Enums.Entities.User;
+using API.Shared.Models.Infrastructure.Hasher;
 
 namespace API.UnitTests.Features.Authentication.Register;
 
@@ -58,7 +59,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -115,7 +121,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -160,7 +171,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -200,7 +216,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -241,7 +262,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -280,7 +306,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -321,7 +352,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -357,7 +393,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -396,7 +437,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService
@@ -435,7 +481,12 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(("hashedpassword", "salt"));
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = "hashedpassword",
+            Salt = "salt"
+        });
 
         // Setup default behavior for email verification service
         mockEmailVerificationService

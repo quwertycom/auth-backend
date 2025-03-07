@@ -7,6 +7,7 @@ using API.Shared.Interfaces.Security;
 using API.Infrastructure.Database.Entities.Authentication;
 using API.Infrastructure.Database.Entities.User;
 using NSubstitute.ExceptionExtensions;
+using API.Shared.Models.Infrastructure.Hasher;
 
 namespace API.UnitTests.Features.Authentication.Login;
 
@@ -82,7 +83,11 @@ public class LoginServiceTests : TestBase
             .Returns(user);
 
         mockHasher!.Compare(password, passwordHash, passwordSalt)
-            .Returns(true);
+            .Returns(new CompareResult {
+                IsSuccess = true,
+                Status = "OK",
+                IsMatch = true
+            });
 
         mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
             .Returns(new GenerateRefreshTokenResponse
@@ -188,7 +193,11 @@ public class LoginServiceTests : TestBase
             .Returns(user);
 
         mockHasher!.Compare(password, passwordHash, passwordSalt)
-            .Returns(false);
+            .Returns(new CompareResult {
+                IsSuccess = true,
+                Status = "OK",
+                IsMatch = false
+            });
 
         // Act
         var result = await loginService!.LoginAsync(username, password, CancellationToken.None);
@@ -317,7 +326,11 @@ public class LoginServiceTests : TestBase
             .Returns(user);
 
         mockHasher!.Compare(password, passwordHash, passwordSalt)
-            .Returns(true);
+            .Returns(new CompareResult {
+                IsSuccess = true,
+                Status = "OK",
+                IsMatch = true
+            });
 
         mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
             .Returns(new GenerateRefreshTokenResponse
