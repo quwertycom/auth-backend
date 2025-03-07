@@ -1,5 +1,7 @@
 using API.Features.Session.Revoke.Interfaces;
 using API.Features.Session.Revoke.Services;
+using API.Features.Session.Refresh.Interfaces;
+using API.Features.Session.Refresh.Services;
 
 namespace API.Features.Session;
 
@@ -16,6 +18,7 @@ public static class SessionModule
     public static IServiceCollection AddSessionServices(this IServiceCollection services)
     {
         services.AddScoped<IRevokeSessionService, RevokeSessionService>();
+        services.AddScoped<IRefreshSessionService, RefreshSessionService>();
         
         return services;
     }
