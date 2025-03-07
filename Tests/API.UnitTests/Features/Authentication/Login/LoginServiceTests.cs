@@ -1,12 +1,11 @@
-using API.Features.Authentication.Login.Models.Services;
 using API.Features.Authentication.Login.Services;
+using API.Shared.Models.Infrastructure.Security.JwtService;
 using API.Shared.Enums.Entities.User;
 using API.Shared.Enums.Entities.Authentication;
 using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Security;
 using API.Infrastructure.Database.Entities.Authentication;
 using API.Infrastructure.Database.Entities.User;
-using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
 namespace API.UnitTests.Features.Authentication.Login;
@@ -104,10 +103,22 @@ public class LoginServiceTests : TestBase
             .Returns(true);
 
         _mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
-            .Returns((true, "SUCCESS", "Token generated", refreshToken));
+            .Returns(new GenerateRefreshTokenResponse
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                Message = "Token generated",
+                RefreshToken = refreshToken
+            });
 
         _mockJwtService!.GenerateAccessToken(refreshToken)
-            .Returns((true, "SUCCESS", "Token generated", accessToken));
+            .Returns(new GenerateAccessTokenResponse
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                Message = "Token generated",
+                AccessToken = accessToken
+            });
 
         _mockSessionRepository!.AddSessionAsync(Arg.Any<Session>())
             .Returns(Task.CompletedTask);
@@ -277,7 +288,13 @@ public class LoginServiceTests : TestBase
             .Returns(true);
 
         _mockJwtService!.GenerateRefreshToken(TokenTarget.User, (user.Id, null, null))
-            .Returns((false, "ERROR", "Failed to generate refresh token", (string?)null));
+            .Returns(new GenerateRefreshTokenResponse
+            {
+                IsSuccess = false,
+                Status = "ERROR",
+                Message = "Failed to generate refresh token",
+                RefreshToken = null
+            });
 
         // Act
         var result = await _loginService!.LoginAsync(username, password, CancellationToken.None);
