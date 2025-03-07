@@ -26,8 +26,7 @@ public class RevokeSessionEndpoint :  Endpoint<RevokeSessionRequest>
         await SendAsync(new RevokeSessionResponse {
           Status = result.Status,
           Message = result.Message,
-        });
-
+        }, statusCode: result.HttpStatusCode ?? (result.IsSuccess ? 200 : 400), cancellationToken);
     }
     
 }
