@@ -84,7 +84,7 @@ public class RefreshSessionServiceTests : TestBase
         var mockJwtService = Substitute.For<IJwtService>();
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "non-existent-token";
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(null));
 
@@ -109,7 +109,7 @@ public class RefreshSessionServiceTests : TestBase
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "revoked-session-token";
         var session = CreateTestSession(isRevoked: true);
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
 
@@ -134,10 +134,10 @@ public class RefreshSessionServiceTests : TestBase
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "token-not-in-db";
         var session = CreateTestSession();
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
-            
+
         MockSessionRepository!.GetTokenByTokenStringAsync(refreshToken)
             .Returns(Task.FromResult<Token?>(null));
 
@@ -163,10 +163,10 @@ public class RefreshSessionServiceTests : TestBase
         var accessToken = "access-token-123";
         var session = CreateTestSession();
         var token = CreateTestToken(value: accessToken, type: TokenType.Access);
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(accessToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
-            
+
         MockSessionRepository!.GetTokenByTokenStringAsync(accessToken)
             .Returns(Task.FromResult<Token?>(token));
 
@@ -192,10 +192,10 @@ public class RefreshSessionServiceTests : TestBase
         var refreshToken = "revoked-refresh-token";
         var session = CreateTestSession();
         var token = CreateTestToken(value: refreshToken, isRevoked: true);
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
-            
+
         MockSessionRepository!.GetTokenByTokenStringAsync(refreshToken)
             .Returns(Task.FromResult<Token?>(token));
 
@@ -222,13 +222,13 @@ public class RefreshSessionServiceTests : TestBase
         var user = CreateTestUser();
         var session = CreateTestSession(user: user);
         var token = CreateTestToken(value: refreshToken, user: user, session: session);
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
-            
+
         MockSessionRepository!.GetTokenByTokenStringAsync(refreshToken)
             .Returns(Task.FromResult<Token?>(token));
-            
+
         mockJwtService!.RefreshTokens(refreshToken)
             .Returns(new RefreshTokensResponse
             {
@@ -262,13 +262,13 @@ public class RefreshSessionServiceTests : TestBase
         var user = CreateTestUser();
         var session = CreateTestSession(user: user);
         var token = CreateTestToken(value: refreshToken, user: user, session: session);
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
-            
+
         MockSessionRepository!.GetTokenByTokenStringAsync(refreshToken)
             .Returns(Task.FromResult<Token?>(token));
-            
+
         mockJwtService!.RefreshTokens(refreshToken)
             .Returns(new RefreshTokensResponse
             {
@@ -304,13 +304,13 @@ public class RefreshSessionServiceTests : TestBase
         var user = CreateTestUser();
         var session = CreateTestSession(user: user);
         var token = CreateTestToken(value: refreshToken, user: user, session: session);
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
-            
+
         MockSessionRepository!.GetTokenByTokenStringAsync(refreshToken)
             .Returns(Task.FromResult<Token?>(token));
-            
+
         mockJwtService!.RefreshTokens(refreshToken)
             .Returns(new RefreshTokensResponse
             {
@@ -320,10 +320,10 @@ public class RefreshSessionServiceTests : TestBase
                 RefreshToken = newRefreshToken,
                 AccessToken = newAccessToken
             });
-            
+
         MockSessionRepository!.RevokeAllSessionTokensAsync(session.Id)
             .Returns(Task.CompletedTask);
-            
+
         MockSessionRepository!.AddTokenAsync(Arg.Any<Token>())
             .Returns(Task.CompletedTask);
 
@@ -339,7 +339,7 @@ public class RefreshSessionServiceTests : TestBase
             Assert.That(result.RefreshToken, Is.EqualTo(newRefreshToken));
             Assert.That(result.AccessToken, Is.EqualTo(newAccessToken));
         });
-        
+
         await MockSessionRepository!.Received(1).RevokeAllSessionTokensAsync(session.Id);
         await MockSessionRepository!.Received(2).AddTokenAsync(Arg.Any<Token>());
     }
@@ -352,7 +352,7 @@ public class RefreshSessionServiceTests : TestBase
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "valid-refresh-token";
         var exceptionMessage = "Test database exception";
-        
+
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .ThrowsAsync(new Exception(exceptionMessage));
 
@@ -370,4 +370,4 @@ public class RefreshSessionServiceTests : TestBase
     }
 
     #endregion
-} 
+}

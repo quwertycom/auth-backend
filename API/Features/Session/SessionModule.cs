@@ -19,7 +19,7 @@ public static class SessionModule
     {
         services.AddScoped<IRevokeSessionService, RevokeSessionService>();
         services.AddScoped<IRefreshSessionService, RefreshSessionService>();
-        
+
         return services;
     }
 }

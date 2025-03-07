@@ -39,7 +39,8 @@ public class JwtService : IJwtService
             switch (target)
             {
                 case TokenTarget.User when string.IsNullOrEmpty(ids.userId.ToString()):
-                    return new GenerateRefreshTokenResponse {
+                    return new GenerateRefreshTokenResponse
+                    {
                         IsSuccess = false,
                         Status = "ERROR",
                         Message = "Missing user id",
@@ -47,7 +48,8 @@ public class JwtService : IJwtService
                     };
 
                 case TokenTarget.Account when !ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()):
-                    return new GenerateRefreshTokenResponse {
+                    return new GenerateRefreshTokenResponse
+                    {
                         IsSuccess = false,
                         Status = "ERROR",
                         Message = "Missing account id or user id",
@@ -55,7 +57,8 @@ public class JwtService : IJwtService
                     };
 
                 case TokenTarget.Application when !ids.applicationId.HasValue || !ids.accountId.HasValue || string.IsNullOrEmpty(ids.userId.ToString()):
-                    return new GenerateRefreshTokenResponse {
+                    return new GenerateRefreshTokenResponse
+                    {
                         IsSuccess = false,
                         Status = "ERROR",
                         Message = "Missing application id, account id, or user id",
@@ -100,7 +103,8 @@ public class JwtService : IJwtService
                     break;
 
                 default:
-                    return new GenerateRefreshTokenResponse {
+                    return new GenerateRefreshTokenResponse
+                    {
                         IsSuccess = false,
                         Status = "ERROR",
                         Message = "Invalid token target",
@@ -121,7 +125,8 @@ public class JwtService : IJwtService
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return new GenerateRefreshTokenResponse {
+            return new GenerateRefreshTokenResponse
+            {
                 IsSuccess = true,
                 Status = "SUCCESS",
                 Message = "Token generated successfully",
@@ -130,10 +135,13 @@ public class JwtService : IJwtService
         }
         catch (Exception ex)
         {
-            return new GenerateRefreshTokenResponse {
+            return new GenerateRefreshTokenResponse
+            {
                 IsSuccess = false,
                 Status = "ERROR",
-                Message = $"Failed to generate refresh token: {ex.Message}", RefreshToken = null };
+                Message = $"Failed to generate refresh token: {ex.Message}",
+                RefreshToken = null
+            };
         }
     }
 
@@ -144,7 +152,8 @@ public class JwtService : IJwtService
             var claims = GetTokenClaims(refreshToken);
             if (claims == null)
             {
-                return new GenerateAccessTokenResponse {
+                return new GenerateAccessTokenResponse
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid refresh token",
@@ -155,7 +164,8 @@ public class JwtService : IJwtService
             // Verify it's a refresh token
             if (!claims.TryGetValue("token_type", out var tokenType) || tokenType != "refresh")
             {
-                return new GenerateAccessTokenResponse {
+                return new GenerateAccessTokenResponse
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid token type",
@@ -167,7 +177,8 @@ public class JwtService : IJwtService
             if (!claims.TryGetValue("token_target", out var targetStr) ||
                 !Enum.TryParse<TokenTarget>(targetStr, out var target))
             {
-                return new GenerateAccessTokenResponse {
+                return new GenerateAccessTokenResponse
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid token target",
@@ -226,7 +237,8 @@ public class JwtService : IJwtService
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return new GenerateAccessTokenResponse {
+            return new GenerateAccessTokenResponse
+            {
                 IsSuccess = true,
                 Status = "SUCCESS",
                 Message = "Access token generated successfully",
@@ -235,7 +247,8 @@ public class JwtService : IJwtService
         }
         catch (Exception ex)
         {
-            return new GenerateAccessTokenResponse {
+            return new GenerateAccessTokenResponse
+            {
                 IsSuccess = false,
                 Status = "ERROR",
                 Message = $"Failed to generate access token: {ex.Message}",
@@ -280,7 +293,8 @@ public class JwtService : IJwtService
             var claims = GetTokenClaims(oldRefreshToken);
             if (claims == null)
             {
-                return new RefreshTokensResponse {
+                return new RefreshTokensResponse
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid refresh token",
@@ -291,7 +305,8 @@ public class JwtService : IJwtService
 
             if (!claims.TryGetValue("token_type", out var tokenType) || tokenType != "refresh")
             {
-                return new RefreshTokensResponse {
+                return new RefreshTokensResponse
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid token type",
@@ -303,7 +318,8 @@ public class JwtService : IJwtService
             if (!claims.TryGetValue("token_target", out var targetStr) ||
                 !Enum.TryParse<TokenTarget>(targetStr, out var target))
             {
-                return new RefreshTokensResponse {
+                return new RefreshTokensResponse
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Invalid token target",
@@ -319,7 +335,8 @@ public class JwtService : IJwtService
             var refreshResult = GenerateRefreshToken(target, (userId: userId, accountId: accountId, applicationId: applicationId));
             if (!refreshResult.IsSuccess)
             {
-                return new RefreshTokensResponse {
+                return new RefreshTokensResponse
+                {
                     IsSuccess = false,
                     Status = refreshResult.Status,
                     Message = refreshResult.Message,
@@ -331,7 +348,8 @@ public class JwtService : IJwtService
             var accessResult = GenerateAccessToken(refreshResult.RefreshToken!);
             if (!accessResult.IsSuccess)
             {
-                return new RefreshTokensResponse {
+                return new RefreshTokensResponse
+                {
                     IsSuccess = false,
                     Status = accessResult.Status,
                     Message = accessResult.Message,
@@ -340,7 +358,8 @@ public class JwtService : IJwtService
                 };
             }
 
-            return new RefreshTokensResponse {
+            return new RefreshTokensResponse
+            {
                 IsSuccess = true,
                 Status = "SUCCESS",
                 Message = "Tokens refreshed successfully",
@@ -350,7 +369,8 @@ public class JwtService : IJwtService
         }
         catch (Exception ex)
         {
-            return new RefreshTokensResponse {
+            return new RefreshTokensResponse
+            {
                 IsSuccess = false,
                 Status = "ERROR",
                 Message = $"Failed to refresh tokens: {ex.Message}",

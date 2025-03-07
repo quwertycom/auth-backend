@@ -5,7 +5,7 @@ using API.Features.Session.Refresh.Models.Services;
 using Microsoft.AspNetCore.Http;
 namespace API.Features.Session.Refresh.Endpoints;
 
-public class RefreshSessionEndpoint :  Endpoint<RefreshSessionRequest>
+public class RefreshSessionEndpoint : Endpoint<RefreshSessionRequest>
 {
     private readonly IRefreshSessionService _refreshSessionService;
 
@@ -30,12 +30,13 @@ public class RefreshSessionEndpoint :  Endpoint<RefreshSessionRequest>
             return;
         }
 
-        await SendAsync(new RefreshSessionResponse {
-          Status = result.Status,
-          Message = result.Message,
-          AccessToken = result.AccessToken,
-          RefreshToken = result.RefreshToken,
+        await SendAsync(new RefreshSessionResponse
+        {
+            Status = result.Status,
+            Message = result.Message,
+            AccessToken = result.AccessToken,
+            RefreshToken = result.RefreshToken,
         }, statusCode: result.HttpStatusCode ?? (result.IsSuccess ? 200 : 400), cancellationToken);
     }
-    
+
 }

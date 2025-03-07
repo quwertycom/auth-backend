@@ -4,7 +4,7 @@ using API.Features.Session.Revoke.Models.Contracts;
 
 namespace API.Features.Session.Revoke.Endpoints;
 
-public class RevokeSessionEndpoint :  Endpoint<RevokeSessionRequest>
+public class RevokeSessionEndpoint : Endpoint<RevokeSessionRequest>
 {
     private readonly IRevokeSessionService _revokeSessionService;
 
@@ -23,10 +23,11 @@ public class RevokeSessionEndpoint :  Endpoint<RevokeSessionRequest>
     {
         var result = await _revokeSessionService.RevokeSessionAsync(long.Parse(request.SessionId));
 
-        await SendAsync(new RevokeSessionResponse {
-          Status = result.Status,
-          Message = result.Message,
+        await SendAsync(new RevokeSessionResponse
+        {
+            Status = result.Status,
+            Message = result.Message,
         }, statusCode: result.HttpStatusCode ?? (result.IsSuccess ? 200 : 400), cancellationToken);
     }
-    
+
 }

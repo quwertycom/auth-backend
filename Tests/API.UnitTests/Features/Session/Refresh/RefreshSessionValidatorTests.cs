@@ -48,4 +48,4 @@ public class RefreshSessionValidatorTests : TestBase
         var result = _validator!.TestValidate(request);
         result.ShouldNotHaveValidationErrorFor(x => x.Token);
     }
-} 
+}

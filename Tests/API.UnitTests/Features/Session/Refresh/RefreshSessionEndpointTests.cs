@@ -238,4 +238,4 @@ public class RefreshSessionEndpointTests : TestBase
     }
 
     #endregion
-} 
+}

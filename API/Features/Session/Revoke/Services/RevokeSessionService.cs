@@ -22,10 +22,12 @@ public class RevokeSessionService : IRevokeSessionService
             if (session == null)
             {
                 return new RevokeSessionResult { IsSuccess = false, Status = "ERROR", Message = "Session not found", HttpStatusCode = 404 };
-            } else if (session.IsRevoked) {
-              return new RevokeSessionResult { IsSuccess = false, Status = "ERROR", Message = "Session has been already revoked", HttpStatusCode = 400 };
             }
-            
+            else if (session.IsRevoked)
+            {
+                return new RevokeSessionResult { IsSuccess = false, Status = "ERROR", Message = "Session has been already revoked", HttpStatusCode = 400 };
+            }
+
             await _sessionRepository.RevokeSessionAsync(session.Id);
 
             return new RevokeSessionResult { IsSuccess = true, Status = "SUCCESS", Message = "Session revoked" };

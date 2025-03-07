@@ -43,22 +43,22 @@ public class RevokeSessionServiceTests : TestBase
         // Arrange
         var mockSession = CreateMockSession(1);
         var mockSessionRepository = Substitute.For<ISessionRepository>();
-        
+
         mockSessionRepository.GetSessionByIdAsync(1).Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(mockSession));
         mockSessionRepository.RevokeSessionAsync(1).Returns(Task.CompletedTask);
-        
+
         var revokeSessionService = new RevokeSessionService(mockSessionRepository);
-        
+
         // Act
         var result = await revokeSessionService.RevokeSessionAsync(1);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         result.Status.Should().Be("SUCCESS");
         result.Message.Should().Be("Session revoked");
         // HttpStatusCode is null in the success case and handled by controller (returns 200)
-        
+
         await mockSessionRepository.Received(1).RevokeSessionAsync(1);
     }
 
@@ -67,21 +67,21 @@ public class RevokeSessionServiceTests : TestBase
     {
         // Arrange
         var mockSessionRepository = Substitute.For<ISessionRepository>();
-        
+
         mockSessionRepository.GetSessionByIdAsync(1).Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(null));
-        
+
         var revokeSessionService = new RevokeSessionService(mockSessionRepository);
-        
+
         // Act
         var result = await revokeSessionService.RevokeSessionAsync(1);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("ERROR");
         result.Message.Should().Be("Session not found");
         result.HttpStatusCode.Should().Be(404);
-        
+
         await mockSessionRepository.DidNotReceive().RevokeSessionAsync(Arg.Any<long>());
     }
 
@@ -91,21 +91,21 @@ public class RevokeSessionServiceTests : TestBase
         // Arrange
         var mockSession = CreateMockSession(1, true);
         var mockSessionRepository = Substitute.For<ISessionRepository>();
-        
+
         mockSessionRepository.GetSessionByIdAsync(1).Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(mockSession));
-        
+
         var revokeSessionService = new RevokeSessionService(mockSessionRepository);
-        
+
         // Act
         var result = await revokeSessionService.RevokeSessionAsync(1);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be("ERROR");
         result.Message.Should().Be("Session has been already revoked");
         result.HttpStatusCode.Should().Be(400);
-        
+
         await mockSessionRepository.DidNotReceive().RevokeSessionAsync(Arg.Any<long>());
     }
 
@@ -115,15 +115,15 @@ public class RevokeSessionServiceTests : TestBase
         // Arrange
         var mockSession = CreateMockSession(1);
         var mockSessionRepository = Substitute.For<ISessionRepository>();
-        
+
         mockSessionRepository.GetSessionByIdAsync(1).Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(mockSession));
         mockSessionRepository.When(x => x.RevokeSessionAsync(1)).Do(x => { throw new Exception("Test exception"); });
-        
+
         var revokeSessionService = new RevokeSessionService(mockSessionRepository);
-        
+
         // Act
         var result = await revokeSessionService.RevokeSessionAsync(1);
-        
+
         // Assert
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeFalse();
@@ -133,4 +133,4 @@ public class RevokeSessionServiceTests : TestBase
     }
 
     #endregion
-} 
+}

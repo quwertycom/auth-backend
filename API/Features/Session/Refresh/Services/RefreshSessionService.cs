@@ -24,7 +24,8 @@ public class RefreshSessionService : IRefreshSessionService
 
             if (session == null || session.User == null)
             {
-                return new RefreshSessionResult {
+                return new RefreshSessionResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Session not found",
@@ -33,7 +34,8 @@ public class RefreshSessionService : IRefreshSessionService
             }
             else if (session.IsRevoked)
             {
-                return new RefreshSessionResult {
+                return new RefreshSessionResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Session has been already revoked",
@@ -45,23 +47,28 @@ public class RefreshSessionService : IRefreshSessionService
 
             if (token == null)
             {
-                return new RefreshSessionResult {
+                return new RefreshSessionResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Token not found",
                     HttpStatusCode = 404
                 };
-            } else if (token.Type != TokenType.Refresh)
+            }
+            else if (token.Type != TokenType.Refresh)
             {
-                return new RefreshSessionResult {
+                return new RefreshSessionResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Token is not a refresh token",
                     HttpStatusCode = 400
                 };
-            } else if (token.IsRevoked)
+            }
+            else if (token.IsRevoked)
             {
-                return new RefreshSessionResult {
+                return new RefreshSessionResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Token has already been revoked",
@@ -77,15 +84,18 @@ public class RefreshSessionService : IRefreshSessionService
 
             if (!getNewTokensResult.IsSuccess)
             {
-                return new RefreshSessionResult {
+                return new RefreshSessionResult
+                {
                     IsSuccess = false,
                     Status = getNewTokensResult.Status,
                     Message = getNewTokensResult.Message ?? "Internal server error",
                     HttpStatusCode = 500
                 };
-            } else if (string.IsNullOrEmpty(getNewTokensResult.AccessToken) || string.IsNullOrEmpty(getNewTokensResult.RefreshToken))
+            }
+            else if (string.IsNullOrEmpty(getNewTokensResult.AccessToken) || string.IsNullOrEmpty(getNewTokensResult.RefreshToken))
             {
-                return new RefreshSessionResult {
+                return new RefreshSessionResult
+                {
                     IsSuccess = false,
                     Status = "ERROR",
                     Message = "Internal server error",
@@ -93,7 +103,8 @@ public class RefreshSessionService : IRefreshSessionService
                 };
             }
 
-            var newRefreshToken = new Token {
+            var newRefreshToken = new Token
+            {
                 Value = getNewTokensResult.RefreshToken,
                 Type = TokenType.Refresh,
                 Target = tokenTarget,
@@ -101,7 +112,8 @@ public class RefreshSessionService : IRefreshSessionService
                 Session = session
             };
 
-            var newAccessToken = new Token {
+            var newAccessToken = new Token
+            {
                 Value = getNewTokensResult.AccessToken,
                 Type = TokenType.Access,
                 Target = tokenTarget,
@@ -114,7 +126,8 @@ public class RefreshSessionService : IRefreshSessionService
             await _sessionRepository.AddTokenAsync(newRefreshToken);
             await _sessionRepository.AddTokenAsync(newAccessToken);
 
-            return new RefreshSessionResult {
+            return new RefreshSessionResult
+            {
                 IsSuccess = true,
                 Status = "SUCCESS",
                 Message = "Session refreshed",
