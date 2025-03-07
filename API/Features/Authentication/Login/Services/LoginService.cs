@@ -51,7 +51,7 @@ public class LoginService : ILoginService
                     HttpStatusCode = 401
                 };
             }
-            else if (!_hasher.Compare(password, user.PasswordHash, user.PasswordSalt))
+            else if (!_hasher.Compare(password, user.PasswordHash, user.PasswordSalt).IsMatch)
             {
                 return new LoginResult
                 {

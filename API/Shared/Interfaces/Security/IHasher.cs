@@ -1,5 +1,4 @@
-using API.Shared.Configuration;
-using Microsoft.Extensions.Options;
+using API.Shared.Models.Infrastructure.Hasher;
 
 namespace API.Shared.Interfaces.Security;
 
@@ -14,7 +13,7 @@ public interface IHasher
     /// <param name="password">The password to hash.</param>
     /// <param name="customSalt">Optional custom salt.</param>
     /// <returns>The hash and salt.</returns>
-    (string hash, string salt) Hash(string password, string? customSalt = null);
+    HashResult Hash(string password, string? customSalt = null);
 
     /// <summary>
     /// Compares the password with the stored hash and salt.
@@ -23,5 +22,5 @@ public interface IHasher
     /// <param name="storedHash">The stored hash.</param>
     /// <param name="storedSalt">The stored salt.</param>
     /// <returns>True if the password matches the hash, false otherwise.</returns>
-    bool Compare(string password, string storedHash, string storedSalt);
+    CompareResult Compare(string password, string storedHash, string storedSalt);
 }

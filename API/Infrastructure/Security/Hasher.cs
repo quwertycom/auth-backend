@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using API.Shared.Configuration;
 using API.Shared.Interfaces.Security;
 using Microsoft.Extensions.Options;
-
+using API.Shared.Models.Infrastructure.Hasher;
 
 namespace API.Infrastructure.Security;
 
@@ -23,7 +23,7 @@ public class Hasher : IHasher
         _keySize = settings.KeySize;
     }
 
-    public (string hash, string salt) Hash(string password, string? customSalt = null)
+    public HashResult Hash(string password, string? customSalt = null)
     {
         string saltBase64;
         byte[] salt;
@@ -54,10 +54,15 @@ public class Hasher : IHasher
             _keySize
         );
 
-        return (Convert.ToBase64String(hash), saltBase64);
+        return new HashResult {
+            IsSuccess = true,
+            Status = "OK",
+            Hash = Convert.ToBase64String(hash),
+            Salt = saltBase64,
+        };
     }
 
-    public bool Compare(string password, string storedHash, string storedSalt)
+    public CompareResult Compare(string password, string storedHash, string storedSalt)
     {
         try
         {
@@ -74,11 +79,19 @@ public class Hasher : IHasher
             );
 
             // Compare the hashes
-            return CryptographicOperations.FixedTimeEquals(hash, newHash);
+            return new CompareResult {
+                IsSuccess = true,
+                Status = "OK",
+                IsMatch = CryptographicOperations.FixedTimeEquals(hash, newHash)
+            };
         }
         catch
         {
-            return false;
+            return new CompareResult {
+                IsSuccess = false,
+                Status = "ERROR",
+                IsMatch = false
+            };
         }
     }
 }

@@ -50,8 +50,8 @@ public class RegisterService : IRegisterService
                 Username = request.Username,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                PasswordHash = hashedPassword.hash,
-                PasswordSalt = hashedPassword.salt,
+                PasswordHash = hashedPassword.Hash,
+                PasswordSalt = hashedPassword.Salt,
                 BirthDate = request.BirthDate,
                 Gender = request.Gender,
                 State = UserState.PendingVerification
