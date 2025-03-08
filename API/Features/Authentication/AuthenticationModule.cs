@@ -4,6 +4,8 @@ using API.Features.Authentication.Login.Interfaces;
 using API.Features.Authentication.Login.Services;
 using API.Features.Authentication.Register.Interfaces;
 using API.Features.Authentication.Register.Services;
+using API.Features.Authentication.Password.Reset.Interfaces;
+using API.Features.Authentication.Password.Reset.Services;
 
 namespace API.Features.Authentication;
 
@@ -22,6 +24,7 @@ public static class AuthenticationModule
         services.AddScoped<ILoginService, LoginService>();
         services.AddScoped<IRegisterService, RegisterService>();
         services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+        services.AddScoped<IResetPasswordService, ResetPasswordService>();
 
         return services;
     }
