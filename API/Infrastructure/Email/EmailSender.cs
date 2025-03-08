@@ -65,9 +65,9 @@ public class EmailSender : IEmailSender, IDisposable
             templateData);
     }
 
-    public async Task<bool> SendResetPasswordEmailAsync(string toEmail, string codeHash, string language = "en")
+    public async Task<bool> SendResetPasswordEmailAsync(string toEmail, string code, string language = "en")
     {
-        var resetLink = $"{_frontendUrl}/app/auth/reset-password?code={codeHash}";
+        var resetLink = $"{_frontendUrl}/app/auth/reset-password?code={code}";
 
         var templateData = new Dictionary<string, string>
         {
