@@ -139,4 +139,78 @@ public class ResetPasswordService : IResetPasswordService
             
         }
     }
+
+    public async Task<ResetPasswordResult> ResetPasswordAsync(string code, string newPassword, CancellationToken cancellationToken)
+    {
+        try {
+            var codeHash = _hasher.Hash(code, "");
+            var request = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync(codeHash.Hash, includeEmailAddress: true);
+
+            if (request == null) {
+                return new ResetPasswordResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Request not found",
+                    HttpStatusCode = 404
+                };
+            } else if (request.ExpiresAt < DateTime.UtcNow) {
+                return new ResetPasswordResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Request expired",
+                    HttpStatusCode = 400
+                };
+            } else if (request.IsUsed) {
+                return new ResetPasswordResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Request already used",
+                    HttpStatusCode = 400
+                };
+            }
+
+            var email = await _userRepository.GetEmailAdressByIdAsync(request.EmailAddress.Id, includeUser: true);
+
+            if (email == null) {
+                return new ResetPasswordResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Email not found",
+                    HttpStatusCode = 404
+                };
+            } else if (email.User == null) {
+                return new ResetPasswordResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "User not found",
+                    HttpStatusCode = 404
+                };
+            }
+            
+            var hashedPassword = _hasher.Hash(newPassword);
+            await _userRepository.UpdateUserPasswordAsync(email.User.Id, hashedPassword.Hash, hashedPassword.Salt);
+            await _verificationRepository.MarkPasswordResetRequestAsUsedAsync(request.Id);
+
+            return new ResetPasswordResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                Message = "Password reset successfully",
+                HttpStatusCode = 200
+            };
+        } catch (Exception ex) {
+            return new ResetPasswordResult
+            {
+                IsSuccess = false,
+                Message = ex.Message,
+                Status = "ERROR",
+                HttpStatusCode = 500
+            };
+        }
+    }
 }

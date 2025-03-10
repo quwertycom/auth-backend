@@ -6,4 +6,5 @@ public interface IResetPasswordService
 {
     Task<RequestPasswordResetResult> RequestPasswordResetViaEmailAsync(string email, CancellationToken cancellationToken);
     Task<CheckRequestStatusResult> CheckRequestStatusAsync(string code, CancellationToken cancellationToken);
+    Task<ResetPasswordResult> ResetPasswordAsync(string code, string newPassword, CancellationToken cancellationToken);
 }

@@ -17,7 +17,7 @@ public class RequestPasswordResetEndpoint : Endpoint<RequestPasswordResetRequest
 
     public override void Configure()
     {
-        Post("/api/user/password/reset");
+        Post("/api/user/password/reset/request");
         AllowAnonymous();
     }
 
