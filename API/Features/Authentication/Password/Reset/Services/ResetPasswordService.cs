@@ -5,6 +5,7 @@ using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Email;
 using API.Shared.Interfaces.Security;
 using API.Shared.Enums.Entities.User;
+using System.Security.Cryptography.X509Certificates;
 
 namespace API.Features.Authentication.Password.Reset.Services;
 
@@ -100,6 +101,43 @@ public class ResetPasswordService : IResetPasswordService
                 Status = "ERROR",
                 HttpStatusCode = 500
             };
+        }
+    }
+
+    public async Task<CheckRequestStatusResult> CheckRequestStatusAsync(string code, CancellationToken cancellationToken)
+    {
+        try {
+            var codeHash = _hasher.Hash(code, "");
+            var request = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync(codeHash.Hash);
+
+            if (request == null) {
+                return new CheckRequestStatusResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Request not found",
+                    HttpStatusCode = 404
+                };
+            }
+
+            return new CheckRequestStatusResult
+            {
+                IsSuccess = true,
+                Status = "SUCCESS",
+                Message = "Request found",
+                HttpStatusCode = 200,
+                IsExpired = request.ExpiresAt < DateTime.UtcNow,
+                IsUsed = request.IsUsed,
+            };
+        } catch (Exception ex) {
+            return new CheckRequestStatusResult
+            {
+                IsSuccess = false,
+                Message = ex.Message,
+                Status = "ERROR",
+                HttpStatusCode = 500
+            };
+            
         }
     }
 }
