@@ -16,7 +16,7 @@ public class RequestPasswordResetRequestValidator : Validator<RequestPasswordRes
         RuleFor(x => x.Email)
             .EmailAddress()
             .WithMessage("Invalid email address!")
-            .When(x => !string.IsNullOrEmpty(x.Email));
+            .When(x => string.IsNullOrEmpty(x.Username));
 
         RuleFor(x => x.Username)
             .NotEmpty()
@@ -27,6 +27,6 @@ public class RequestPasswordResetRequestValidator : Validator<RequestPasswordRes
             .WithMessage("Username must be less than 32 characters long!")
             .Matches(@"^[a-zA-Z0-9_]+$")
             .WithMessage("Username must contain only letters, numbers, and underscores!")
-            .When(x => !string.IsNullOrEmpty(x.Username));
+            .When(x => string.IsNullOrEmpty(x.Email));
     }
 }

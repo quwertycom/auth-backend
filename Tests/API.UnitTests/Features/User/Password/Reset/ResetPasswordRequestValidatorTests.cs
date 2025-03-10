@@ -1,4 +1,3 @@
-// Unit test file
 using API.Features.User.Password.Reset.Models.Contracts;
 using API.Features.User.Password.Reset.Validation;
 using FluentValidation.TestHelper;

@@ -154,6 +154,7 @@ public class ResetPasswordServiceTests : TestBase
     {
         // Arrange
         var email = "test@example.com";
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         var mockEmailAddress = new EmailAddress
         {
             Id = 1,
@@ -163,6 +164,7 @@ public class ResetPasswordServiceTests : TestBase
             User = null,
             UserId = 1
         };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         _userRepository!.GetEmailAdressByEmailStringAsync(email, true).Returns(mockEmailAddress);
 
@@ -518,7 +520,8 @@ public class ResetPasswordServiceTests : TestBase
         var mockUser = CreateMockUser();
         var mockEmailAddress = CreateMockEmailAddress("test@example.com", mockUser);
         var mockRequest = CreateMockPasswordResetRequest(codeHash, mockUser, mockEmailAddress);
-        
+
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         var emailWithoutUser = new EmailAddress
         {
             Id = mockEmailAddress.Id,
@@ -528,6 +531,7 @@ public class ResetPasswordServiceTests : TestBase
             User = null,
             UserId = mockUser.Id
         };
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
         _hasher!.Hash(code, "").Returns(codeHash);
         _verificationRepository!.GetPasswordResetRequestByCodeHashAsync(
