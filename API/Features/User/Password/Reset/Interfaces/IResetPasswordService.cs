@@ -1,5 +1,6 @@
-using API.Features.Authentication.Password.Reset.Models.Services;
-namespace API.Features.Authentication.Password.Reset.Interfaces;
+using API.Features.User.Password.Reset.Models.Services;
+
+namespace API.Features.User.Password.Reset.Interfaces;
 
 public interface IResetPasswordService
 {

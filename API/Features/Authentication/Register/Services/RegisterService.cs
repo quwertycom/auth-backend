@@ -45,7 +45,7 @@ public class RegisterService : IRegisterService
 
             var hashedPassword = _hasher.Hash(request.Password);
 
-            var newUser = new User
+            var newUser = new Infrastructure.Database.Entities.User.User
             {
                 Username = request.Username,
                 FirstName = request.FirstName,

@@ -1,5 +1,5 @@
 
-namespace API.Features.Authentication.Password.Reset.Models.Contracts;
+namespace API.Features.User.Password.Reset.Models.Contracts;
 
 public record RequestPasswordResetRequest
 {

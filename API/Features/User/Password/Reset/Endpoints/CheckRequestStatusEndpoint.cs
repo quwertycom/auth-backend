@@ -1,8 +1,8 @@
 using FastEndpoints;
-using API.Features.Authentication.Password.Reset.Models.Contracts;
-using API.Features.Authentication.Password.Reset.Interfaces;
+using API.Features.User.Password.Reset.Models.Contracts;
+using API.Features.User.Password.Reset.Interfaces;
 
-namespace API.Features.Authentication.Password.Reset.Endpoints;
+namespace API.Features.User.Password.Reset.Endpoints;
 
 public class CheckRequestStatusEndpoint : Endpoint<CheckRequestStatusRequest, CheckRequestStatusResponse>
 {
@@ -15,7 +15,7 @@ public class CheckRequestStatusEndpoint : Endpoint<CheckRequestStatusRequest, Ch
 
     public override void Configure()
     {
-        Get("/api/authentication/password/reset/request-status");
+        Get("/api/user/password/reset/request-status");
         AllowAnonymous();
     }
 

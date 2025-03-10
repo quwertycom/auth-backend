@@ -1,8 +1,8 @@
-
 using FastEndpoints;
 using FluentValidation;
-using API.Features.Authentication.Password.Reset.Models.Contracts;
-namespace API.Features.Authentication.Password.Reset.Validation;
+using API.Features.User.Password.Reset.Models.Contracts;
+
+namespace API.Features.User.Password.Reset.Validation;
 
 public class RequestPasswordResetRequestValidator : Validator<RequestPasswordResetRequest>
 {
@@ -14,4 +14,4 @@ public class RequestPasswordResetRequestValidator : Validator<RequestPasswordRes
             .EmailAddress()
             .WithMessage("Invalid email address!");
     }
-}
+}   

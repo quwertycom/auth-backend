@@ -4,8 +4,8 @@ using API.Features.Authentication.Login.Interfaces;
 using API.Features.Authentication.Login.Services;
 using API.Features.Authentication.Register.Interfaces;
 using API.Features.Authentication.Register.Services;
-using API.Features.Authentication.Password.Reset.Interfaces;
-using API.Features.Authentication.Password.Reset.Services;
+using API.Features.User.Password.Reset.Interfaces;
+using API.Features.User.Password.Reset.Services;
 
 namespace API.Features.Authentication;
 

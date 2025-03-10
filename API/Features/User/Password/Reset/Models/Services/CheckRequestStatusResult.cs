@@ -1,6 +1,6 @@
 using API.Shared.Models.Features.Services;
 
-namespace API.Features.Authentication.Password.Reset.Models.Services;
+namespace API.Features.User.Password.Reset.Models.Services;
 
 public record CheckRequestStatusResult : ServiceResult {
   public bool? IsExpired { get; set; }

@@ -1,13 +1,12 @@
-using API.Features.Authentication.Password.Reset.Interfaces;
-using API.Features.Authentication.Password.Reset.Models.Services;
+using API.Features.User.Password.Reset.Interfaces;
+using API.Features.User.Password.Reset.Models.Services;
 using API.Infrastructure.Database.Entities.Verification;
 using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Email;
 using API.Shared.Interfaces.Security;
 using API.Shared.Enums.Entities.User;
-using System.Security.Cryptography.X509Certificates;
 
-namespace API.Features.Authentication.Password.Reset.Services;
+namespace API.Features.User.Password.Reset.Services;
 
 public class ResetPasswordService : IResetPasswordService
 {

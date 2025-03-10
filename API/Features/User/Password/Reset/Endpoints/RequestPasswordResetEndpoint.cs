@@ -1,10 +1,10 @@
 using FastEndpoints;
-using API.Features.Authentication.Password.Reset.Models.Contracts;
-using API.Features.Authentication.Password.Reset.Interfaces;
+using API.Features.User.Password.Reset.Models.Contracts;
+using API.Features.User.Password.Reset.Interfaces;
 using API.Shared.Contracts.Responses.Common;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace API.Features.Authentication.Password.Reset.Endpoints;
+namespace API.Features.User.Password.Reset.Endpoints;
 
 public class RequestPasswordResetEndpoint : Endpoint<RequestPasswordResetRequest, RequestPasswordResetResponse>
 {
@@ -17,7 +17,7 @@ public class RequestPasswordResetEndpoint : Endpoint<RequestPasswordResetRequest
 
     public override void Configure()
     {
-        Post("/api/authentication/password/reset");
+        Post("/api/user/password/reset");
         AllowAnonymous();
     }
 
