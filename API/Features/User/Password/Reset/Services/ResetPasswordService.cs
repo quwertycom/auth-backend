@@ -145,7 +145,7 @@ public class ResetPasswordService : IResetPasswordService
         try {
             var codeHash = _hasher.Hash(code, "");
             var request = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync(codeHash.Hash, includeEmailAddress: true);
-
+            
             if (request == null) {
                 return new ResetPasswordResult
                 {
@@ -154,7 +154,9 @@ public class ResetPasswordService : IResetPasswordService
                     Message = "Request not found",
                     HttpStatusCode = 404
                 };
-            } else if (request.ExpiresAt < DateTime.UtcNow) {
+            } 
+            
+            if (request.ExpiresAt < DateTime.UtcNow) {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -162,7 +164,9 @@ public class ResetPasswordService : IResetPasswordService
                     Message = "Request expired",
                     HttpStatusCode = 400
                 };
-            } else if (request.IsUsed) {
+            } 
+            
+            if (request.IsUsed) {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -173,7 +177,7 @@ public class ResetPasswordService : IResetPasswordService
             }
 
             var email = await _userRepository.GetEmailAdressByIdAsync(request.EmailAddress.Id, includeUser: true);
-
+            
             if (email == null) {
                 return new ResetPasswordResult
                 {
@@ -182,7 +186,9 @@ public class ResetPasswordService : IResetPasswordService
                     Message = "Email not found",
                     HttpStatusCode = 404
                 };
-            } else if (email.User == null) {
+            } 
+            
+            if (email.User == null) {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,

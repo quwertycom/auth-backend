@@ -13,9 +13,9 @@ public class EmailVerificationServiceTests : TestBase
 {
     #region Helper Methods
 
-    private User CreateMockUser(UserState state = UserState.PendingVerification)
+    private API.Infrastructure.Database.Entities.User.User CreateMockUser(UserState state = UserState.PendingVerification)
     {
-        return new User
+        return new API.Infrastructure.Database.Entities.User.User
         {
             Id = Snowflake.Generate(),
             Username = "testuser",
@@ -29,7 +29,7 @@ public class EmailVerificationServiceTests : TestBase
         };
     }
 
-    private EmailAddress CreateMockEmailAddress(string email, EmailState state, User? user = null)
+    private EmailAddress CreateMockEmailAddress(string email, EmailState state, API.Infrastructure.Database.Entities.User.User? user = null)
     {
         var mockUser = user ?? CreateMockUser();
         return new EmailAddress
@@ -47,7 +47,7 @@ public class EmailVerificationServiceTests : TestBase
         string requestId,
         string code,
         EmailAddress emailAddress,
-        User user,
+        API.Infrastructure.Database.Entities.User.User user,
         bool isUsed = false,
         bool isExpired = false)
     {
@@ -87,7 +87,7 @@ public class EmailVerificationServiceTests : TestBase
         );
 
         mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<API.Infrastructure.Database.Entities.User.User?>(mockUser));
         mockRandomGenerator.GenerateNumberCode(8).Returns("12345678");
         mockEmailSender.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
 
@@ -163,7 +163,7 @@ public class EmailVerificationServiceTests : TestBase
         );
 
         mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(null));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<API.Infrastructure.Database.Entities.User.User?>(null));
 
         // Act
         var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
@@ -199,7 +199,7 @@ public class EmailVerificationServiceTests : TestBase
         );
 
         mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<API.Infrastructure.Database.Entities.User.User?>(mockUser));
 
         // Act
         var result = await emailVerificationService!.RequestEmailVerificationAsync(emailAddress, CancellationToken.None);
@@ -235,7 +235,7 @@ public class EmailVerificationServiceTests : TestBase
         );
 
         mockUserRepository!.GetEmailAdressByEmailStringAsync(emailAddress).Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
-        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<User?>(mockUser));
+        mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId).Returns(Task.FromResult<API.Infrastructure.Database.Entities.User.User?>(mockUser));
         mockRandomGenerator.GenerateNumberCode(8).Returns("12345678");
         mockEmailSender!.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(false);
 
@@ -796,7 +796,7 @@ public class EmailVerificationServiceTests : TestBase
             .Returns(Task.FromResult<EmailAddress?>(mockEmailAddressEntity));
 
         mockUserRepository!.GetUserByIdAsync(mockEmailAddressEntity.UserId)
-            .Returns(Task.FromResult<User?>(mockEmailAddressEntity.User));
+            .Returns(Task.FromResult<API.Infrastructure.Database.Entities.User.User?>(mockEmailAddressEntity.User));
 
         mockRandomGenerator.GenerateNumberCode(8).Returns("12345678");
         mockEmailSender.SendOtpEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);

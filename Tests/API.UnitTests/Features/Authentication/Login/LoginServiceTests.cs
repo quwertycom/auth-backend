@@ -15,7 +15,7 @@ public class LoginServiceTests : TestBase
 {
     #region Helper Methods
 
-    private User CreateTestUser(
+    private API.Infrastructure.Database.Entities.User.User CreateTestUser(
         long id = 123,
         string username = "testuser",
         string firstName = "Test",
@@ -26,7 +26,7 @@ public class LoginServiceTests : TestBase
         UserGender gender = UserGender.Male,
         UserState state = UserState.Active)
     {
-        return new User
+        return new API.Infrastructure.Database.Entities.User.User
         {
             Id = id,
             Username = username,
@@ -150,7 +150,7 @@ public class LoginServiceTests : TestBase
         );
 
         mockUserRepository!.GetUserByUsernameAsync(username)
-            .Returns((User?)null);
+            .Returns((API.Infrastructure.Database.Entities.User.User?)null);
 
         // Act
         var result = await loginService!.LoginAsync(username, password, CancellationToken.None);

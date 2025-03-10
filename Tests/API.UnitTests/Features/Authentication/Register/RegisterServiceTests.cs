@@ -86,7 +86,7 @@ public class RegisterServiceTests : TestBase
         result.RequestId.Should().Be("verification-session-id");
 
         // Verify interactions with repositories
-        await MockUserRepository.Received(1).AddUserAsync(Arg.Is<User>(u =>
+        await MockUserRepository.Received(1).AddUserAsync(Arg.Is<API.Infrastructure.Database.Entities.User.User>(u =>
             u.Username == request.Username &&
             u.FirstName == request.FirstName &&
             u.LastName == request.LastName &&
@@ -197,7 +197,7 @@ public class RegisterServiceTests : TestBase
         result.Status.Should().Be("USERNAME_EXISTS");
 
         // Verify no user was added
-        await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<User>());
+        await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<API.Infrastructure.Database.Entities.User.User>());
         await MockUserRepository.DidNotReceive().AddEmailAsync(Arg.Any<EmailAddress>());
     }
 
@@ -242,7 +242,7 @@ public class RegisterServiceTests : TestBase
         result.Status.Should().Be("EMAIL_EXISTS");
 
         // Verify no user was added
-        await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<User>());
+        await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<API.Infrastructure.Database.Entities.User.User>());
         await MockUserRepository.DidNotReceive().AddEmailAsync(Arg.Any<EmailAddress>());
     }
 
@@ -288,7 +288,7 @@ public class RegisterServiceTests : TestBase
         result.Status.Should().Be("PHONE_NUMBER_EXISTS");
 
         // Verify no user was added
-        await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<User>());
+        await MockUserRepository.DidNotReceive().AddUserAsync(Arg.Any<API.Infrastructure.Database.Entities.User.User>());
         await MockUserRepository.DidNotReceive().AddEmailAsync(Arg.Any<EmailAddress>());
     }
 
@@ -410,7 +410,7 @@ public class RegisterServiceTests : TestBase
                 RequestId = "verification-session-id"
             });
 
-        MockUserRepository.AddUserAsync(Arg.Any<User>())
+        MockUserRepository.AddUserAsync(Arg.Any<API.Infrastructure.Database.Entities.User.User>())
             .Returns(Task.FromException(new Exception("Failed to add user to database")));
 
         // Act

@@ -13,7 +13,7 @@ public class RefreshSessionServiceTests : TestBase
 {
     #region Helper Methods
 
-    private User CreateTestUser(
+    private API.Infrastructure.Database.Entities.User.User CreateTestUser(
         long id = 123,
         string username = "testuser",
         string firstName = "Test",
@@ -24,7 +24,7 @@ public class RefreshSessionServiceTests : TestBase
         UserGender gender = UserGender.Male,
         UserState state = UserState.Active)
     {
-        return new User
+        return new API.Infrastructure.Database.Entities.User.User
         {
             Id = id,
             Username = username,
@@ -40,7 +40,7 @@ public class RefreshSessionServiceTests : TestBase
 
     private API.Infrastructure.Database.Entities.Authentication.Session CreateTestSession(
         long id = 1,
-        User? user = null,
+        API.Infrastructure.Database.Entities.User.User? user = null,
         SessionTarget target = SessionTarget.User,
         bool isRevoked = false)
     {
@@ -60,7 +60,7 @@ public class RefreshSessionServiceTests : TestBase
         TokenTarget target = TokenTarget.User,
         API.Infrastructure.Database.Entities.Authentication.Session? session = null,
         bool isRevoked = false,
-        User? user = null)
+        API.Infrastructure.Database.Entities.User.User? user = null)
     {
         return new Token
         {
