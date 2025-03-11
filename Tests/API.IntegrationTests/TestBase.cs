@@ -135,7 +135,7 @@ public abstract class TestBase : IDisposable
             var hashedPassword = hasher.Hash(password);
 
             // Create and add a new user with the Active state
-            var newUser = new User
+            var newUser = new API.Infrastructure.Database.Entities.User.User
             {
                 Username = username,
                 FirstName = "Test",
@@ -150,7 +150,7 @@ public abstract class TestBase : IDisposable
             await userRepository.AddUserAsync(newUser);
 
             // Add a verified email for the user
-            var newEmail = new EmailAddress
+            var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
             {
                 User = newUser,
                 Value = $"{username}@example.com",
