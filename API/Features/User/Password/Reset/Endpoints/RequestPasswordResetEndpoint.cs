@@ -29,6 +29,11 @@ public class RequestPasswordResetEndpoint : Endpoint<RequestPasswordResetRequest
         if (!string.IsNullOrEmpty(req.Email))
         {
             result = await _resetPasswordService.RequestPasswordResetViaEmailAsync(req.Email, ct);
+            await SendAsync(new RequestPasswordResetResponse
+            {
+                Status = result.Status,
+                Message = result.Message
+            }, statusCode: result.HttpStatusCode ?? (result.IsSuccess ? 200 : 400), ct);
         }
         else if (!string.IsNullOrEmpty(req.Username))
         {
