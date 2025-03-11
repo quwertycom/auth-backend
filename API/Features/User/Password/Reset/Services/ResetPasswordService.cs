@@ -231,6 +231,7 @@ public class ResetPasswordService : IResetPasswordService
     public async Task<ResetPasswordResult> ResetPasswordAsync(string code, string newPassword, CancellationToken cancellationToken)
     {
         try {
+            // Generate code hash using empty salt
             var codeHash = _hasher.Hash(code, "");
             var request = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync(codeHash.Hash, includeEmailAddress: true);
             
@@ -264,6 +265,7 @@ public class ResetPasswordService : IResetPasswordService
                 };
             }
 
+            // Get user information
             var email = await _userRepository.GetEmailAdressByIdAsync(request.EmailAddress.Id, includeUser: true);
             
             if (email == null) {
@@ -286,8 +288,24 @@ public class ResetPasswordService : IResetPasswordService
                 };
             }
             
+            if (email.User.Id != request.User.Id) {
+                return new ResetPasswordResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "User mismatch",
+                    HttpStatusCode = 400
+                };
+            }
+            
+            // Generate a new hash and salt for the password
+            // Don't pass a custom salt - let the hasher generate a fresh one
             var hashedPassword = _hasher.Hash(newPassword);
+            
+            // Update the user's password with both the new hash and salt
             await _userRepository.UpdateUserPasswordAsync(email.User.Id, hashedPassword.Hash, hashedPassword.Salt);
+            
+            // Mark the request as used
             await _verificationRepository.MarkPasswordResetRequestAsUsedAsync(request.Id);
 
             return new ResetPasswordResult
