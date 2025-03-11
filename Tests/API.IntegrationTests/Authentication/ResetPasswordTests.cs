@@ -48,7 +48,7 @@ public class ResetPasswordTests : TestBase
     public async Task RequestPasswordReset_ValidUsername_ShouldReturnSuccess()
     {
         // Arrange - Ensure a verified user exists
-        var username = $"reset-username-valid-{Guid.NewGuid()}";
+        var username = $"resetusernamevalid{Guid.NewGuid().ToString().Replace("-", "").Substring(0, 10)}"; // Shorten username and remove hyphens
         var email = $"{username}@example.com";
         await EnsureVerifiedUserExistsAsync(username, "Password123!");
 
@@ -58,12 +58,12 @@ public class ResetPasswordTests : TestBase
         var response = await PostAsync("/api/user/password/reset/request", request);
 
         // Assert
-        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode,
             "RequestPasswordReset with valid username should return OK");
 
         var content = await response.Content.ReadFromJsonAsync<RequestPasswordResetResponse>();
         Assert.IsNotNull(content, "Response content should not be null");
-        Assert.That(content!.Status, Is.EqualTo("ERROR").IgnoreCase);
+        Assert.AreEqual("SUCCESS", content!.Status, "Response status should be SUCCESS");
     }
 
     [Test]
@@ -327,7 +327,7 @@ public class ResetPasswordTests : TestBase
         var response = await PostAsync("/api/user/password/reset", request);
 
         // Assert
-        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode,
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
             "ResetPassword with expired code should return BadRequest");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
@@ -480,6 +480,18 @@ public class ResetPasswordTests : TestBase
         var email = $"expired-reset-{Guid.NewGuid()}@example.com";
         await EnsureVerifiedUserExistsAsync(username, "Password123!");
 
+        var user = await userRepository.GetUserByUsernameAsync(username);
+        if (user == null)
+        {
+            throw new Exception($"User with username '{username}' not found.");
+        }
+
+        var emailAddress = user.EmailAddresses.FirstOrDefault();
+        if (emailAddress == null)
+        {
+            throw new Exception($"Email address for user '{username}' not found.");
+        }
+
         // Generate code and hash
         var code = randomGenerator.GenerateAlphanumericCode(64);
         var codeHash = hasher.Hash(code, "");
@@ -488,8 +500,8 @@ public class ResetPasswordTests : TestBase
         var passwordResetRequest = new API.Infrastructure.Database.Entities.Verification.PasswordResetRequest
         {
             CodeHash = codeHash.Hash,
-            EmailAddress = await userRepository.GetEmailAdressByEmailStringAsync(email), // Fetch existing email
-            User = await userRepository.GetUserByUsernameAsync(username), // Fetch existing user
+            EmailAddress = emailAddress,
+            User = user,
             ExpiresAt = DateTime.UtcNow.AddMinutes(-10), // Expired
             CreatedAt = DateTime.UtcNow.AddMinutes(-20)
         };
@@ -521,15 +533,19 @@ public class ResetPasswordTests : TestBase
         var codeHash = hasher.Hash(code, "");
 
         // Create used request
+#pragma warning disable CS8601 // Possible null reference assignment.
+#pragma warning disable CS8601 // Possible null reference assignment.
         var passwordResetRequest = new API.Infrastructure.Database.Entities.Verification.PasswordResetRequest
         {
             CodeHash = codeHash.Hash,
-            EmailAddress = await userRepository.GetEmailAdressByEmailStringAsync(email), // Fetch existing email
-            User = await userRepository.GetUserByUsernameAsync(username), // Fetch existing user
+            EmailAddress = await userRepository.GetEmailAdressByEmailStringAsync(email),
+            User = await userRepository.GetUserByUsernameAsync(username),
             ExpiresAt = DateTime.UtcNow.AddMinutes(10),
             CreatedAt = DateTime.UtcNow,
             IsUsed = true // Already used
         };
+#pragma warning restore CS8601 // Possible null reference assignment.
+#pragma warning restore CS8601 // Possible null reference assignment.
 
         await verificationRepository.AddPasswordResetRequestAsync(passwordResetRequest);
 
