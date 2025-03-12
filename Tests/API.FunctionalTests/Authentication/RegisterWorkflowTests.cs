@@ -18,7 +18,7 @@ namespace API.FunctionalTests.Authentication;
 [TestFixture]
 public class RegisterWorkflowTests : TestBase
 {
-    private IUserRepository _userRepository;
+    private IUserRepository? _userRepository;
     
     [SetUp]
     public void Setup()
