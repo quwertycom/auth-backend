@@ -10,6 +10,7 @@ using API.Shared.Enums.Entities.Application;
 using API.Shared.Enums.Entities.Authentication;
 using API.Shared.Enums.Entities.Developer;
 using API.Shared.Enums.Entities.User;
+using API.Shared.Utilities;
 
 namespace API.Tests.DataGenerator;
 
@@ -19,7 +20,7 @@ public class Generate
     {
         return new User
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Username = username ?? "testuser",
             FirstName = firstName ?? "Test",
             LastName = lastName ?? "User",
@@ -35,11 +36,11 @@ public class Generate
     {
         return new Account
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Name = name ?? "Test Account",
             UserId = userId ?? 1,
             Type = type ?? AccountType.Personal,
-            User = New()
+            User = NewUser()
         };
     }
 
@@ -47,7 +48,7 @@ public class Generate
     {
         return new Application
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Name = name ?? "Test App",
             Description = description ?? "Test",
             Developer = developer ?? NewDeveloper(developerId ?? 1),
@@ -61,10 +62,10 @@ public class Generate
     {
         return new Session
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             UserId = userId ?? 1,
             Target = target ?? SessionTarget.User,
-            User = New()
+            User = NewUser()
         };
     }
 
@@ -72,7 +73,7 @@ public class Generate
     {
         return new Developer
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Name = name ?? "Test Dev",
             ContactEmail = contactEmail ?? "test@dev.com",
             OrganizationId = organizationId ?? 1,
@@ -86,7 +87,7 @@ public class Generate
     {
         return new Organization
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Name = name ?? "Test Org",
             Description = description ?? "Test"
         };
@@ -96,7 +97,7 @@ public class Generate
     {
         return new ApplicationAccount
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             ApplicationId = applicationId ?? 1,
             AccountId = accountId ?? 1,
             Sessions = new List<Session>(),
@@ -109,13 +110,13 @@ public class Generate
     {
         return new Token
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Value = value ?? "test",
             SessionId = sessionId ?? 1,
             Type = type ?? TokenType.Access,
             Target = target ?? TokenTarget.User,
             Session = NewSession(),
-            User = New()
+            User = NewUser()
         };
     }
 
@@ -123,7 +124,7 @@ public class Generate
     {
         return new DeveloperAccount
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Name = name ?? "Test Dev Acc",
             DeveloperId = developerId ?? 1,
             Developer = NewDeveloper(),
@@ -134,67 +135,67 @@ public class Generate
         };
     }
 
-    public OrganizationRole NewOrganizationRole(long? id = null, string? name = null, string? description = null, long? organizationId = null)
+    public OrganizationRole NewOrganizationRole(long? id = null, string? name = null, string? description = null, long? organizationId = null, Organization? organization = null)
     {
         return new OrganizationRole
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Name = name ?? "Test Role",
             Description = description ?? "Test",
             OrganizationId = organizationId ?? 1,
-            Organization = NewOrganization(organizationId ?? 1)
+            Organization = organization ?? NewOrganization(organizationId ?? 1)
         };
     }
 
-    public EmailAddress NewEmailAddress(long? id = null, string? value = null, long? userId = null, EmailType? type = null, EmailState? state = null)
+    public EmailAddress NewEmailAddress(long? id = null, string? value = null, long? userId = null, EmailType? type = null, EmailState? state = null, User? user = null)
     {   
         return new EmailAddress
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Value = value ?? "test@test.com",
             UserId = userId ?? 1,
             Type = type ?? EmailType.Primary,
             State = state ?? EmailState.PendingVerification,
-            User = New()
+            User = user ?? NewUser()
         };
     }
 
-    public PhoneNumber NewPhoneNumber(long? id = null, string? value = null, long? userId = null, PhoneType? type = null, PhoneState? state = null)
+    public PhoneNumber NewPhoneNumber(long? id = null, string? value = null, long? userId = null, PhoneType? type = null, PhoneState? state = null, User? user = null)
     {
         return new PhoneNumber
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Value = value ?? "+123456789",
             UserId = userId ?? 1,
             Type = type ?? PhoneType.Primary,
             State = state ?? PhoneState.PendingVerification,
-            User = New()
+            User = user ?? NewUser()
         };
     }
 
-    public EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null)
+    public EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null)
     {
         return new EmailVerificationRequest
         {
-            Id = id ?? 1,
+            Id = id ?? Snowflake.Generate(),
             Code = code ?? "123456",
             UserId = userId ?? 1,
             EmailId = emailId ?? 1,
-            User = New(),
-            EmailAddress = NewEmailAddress()
+            User = user ?? NewUser(),
+            EmailAddress = emailAddress ?? NewEmailAddress()
         };
     }
 
-    public PasswordResetRequest NewPasswordResetRequest(long id = 1, string codeHash = "hash", long userId = 1, long emailId = 1)
+    public PasswordResetRequest NewPasswordResetRequest(long? id = null, string? codeHash = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null)
     {
         return new PasswordResetRequest
         {
-            Id = id,
-            CodeHash = codeHash,
-            UserId = userId,
-            EmailId = emailId,
-            User = New(),
-            EmailAddress = NewEmailAddress()
+            Id = id ?? Snowflake.Generate(),
+            CodeHash = codeHash ?? "hash",
+            UserId = userId ?? 1,
+            EmailId = emailId ?? 1,
+            User = user ?? NewUser(),
+            EmailAddress = emailAddress ?? NewEmailAddress()
         };
     }
 }
