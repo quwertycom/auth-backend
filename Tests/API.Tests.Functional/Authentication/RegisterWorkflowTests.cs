@@ -118,27 +118,25 @@ public class RegisterWorkflowTests : TestBase
         var hasher = GetRequiredService<IHasher>();
         
         var hashedPassword = hasher.Hash("Password123!");
-        var existingUser = new User
-        {
-            Username = "testusertest3",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.Active
-        };
+        var existingUser = _generate.NewUser(
+            username: "testusertest3",
+            firstName: "Test",
+            lastName: "User",
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt,
+            birthDate: new DateTime(1990, 1, 1),
+            gender: UserGender.Male,
+            state: UserState.Active
+        );
         await userRepo.AddUserAsync(existingUser);
 
-        var existingPhone = new PhoneNumber
-        {
-            Value = "+1234567890",
-            UserId = existingUser.Id,
-            Type = PhoneType.Primary,
-            State = PhoneState.Active,
-            User = existingUser,
-        };
+        var existingPhone = _generate.NewPhoneNumber(
+            value: "+1234567890",
+            userId: existingUser.Id,
+            type: PhoneType.Primary,
+            state: PhoneState.Active,
+            user: existingUser
+        );
         await userRepo.AddPhoneNumberAsync(existingPhone);
 
         var request = new RegisterRequest

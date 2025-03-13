@@ -5,6 +5,7 @@ using API.Infrastructure.Database.Entities.User;
 using API.Shared.Enums.Entities.User;
 using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Security;
+using API.Tests.DataGenerator;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -28,17 +29,16 @@ public class LoginWorkflowTests : TestBase
         var hasher = GetRequiredService<IHasher>();
 
         var hashedPassword = hasher.Hash("Password123!");
-        var existingUser = new User
-        {
-            Username = "testusertest1",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.Active
-        };
+        var existingUser = _generate.NewUser(
+            username: "testusertest1",
+            firstName: "Test",
+            lastName: "User",
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt,
+            birthDate: new DateTime(1990, 1, 1),
+            gender: UserGender.Male,
+            state: UserState.Active
+        );
         await userRepo.AddUserAsync(existingUser);
 
         var request = new LoginRequest
@@ -58,17 +58,16 @@ public class LoginWorkflowTests : TestBase
         var hasher = GetRequiredService<IHasher>();
 
         var hashedPassword = hasher.Hash("Password123!");
-        var existingUser = new User
-        {
-            Username = "testusertest2",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.Active
-        };
+        var existingUser = _generate.NewUser(
+            username: "testusertest2",
+            firstName: "Test",
+            lastName: "User",
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt,
+            birthDate: new DateTime(1990, 1, 1),
+            gender: UserGender.Male,
+            state: UserState.Active
+        );
         await userRepo.AddUserAsync(existingUser);
 
         var request = new LoginRequest
@@ -88,17 +87,16 @@ public class LoginWorkflowTests : TestBase
         var hasher = GetRequiredService<IHasher>();
 
         var hashedPassword = hasher.Hash("Password123!");
-        var existingUser = new User
-        {
-            Username = "testusertest3",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.Suspended
-        };
+        var existingUser = _generate.NewUser(
+            username: "testusertest3",
+            firstName: "Test",
+            lastName: "User",
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt,
+            birthDate: new DateTime(1990, 1, 1),
+            gender: UserGender.Male,
+            state: UserState.Suspended
+        );
         await userRepo.AddUserAsync(existingUser);
 
         var request = new LoginRequest
@@ -118,17 +116,16 @@ public class LoginWorkflowTests : TestBase
         var hasher = GetRequiredService<IHasher>();
 
         var hashedPassword = hasher.Hash("Password123!");
-        var existingUser = new User
-        {
-            Username = "testusertest4",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.Deleted
-        };
+        var existingUser = _generate.NewUser(
+            username: "testusertest4",
+            firstName: "Test",
+            lastName: "User",
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt,
+            birthDate: new DateTime(1990, 1, 1),
+            gender: UserGender.Male,
+            state: UserState.Deleted
+        );
         await userRepo.AddUserAsync(existingUser);
 
         var request = new LoginRequest
@@ -148,17 +145,16 @@ public class LoginWorkflowTests : TestBase
         var hasher = GetRequiredService<IHasher>();
 
         var hashedPassword = hasher.Hash("Password123!");
-        var existingUser = new User
-        {
-            Username = "testusertest5",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.Active
-        };
+        var existingUser = _generate.NewUser(
+            username: "testusertest5",
+            firstName: "Test",
+            lastName: "User",
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt,
+            birthDate: new DateTime(1990, 1, 1),
+            gender: UserGender.Male,
+            state: UserState.Active
+        );
         await userRepo.AddUserAsync(existingUser);
 
         var request = new LoginRequest
