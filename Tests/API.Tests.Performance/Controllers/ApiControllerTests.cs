@@ -3,7 +3,7 @@ using NBomber.CSharp;
 using FluentAssertions;
 using System.Net.Http;
 
-namespace API.PerformanceTests.Controllers;
+namespace API.Tests.Performance.Controllers;
 
 public class ApiControllerTests : TestBase
 {

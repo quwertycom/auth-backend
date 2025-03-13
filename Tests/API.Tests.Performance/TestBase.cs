@@ -4,7 +4,7 @@ using NBomber.Http.CSharp;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 
-namespace API.PerformanceTests;
+namespace API.Tests.Performance;
 
 public abstract class TestBase
 {
