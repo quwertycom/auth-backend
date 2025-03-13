@@ -235,7 +235,7 @@
             "type": "process",
             "args": [
                 "test",
-                "${workspaceFolder}/Tests/API.UnitTests/API.UnitTests.csproj",
+                "${workspaceFolder}/Tests/API.Tests.Unit/API.Tests.Unit.csproj",
                 "--logger:trx"
             ],
             "problemMatcher": "$msCompile",
@@ -253,7 +253,7 @@
             "type": "process",
             "args": [
                 "test",
-                "${workspaceFolder}/Tests/API.IntegrationTests/API.IntegrationTests.csproj",
+                "${workspaceFolder}/Tests/API.Tests.Integration/API.Tests.Integration.csproj",
                 "--logger:trx"
             ],
             "problemMatcher": "$msCompile",
@@ -274,7 +274,7 @@
             "type": "process",
             "args": [
                 "test",
-                "${workspaceFolder}/Tests/API.FunctionalTests/API.FunctionalTests.csproj",
+                "${workspaceFolder}/Tests/API.Tests.Functional/API.Tests.Functional.csproj",
                 "--logger:trx"
             ],
             "problemMatcher": "$msCompile",
@@ -319,7 +319,7 @@
             "type": "process",
             "args": [
                 "test",
-                "${workspaceFolder}/Tests/API.PerformanceTests/API.PerformanceTests.csproj",
+                "${workspaceFolder}/Tests/API.Tests.Performance/API.Tests.Performance.csproj",
                 "--logger:trx"
             ],
             "problemMatcher": "$msCompile",
