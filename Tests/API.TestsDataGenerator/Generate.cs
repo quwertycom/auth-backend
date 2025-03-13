@@ -11,7 +11,7 @@ using API.Shared.Enums.Entities.Authentication;
 using API.Shared.Enums.Entities.Developer;
 using API.Shared.Enums.Entities.User;
 
-namespace API.Tests.DataGenerator;
+namespace API.TestsDataGenerator;
 
 public class Generate
 {
