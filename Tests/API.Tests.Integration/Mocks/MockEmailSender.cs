@@ -1,6 +1,6 @@
 using API.Shared.Interfaces.Email;
 
-namespace API.IntegrationTests.Mocks;
+namespace API.Tests.Integration.Mocks;
 
 /// <summary>
 /// Mock implementation of IEmailSender for testing purposes that doesn't actually send emails

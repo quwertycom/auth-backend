@@ -11,14 +11,14 @@ using API.Shared.Interfaces.Database;
 using API.Shared.Interfaces.Security;
 using API.Shared.Configuration;
 using API.Shared.Interfaces.Email;
-using API.IntegrationTests.Mocks;
+using API.Tests.Integration.Mocks;
 using API.Shared.Interfaces.Database.Repositories;
 using API.Infrastructure.Database.Entities.User;
 using API.Shared.Enums.Entities.User;
 using Microsoft.EntityFrameworkCore;
 using API.Infrastructure.Database;
 
-namespace API.IntegrationTests;
+namespace API.Tests.Integration;
 
 public abstract class TestBase : IDisposable
 {

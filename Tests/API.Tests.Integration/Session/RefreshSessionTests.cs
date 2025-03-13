@@ -7,7 +7,7 @@ using API.Features.Session.Refresh.Models.Contracts;
 using API.Shared.Interfaces.Database.Repositories;
 using NUnit.Framework;
 
-namespace API.IntegrationTests.Session;
+namespace API.Tests.Integration.Session;
 
 [TestFixture]
 public class RefreshSessionTests : TestBase

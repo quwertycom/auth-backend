@@ -5,7 +5,7 @@ using API.Shared.Contracts.Responses.Common;
 using API.Shared.Enums.Entities.User;
 using NUnit.Framework;
 
-namespace API.IntegrationTests.Authentication.EmailVerification;
+namespace API.Tests.Integration.Authentication.EmailVerification;
 
 [TestFixture]
 public class RequestNewCodeTests : TestBase

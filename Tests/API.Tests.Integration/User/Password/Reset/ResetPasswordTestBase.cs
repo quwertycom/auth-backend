@@ -1,14 +1,6 @@
-using API.IntegrationTests; // Ensure namespace matches your project
-using NUnit.Framework;
-using System;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using API.Features.Authentication.Login.Models.Contracts;
 
-namespace API.IntegrationTests.User.Password.Reset;
+namespace API.Tests.Integration.User.Password.Reset;
 
 [TestFixture]
 public abstract class ResetPasswordTestBase : TestBase

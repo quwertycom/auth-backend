@@ -1,11 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using API.Features.User.Password.Reset.Models.Contracts;
-using API.IntegrationTests.User.Password.Reset;
 using API.Shared.Contracts.Responses.Common;
-using NUnit.Framework;
 
-namespace API.IntegrationTests.User.Password.Reset;
+namespace API.Tests.Integration.User.Password.Reset;
 
 [TestFixture]
 public class ResetPasswordEndpointTests : ResetPasswordTestBase

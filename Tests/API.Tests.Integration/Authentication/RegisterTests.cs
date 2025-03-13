@@ -5,7 +5,7 @@ using API.Shared.Contracts.Responses.Common;
 using API.Shared.Enums.Entities.User;
 using NUnit.Framework;
 
-namespace API.IntegrationTests.Authentication;
+namespace API.Tests.Integration.Authentication;
 
 [TestFixture]
 public class RegisterTests : TestBase

@@ -4,7 +4,7 @@ using API.Features.User.Password.Reset.Models.Contracts;
 using API.Shared.Contracts.Responses.Common;
 using NUnit.Framework;
 
-namespace API.IntegrationTests.User.Password.Reset;
+namespace API.Tests.Integration.User.Password.Reset;
 
 [TestFixture]
 public class RequestPasswordResetTests : TestBase

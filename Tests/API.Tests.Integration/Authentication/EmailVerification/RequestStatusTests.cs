@@ -6,68 +6,74 @@ using API.Shared.Enums.Entities.User;
 using API.Infrastructure.Database.Entities.Verification;
 using NUnit.Framework;
 
-namespace API.IntegrationTests.Authentication.EmailVerification;
+namespace API.Tests.Integration.Authentication.EmailVerification;
 
 [TestFixture]
-public class VerifyEmailTests : TestBase
+public class RequestStatusTests : TestBase
 {
     [Test]
-    public async Task VerifyEmail_Endpoint_Should_BeAccessible()
+    public async Task RequestStatus_Endpoint_Should_BeAccessible()
     {
         // Act: Send request to the endpoint
-        var response = await _client.GetAsync("/api/authentication/email-verification/verify");
+        var response = await _client.GetAsync("/api/authentication/email-verification/request-status");
 
-        // Assert: The endpoint exists even if it returns method not allowed
+        // Assert: The endpoint exists and returns a response (likely BadRequest due to missing parameters)
         Assert.IsFalse(response.StatusCode == HttpStatusCode.NotFound,
-            "VerifyEmail endpoint should exist and not return 404 Not Found");
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
-            "VerifyEmail endpoint should return Method Not Allowed for GET requests");
+            "RequestStatus endpoint should exist and not return 404 Not Found");
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
+            "RequestStatus endpoint should return BadRequest when called without parameters");
     }
 
     [Test]
-    public async Task VerifyEmail_ValidRequest_ShouldReturnSuccess()
+    public async Task RequestStatus_ValidRequest_ShouldReturnSuccess()
     {
         // Arrange - Create a verification request
-        var (requestId, code) = await CreateVerificationRequestAsync();
-
-        var request = new VerifyEmailRequest
-        {
-            RequestId = requestId,
-            Code = code
-        };
+        var (requestId, email) = await CreateVerificationRequestAsync();
 
         // Act
-        var response = await PostAsync("/api/authentication/email-verification/verify", request);
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?RequestId={requestId}&Email={email}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode,
-            "VerifyEmail with valid request should return OK");
+            "RequestStatus with valid request should return OK");
 
-        var content = await response.Content.ReadFromJsonAsync<VerifyEmailResponse>();
+        var content = await response.Content.ReadFromJsonAsync<RequestStatusResponse>();
         Assert.IsNotNull(content, "Response content should not be null");
         Assert.AreEqual("SUCCESS", content!.Status, "Response status should be SUCCESS");
-
-        // Note: In the test environment, we don't verify the state changes 
-        // as they might be executed differently than in production.
-        // The important part is that the API returns a successful response.
     }
 
     [Test]
-    public async Task VerifyEmail_InvalidRequestId_ShouldReturnBadRequest()
+    public async Task RequestStatus_InvalidRequestId_ShouldReturnBadRequest()
     {
         // Arrange
-        var request = new VerifyEmailRequest
-        {
-            RequestId = "999999999999", // Non-existent request ID
-            Code = "123456"
-        };
+        var invalidRequestId = "invalid-id"; // Non-numeric request ID
+        var email = "test@example.com";
 
         // Act
-        var response = await PostAsync("/api/authentication/email-verification/verify", request);
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?RequestId={invalidRequestId}&Email={email}");
+
+        // Assert
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
+            "RequestStatus with invalid request ID format should return BadRequest");
+
+        var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        Assert.IsNotNull(errorContent, "Error response should not be null");
+        Assert.IsNotNull(errorContent!.Message, "Error response should contain a message");
+    }
+
+    [Test]
+    public async Task RequestStatus_NonExistingRequest_ShouldReturnNotFound()
+    {
+        // Arrange
+        var nonExistingRequestId = "999999999999"; // Non-existent request ID
+        var email = "test@example.com";
+
+        // Act
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?RequestId={nonExistingRequestId}&Email={email}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode,
-            "VerifyEmail with invalid request ID should return NotFound");
+            "RequestStatus with non-existing request ID should return NotFound");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -76,48 +82,37 @@ public class VerifyEmailTests : TestBase
     }
 
     [Test]
-    public async Task VerifyEmail_InvalidCode_ShouldReturnBadRequest()
+    public async Task RequestStatus_EmailMismatch_ShouldReturnBadRequest()
     {
         // Arrange - Create a verification request
         var (requestId, _) = await CreateVerificationRequestAsync();
-
-        var request = new VerifyEmailRequest
-        {
-            RequestId = requestId,
-            Code = "WRONG_CODE" // Incorrect code
-        };
+        var wrongEmail = $"wrong-email-{Guid.NewGuid()}@example.com"; // Mismatched email
 
         // Act
-        var response = await PostAsync("/api/authentication/email-verification/verify", request);
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?RequestId={requestId}&Email={wrongEmail}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
-            "VerifyEmail with invalid code should return BadRequest");
+            "RequestStatus with mismatched email should return BadRequest");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
         Assert.IsNotNull(errorContent!.Message, "Error response should contain a message");
-        Assert.That(errorContent.Status, Is.EqualTo("CODE_MISMATCH"));
+        Assert.That(errorContent.Status, Is.EqualTo("EMAIL_MISMATCH"));
     }
 
     [Test]
-    public async Task VerifyEmail_ExpiredRequest_ShouldReturnGone()
+    public async Task RequestStatus_ExpiredRequest_ShouldReturnGone()
     {
         // Arrange - Create an expired verification request
-        var (requestId, code) = await CreateExpiredVerificationRequestAsync();
-
-        var request = new VerifyEmailRequest
-        {
-            RequestId = requestId,
-            Code = code
-        };
+        var (requestId, email) = await CreateExpiredVerificationRequestAsync();
 
         // Act
-        var response = await PostAsync("/api/authentication/email-verification/verify", request);
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?RequestId={requestId}&Email={email}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.Gone, response.StatusCode,
-            "VerifyEmail with expired request should return Gone (410)");
+            "RequestStatus with expired request should return Gone (410)");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -126,32 +121,17 @@ public class VerifyEmailTests : TestBase
     }
 
     [Test]
-    public async Task VerifyEmail_AlreadyUsedRequest_ShouldReturnBadRequest()
+    public async Task RequestStatus_AlreadyUsedRequest_ShouldReturnBadRequest()
     {
         // Arrange - Create and use a verification request
-        var (requestId, code) = await CreateVerificationRequestAsync();
-
-        // First verification (should succeed)
-        var firstRequest = new VerifyEmailRequest
-        {
-            RequestId = requestId,
-            Code = code
-        };
-        await PostAsync("/api/authentication/email-verification/verify", firstRequest);
-
-        // Second verification with the same request
-        var secondRequest = new VerifyEmailRequest
-        {
-            RequestId = requestId,
-            Code = code
-        };
+        var (requestId, email, code) = await CreateAndUseVerificationRequestAsync();
 
         // Act
-        var response = await PostAsync("/api/authentication/email-verification/verify", secondRequest);
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?RequestId={requestId}&Email={email}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
-            "VerifyEmail with already used request should return BadRequest");
+            "RequestStatus with already used request should return BadRequest");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -160,21 +140,17 @@ public class VerifyEmailTests : TestBase
     }
 
     [Test]
-    public async Task VerifyEmail_MissingRequestId_ShouldReturnBadRequest()
+    public async Task RequestStatus_MissingRequestId_ShouldReturnBadRequest()
     {
         // Arrange
-        var request = new VerifyEmailRequest
-        {
-            RequestId = "", // Empty request ID
-            Code = "123456"
-        };
+        var email = "test@example.com";
 
         // Act
-        var response = await PostAsync("/api/authentication/email-verification/verify", request);
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?Email={email}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
-            "VerifyEmail with missing request ID should return BadRequest");
+            "RequestStatus with missing request ID should return BadRequest");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -182,21 +158,17 @@ public class VerifyEmailTests : TestBase
     }
 
     [Test]
-    public async Task VerifyEmail_MissingCode_ShouldReturnBadRequest()
+    public async Task RequestStatus_MissingEmail_ShouldReturnBadRequest()
     {
         // Arrange
-        var request = new VerifyEmailRequest
-        {
-            RequestId = "123456",
-            Code = "" // Empty code
-        };
+        var requestId = "123456789";
 
         // Act
-        var response = await PostAsync("/api/authentication/email-verification/verify", request);
+        var response = await GetAsync($"/api/authentication/email-verification/request-status?RequestId={requestId}");
 
         // Assert
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
-            "VerifyEmail with missing code should return BadRequest");
+            "RequestStatus with missing email should return BadRequest");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent, "Error response should not be null");
@@ -204,9 +176,9 @@ public class VerifyEmailTests : TestBase
     }
 
     /// <summary>
-    /// Helper method to create a verification request and return the request ID and code
+    /// Helper method to create a verification request and return the request ID and email
     /// </summary>
-    private async Task<(string requestId, string code)> CreateVerificationRequestAsync()
+    private async Task<(string requestId, string email)> CreateVerificationRequestAsync()
     {
         // Get access to the required services directly
         var userRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IUserRepository>();
@@ -214,8 +186,8 @@ public class VerifyEmailTests : TestBase
         var hasher = GetRequiredService<API.Shared.Interfaces.Security.IHasher>();
 
         // Create a unique username and email
-        var username = $"test-verify-{Guid.NewGuid()}";
-        var email = $"verify-{Guid.NewGuid()}@example.com";
+        var username = $"test-status-{Guid.NewGuid()}";
+        var email = $"status-{Guid.NewGuid()}@example.com";
 
         // Create a hash for the password
         var hashedPassword = hasher.Hash("Password123!");
@@ -263,13 +235,13 @@ public class VerifyEmailTests : TestBase
 
         await verificationRepository.AddEmailVerificationRequestAsync(verificationRequest);
 
-        return (verificationRequest.Id.ToString(), code);
+        return (verificationRequest.Id.ToString(), email);
     }
 
     /// <summary>
     /// Helper method to create an expired verification request
     /// </summary>
-    private async Task<(string requestId, string code)> CreateExpiredVerificationRequestAsync()
+    private async Task<(string requestId, string email)> CreateExpiredVerificationRequestAsync()
     {
         // Get access to the required services directly
         var userRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IUserRepository>();
@@ -277,8 +249,8 @@ public class VerifyEmailTests : TestBase
         var hasher = GetRequiredService<API.Shared.Interfaces.Security.IHasher>();
 
         // Create a unique username and email
-        var username = $"test-expired-{Guid.NewGuid()}";
-        var email = $"expired-{Guid.NewGuid()}@example.com";
+        var username = $"test-expired-status-{Guid.NewGuid()}";
+        var email = $"expired-status-{Guid.NewGuid()}@example.com";
 
         // Create a hash for the password
         var hashedPassword = hasher.Hash("Password123!");
@@ -326,6 +298,70 @@ public class VerifyEmailTests : TestBase
 
         await verificationRepository.AddEmailVerificationRequestAsync(verificationRequest);
 
-        return (verificationRequest.Id.ToString(), code);
+        return (verificationRequest.Id.ToString(), email);
+    }
+
+    /// <summary>
+    /// Helper method to create and use a verification request
+    /// </summary>
+    private async Task<(string requestId, string email, string code)> CreateAndUseVerificationRequestAsync()
+    {
+        // Get access to the required services directly
+        var userRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IUserRepository>();
+        var verificationRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IVerificationRepository>();
+        var hasher = GetRequiredService<API.Shared.Interfaces.Security.IHasher>();
+
+        // Create a unique username and email
+        var username = $"test-used-status-{Guid.NewGuid()}";
+        var email = $"used-status-{Guid.NewGuid()}@example.com";
+
+        // Create a hash for the password
+        var hashedPassword = hasher.Hash("Password123!");
+
+        // Create and add a new user
+        var newUser = new API.Infrastructure.Database.Entities.User.User
+        {
+            Username = username,
+            FirstName = "Test",
+            LastName = "User",
+            PasswordHash = hashedPassword.Hash,
+            PasswordSalt = hashedPassword.Salt,
+            BirthDate = new DateTime(1990, 1, 1),
+            Gender = UserGender.Male,
+            State = UserState.PendingVerification
+        };
+
+        await userRepository.AddUserAsync(newUser);
+
+        // Add an unverified email for the user
+        var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
+        {
+            User = newUser,
+            Value = email,
+            State = EmailState.PendingVerification,
+            Type = EmailType.Primary
+        };
+
+        await userRepository.AddEmailAsync(newEmail);
+
+        // Create a verification code
+        var code = "123456";
+
+        // Create a verification request
+        var verificationRequest = new EmailVerificationRequest
+        {
+            Code = code,
+            User = newUser,
+            EmailAddress = newEmail,
+            UserId = newUser.Id,
+            EmailId = newEmail.Id,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            CreatedAt = DateTime.UtcNow,
+            IsUsed = true // Mark as used
+        };
+
+        await verificationRepository.AddEmailVerificationRequestAsync(verificationRequest);
+
+        return (verificationRequest.Id.ToString(), email, code);
     }
 }
