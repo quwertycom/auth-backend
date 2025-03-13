@@ -14,7 +14,7 @@ using API.Shared.Utilities;
 
 namespace API.Tests.DataGenerator;
 
-public class Generate
+public class Generate : IGenerate
 {
     public User NewUser(long? id = null, string? username = null, string? firstName = null, string? lastName = null, string? passwordHash = null, string? passwordSalt = null, DateTime? birthDate = null, UserGender? gender = null, UserState? state = null)
     {
