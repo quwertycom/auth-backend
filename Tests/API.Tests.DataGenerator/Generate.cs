@@ -28,7 +28,9 @@ public class Generate : IGenerate
             PasswordSalt = passwordSalt ?? "salt",
             BirthDate = birthDate ?? new DateTime(1990, 1, 1),
             Gender = gender ?? UserGender.Male,
-            State = state ?? UserState.Active
+            State = state ?? UserState.Active,
+            EmailAddresses = new List<EmailAddress>(),
+            PhoneNumbers = new List<PhoneNumber>()
         };
     }
 
@@ -173,7 +175,7 @@ public class Generate : IGenerate
         };
     }
 
-    public EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null)
+    public EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null, bool? isUsed = null, bool? isRevoked = null)
     {
         return new EmailVerificationRequest
         {
@@ -184,10 +186,12 @@ public class Generate : IGenerate
             User = user ?? NewUser(),
             EmailAddress = emailAddress ?? NewEmailAddress(),
             ExpiresAt = expiresAt ?? DateTime.UtcNow.AddMinutes(10),
+            IsUsed = isUsed ?? false,
+            IsRevoked = isRevoked ?? false
         };
     }
 
-    public PasswordResetRequest NewPasswordResetRequest(long? id = null, string? codeHash = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null)
+    public PasswordResetRequest NewPasswordResetRequest(long? id = null, string? codeHash = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null, bool? isUsed = null, bool? isRevoked = null)
     {
         return new PasswordResetRequest
         {
@@ -198,6 +202,8 @@ public class Generate : IGenerate
             User = user ?? NewUser(),
             EmailAddress = emailAddress ?? NewEmailAddress(),
             ExpiresAt = expiresAt ?? DateTime.UtcNow.AddMinutes(10),
+            IsUsed = isUsed ?? false,
+            IsRevoked = isRevoked ?? false
         };
     }
 }
