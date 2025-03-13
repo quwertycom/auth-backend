@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "API\API.csproj", "{0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{31062342-72AB-43CE-A522-F13247F77A57}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.UnitTests", "Tests\API.Tests.Unit\API.Tests.Unit.csproj", "{B7B242F7-DD4C-4DD8-AC65-A8662BC9EFE7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.Unit", "Tests\API.Tests.Unit\API.Tests.Unit.csproj", "{B7B242F7-DD4C-4DD8-AC65-A8662BC9EFE7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.IntegrationTests", "Tests\API.IntegrationTests\API.IntegrationTests.csproj", "{3A6D5AA9-8085-4335-A995-E36E56A90100}"
 EndProject
