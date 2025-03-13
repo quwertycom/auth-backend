@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.Unit", "Tests\API
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.Integration", "Tests\API.Tests.Integration\API.Tests.Integration.csproj", "{3A6D5AA9-8085-4335-A995-E36E56A90100}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.FunctionalTests", "Tests\API.FunctionalTests\API.FunctionalTests.csproj", "{107DDA1D-D852-4740-8EC8-84A5767189E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.Functional", "Tests\API.Tests.Functional\API.Tests.Functional.csproj", "{107DDA1D-D852-4740-8EC8-84A5767189E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.PerformanceTests", "Tests\API.PerformanceTests\API.PerformanceTests.csproj", "{13180C79-80F8-4082-A604-18A64D7F723E}"
 EndProject

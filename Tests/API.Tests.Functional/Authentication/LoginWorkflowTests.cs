@@ -8,7 +8,7 @@ using API.Shared.Interfaces.Security;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace API.FunctionalTests.Authentication;
+namespace API.Tests.Functional.Authentication;
 
 [TestFixture]
 public class LoginWorkflowTests : TestBase

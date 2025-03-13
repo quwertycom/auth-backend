@@ -13,7 +13,7 @@ using System.Text.Json;
 using API.Shared.Interfaces.Security;
 using API.Infrastructure.Database.Entities.User;
 
-namespace API.FunctionalTests.Authentication;
+namespace API.Tests.Functional.Authentication;
 
 [TestFixture]
 public class RegisterWorkflowTests : TestBase

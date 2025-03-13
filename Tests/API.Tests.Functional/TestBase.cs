@@ -12,7 +12,7 @@ using API.Shared.Configuration;
 using API.Infrastructure.Database.Entities.User;
 using API.Shared.Enums.Entities.User;
 
-namespace API.FunctionalTests;
+namespace API.Tests.Functional;
 
 public abstract class TestBase : IDisposable
 {
