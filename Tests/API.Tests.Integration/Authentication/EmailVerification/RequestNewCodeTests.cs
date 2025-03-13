@@ -231,28 +231,22 @@ public class RequestNewCodeTests : TestBase
             var hashedPassword = hasher.Hash(password);
 
             // Create and add a new user with the PendingVerification state
-            var newUser = new API.Infrastructure.Database.Entities.User.User
-            {
-                Username = username,
-                FirstName = "Test",
-                LastName = "User",
-                PasswordHash = hashedPassword.Hash,
-                PasswordSalt = hashedPassword.Salt,
-                BirthDate = new DateTime(1990, 1, 1),
-                Gender = UserGender.Male,
-                State = UserState.PendingVerification
-            };
+            var newUser = _generate.NewUser(
+                passwordHash: hashedPassword.Hash,
+                passwordSalt: hashedPassword.Salt,
+                birthDate: new DateTime(1990, 1, 1),
+                state: UserState.PendingVerification
+            );
 
             await userRepository.AddUserAsync(newUser);
 
             // Add an unverified email for the user
-            var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
-            {
-                User = newUser,
-                Value = email,
-                State = EmailState.PendingVerification,
-                Type = EmailType.Primary
-            };
+            var newEmail = _generate.NewEmailAddress(
+                user: newUser,
+                value: email,
+                state: EmailState.PendingVerification,
+                type: EmailType.Primary
+            );
 
             await userRepository.AddEmailAsync(newEmail);
         }
@@ -274,28 +268,22 @@ public class RequestNewCodeTests : TestBase
         var hashedPassword = hasher.Hash("Password123!");
 
         // Create and add a new user
-        var newUser = new API.Infrastructure.Database.Entities.User.User
-        {
-            Username = username,
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.Active
-        };
+        var newUser = _generate.NewUser(
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt,
+            birthDate: new DateTime(1990, 1, 1),
+            state: UserState.Active
+        );
 
         await userRepository.AddUserAsync(newUser);
 
         // Add an email with the specified state for the user
-        var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
-        {
-            User = newUser,
-            Value = email,
-            State = state,
-            Type = EmailType.Primary
-        };
+        var newEmail = _generate.NewEmailAddress(
+            user: newUser,
+            value: email,
+            state: state,
+            type: EmailType.Primary
+        );
 
         await userRepository.AddEmailAsync(newEmail);
     }

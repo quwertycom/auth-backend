@@ -17,6 +17,7 @@ using API.Infrastructure.Database.Entities.User;
 using API.Shared.Enums.Entities.User;
 using Microsoft.EntityFrameworkCore;
 using API.Infrastructure.Database;
+using API.Tests.DataGenerator;
 
 namespace API.Tests.Integration;
 
@@ -25,6 +26,7 @@ public abstract class TestBase : IDisposable
     protected readonly WebApplicationFactory<Program> _factory;
     protected readonly HttpClient _client;
     protected readonly IServiceScope _scope;
+    protected readonly IGenerate _generate;
 
     protected TestBase()
     {
@@ -80,6 +82,7 @@ public abstract class TestBase : IDisposable
 
         _client = _factory.CreateClient();
         _scope = _factory.Services.CreateScope();
+        _generate = new Generate();
     }
 
     protected virtual void ConfigureTestServices(IServiceCollection services)

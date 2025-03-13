@@ -221,28 +221,23 @@ public class VerifyEmailTests : TestBase
         var hashedPassword = hasher.Hash("Password123!");
 
         // Create and add a new user
-        var newUser = new API.Infrastructure.Database.Entities.User.User
-        {
-            Username = username,
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
+        var newUser = _generate.NewUser(
+            username: username,
+            firstName: "Test",
+            lastName: "User",
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt
+        );
 
         await userRepository.AddUserAsync(newUser);
 
         // Add an unverified email for the user
-        var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
-        {
-            User = newUser,
-            Value = email,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary
-        };
+        var newEmail = _generate.NewEmailAddress(
+            user: newUser,
+            value: email,
+            state: EmailState.PendingVerification,
+            type: EmailType.Primary
+        );
 
         await userRepository.AddEmailAsync(newEmail);
 
@@ -250,16 +245,12 @@ public class VerifyEmailTests : TestBase
         var code = "123456";
 
         // Create a verification request
-        var verificationRequest = new EmailVerificationRequest
-        {
-            Code = code,
-            User = newUser,
-            EmailAddress = newEmail,
-            UserId = newUser.Id,
-            EmailId = newEmail.Id,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
-            CreatedAt = DateTime.UtcNow
-        };
+        var verificationRequest = _generate.NewEmailVerificationRequest(
+            code: code,
+            user: newUser,
+            emailAddress: newEmail,
+            expiresAt: DateTime.UtcNow.AddMinutes(10)
+        );
 
         await verificationRepository.AddEmailVerificationRequestAsync(verificationRequest);
 
@@ -276,36 +267,22 @@ public class VerifyEmailTests : TestBase
         var verificationRepository = GetRequiredService<API.Shared.Interfaces.Database.Repositories.IVerificationRepository>();
         var hasher = GetRequiredService<API.Shared.Interfaces.Security.IHasher>();
 
-        // Create a unique username and email
-        var username = $"test-expired-{Guid.NewGuid()}";
-        var email = $"expired-{Guid.NewGuid()}@example.com";
-
         // Create a hash for the password
         var hashedPassword = hasher.Hash("Password123!");
 
         // Create and add a new user
-        var newUser = new API.Infrastructure.Database.Entities.User.User
-        {
-            Username = username,
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = hashedPassword.Hash,
-            PasswordSalt = hashedPassword.Salt,
-            BirthDate = new DateTime(1990, 1, 1),
-            Gender = UserGender.Male,
-            State = UserState.PendingVerification
-        };
+        var newUser = _generate.NewUser(
+            passwordHash: hashedPassword.Hash,
+            passwordSalt: hashedPassword.Salt
+        );
 
         await userRepository.AddUserAsync(newUser);
 
         // Add an unverified email for the user
-        var newEmail = new API.Infrastructure.Database.Entities.User.EmailAddress
-        {
-            User = newUser,
-            Value = email,
-            State = EmailState.PendingVerification,
-            Type = EmailType.Primary
-        };
+        var newEmail = _generate.NewEmailAddress(
+            user: newUser,
+            value: newUser.Username + "@example.com"
+        );
 
         await userRepository.AddEmailAsync(newEmail);
 
@@ -313,16 +290,12 @@ public class VerifyEmailTests : TestBase
         var code = "123456";
 
         // Create an expired verification request
-        var verificationRequest = new EmailVerificationRequest
-        {
-            Code = code,
-            User = newUser,
-            EmailAddress = newEmail,
-            UserId = newUser.Id,
-            EmailId = newEmail.Id,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(-10), // Expired request
-            CreatedAt = DateTime.UtcNow.AddMinutes(-20)
-        };
+        var verificationRequest = _generate.NewEmailVerificationRequest(
+            code: code,
+            user: newUser,
+            emailAddress: newEmail,
+            expiresAt: DateTime.UtcNow.AddMinutes(-10)
+        );
 
         await verificationRepository.AddEmailVerificationRequestAsync(verificationRequest);
 

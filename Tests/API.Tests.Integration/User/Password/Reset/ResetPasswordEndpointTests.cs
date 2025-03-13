@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using API.Features.User.Password.Reset.Models.Contracts;
 using API.Shared.Contracts.Responses.Common;
 
@@ -100,7 +102,7 @@ public class ResetPasswordEndpointTests : ResetPasswordTestBase
         var request = new ResetPasswordRequest { Code = code, NewPassword = newPassword };
         var response = await PostAsync("/api/user/password/reset", request);
 
-        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode,
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
             "ResetPassword with used code should return BadRequest");
 
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
