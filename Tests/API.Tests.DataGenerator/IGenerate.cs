@@ -14,11 +14,11 @@ public interface IGenerate
     User NewUser(long? id = null, string? username = null, string? firstName = null, string? lastName = null, string? passwordHash = null, string? passwordSalt = null, DateTime? birthDate = null, UserGender? gender = null, UserState? state = null);
     Account NewAccount(long? id = null, string? name = null, long? userId = null, AccountType? type = null);
     Application NewApplication(long? id = null, string? name = null, string? description = null, string? redirectUri = null, long? developerId = null, Developer? developer = null);
-    Session NewSession(long? id = null, long? userId = null, SessionTarget? target = null);
+    Session NewSession(long? id = null, long? userId = null, SessionTarget? target = null, User? user = null, bool? isRevoked = null);
     Developer NewDeveloper(long? id = null, string? name = null, string? contactEmail = null, long? organizationId = null);
     Organization NewOrganization(long? id = null, string? name = null, string? description = null);
     ApplicationAccount NewApplicationAccount(long? id = null, long? applicationId = null, long? accountId = null);
-    Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null);
+    Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null, bool? isRevoked = null, User? user = null, Session? session = null);
     DeveloperAccount NewDeveloperAccount(long? id = null, string? name = null, long? developerId = null, long? accountId = null, Account? account = null);
     OrganizationRole NewOrganizationRole(long? id = null, string? name = null, string? description = null, long? organizationId = null, Organization? organization = null);
     EmailAddress NewEmailAddress(long? id = null, string? value = null, long? userId = null, EmailType? type = null, EmailState? state = null, User? user = null);

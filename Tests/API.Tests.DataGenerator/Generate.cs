@@ -60,14 +60,15 @@ public class Generate : IGenerate
         };
     }
 
-    public Session NewSession(long? id = null, long? userId = null, SessionTarget? target = null)
+    public Session NewSession(long? id = null, long? userId = null, SessionTarget? target = null, User? user = null, bool? isRevoked = null)
     {
         return new Session
         {
             Id = id ?? Snowflake.Generate(),
-            UserId = userId ?? 1,
+            UserId = userId ?? user?.Id ?? Snowflake.Generate(),
             Target = target ?? SessionTarget.User,
-            User = NewUser()
+            User = user ?? NewUser(),
+            IsRevoked = isRevoked ?? false,
         };
     }
 
@@ -108,7 +109,7 @@ public class Generate : IGenerate
         };
     }
 
-    public Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null)
+    public Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null, bool? isRevoked = null, User? user = null, Session? session = null)
     {
         return new Token
         {
@@ -117,8 +118,9 @@ public class Generate : IGenerate
             SessionId = sessionId ?? 1,
             Type = type ?? TokenType.Access,
             Target = target ?? TokenTarget.User,
-            Session = NewSession(),
-            User = NewUser()
+            Session = session ?? NewSession(),
+            User = user ?? NewUser(),
+            IsRevoked = isRevoked ?? false
         };
     }
 
