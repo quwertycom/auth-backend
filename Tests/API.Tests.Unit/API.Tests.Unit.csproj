@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\API\API.csproj" />
+    <ProjectReference Include="..\API.Tests.DataGenerator\API.Tests.DataGenerator.csproj" />
   </ItemGroup>
 
   <ItemGroup>
