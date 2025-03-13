@@ -21,7 +21,7 @@ public class Generate : IGenerate
         return new User
         {
             Id = id ?? Snowflake.Generate(),
-            Username = username ?? "testuser",
+            Username = username ?? "testuser" + Guid.NewGuid().ToString("N").Substring(0, 8),
             FirstName = firstName ?? "Test",
             LastName = lastName ?? "User",
             PasswordHash = passwordHash ?? "password",
@@ -37,7 +37,7 @@ public class Generate : IGenerate
         return new Account
         {
             Id = id ?? Snowflake.Generate(),
-            Name = name ?? "Test Account",
+            Name = name ?? "Test Account" + Guid.NewGuid().ToString("N").Substring(0, 8),
             UserId = userId ?? 1,
             Type = type ?? AccountType.Personal,
             User = NewUser()
@@ -49,7 +49,7 @@ public class Generate : IGenerate
         return new Application
         {
             Id = id ?? Snowflake.Generate(),
-            Name = name ?? "Test App",
+            Name = name ?? "Test App" + Guid.NewGuid().ToString("N").Substring(0, 8),
             Description = description ?? "Test",
             Developer = developer ?? NewDeveloper(developerId ?? 1),
             RedirectUri = redirectUri ?? "https://test.com",
@@ -74,7 +74,7 @@ public class Generate : IGenerate
         return new Developer
         {
             Id = id ?? Snowflake.Generate(),
-            Name = name ?? "Test Dev",
+            Name = name ?? "Test Dev" + Guid.NewGuid().ToString("N").Substring(0, 8),
             ContactEmail = contactEmail ?? "test@dev.com",
             OrganizationId = organizationId ?? 1,
             Organization = NewOrganization(organizationId ?? 1),
@@ -88,7 +88,7 @@ public class Generate : IGenerate
         return new Organization
         {
             Id = id ?? Snowflake.Generate(),
-            Name = name ?? "Test Org",
+            Name = name ?? "Test Org" + Guid.NewGuid().ToString("N").Substring(0, 8),
             Description = description ?? "Test"
         };
     }
@@ -111,7 +111,7 @@ public class Generate : IGenerate
         return new Token
         {
             Id = id ?? Snowflake.Generate(),
-            Value = value ?? "test",
+            Value = value ?? "test" + Guid.NewGuid().ToString("N").Substring(0, 8),
             SessionId = sessionId ?? 1,
             Type = type ?? TokenType.Access,
             Target = target ?? TokenTarget.User,
@@ -125,7 +125,7 @@ public class Generate : IGenerate
         return new DeveloperAccount
         {
             Id = id ?? Snowflake.Generate(),
-            Name = name ?? "Test Dev Acc",
+            Name = name ?? "Test Dev Acc" + Guid.NewGuid().ToString("N").Substring(0, 8),
             DeveloperId = developerId ?? 1,
             Developer = NewDeveloper(),
             AccountId = accountId ?? 1,
@@ -140,7 +140,7 @@ public class Generate : IGenerate
         return new OrganizationRole
         {
             Id = id ?? Snowflake.Generate(),
-            Name = name ?? "Test Role",
+            Name = name ?? "Test Role" + Guid.NewGuid().ToString("N").Substring(0, 8),
             Description = description ?? "Test",
             OrganizationId = organizationId ?? 1,
             Organization = organization ?? NewOrganization(organizationId ?? 1)
@@ -152,7 +152,7 @@ public class Generate : IGenerate
         return new EmailAddress
         {
             Id = id ?? Snowflake.Generate(),
-            Value = value ?? "test@test.com",
+            Value = value ?? "test@test.com" + Guid.NewGuid().ToString("N").Substring(0, 8),
             UserId = userId ?? 1,
             Type = type ?? EmailType.Primary,
             State = state ?? EmailState.PendingVerification,
@@ -165,7 +165,7 @@ public class Generate : IGenerate
         return new PhoneNumber
         {
             Id = id ?? Snowflake.Generate(),
-            Value = value ?? "+123456789",
+            Value = value ?? "+123456789" + Guid.NewGuid().ToString("N").Substring(0, 8),
             UserId = userId ?? 1,
             Type = type ?? PhoneType.Primary,
             State = state ?? PhoneState.PendingVerification,
@@ -173,29 +173,31 @@ public class Generate : IGenerate
         };
     }
 
-    public EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null)
+    public EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null)
     {
         return new EmailVerificationRequest
         {
             Id = id ?? Snowflake.Generate(),
-            Code = code ?? "123456",
+            Code = code ?? "123456" + Guid.NewGuid().ToString("N").Substring(0, 8),
             UserId = userId ?? 1,
             EmailId = emailId ?? 1,
             User = user ?? NewUser(),
-            EmailAddress = emailAddress ?? NewEmailAddress()
+            EmailAddress = emailAddress ?? NewEmailAddress(),
+            ExpiresAt = expiresAt ?? DateTime.UtcNow.AddMinutes(10),
         };
     }
 
-    public PasswordResetRequest NewPasswordResetRequest(long? id = null, string? codeHash = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null)
+    public PasswordResetRequest NewPasswordResetRequest(long? id = null, string? codeHash = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null)
     {
         return new PasswordResetRequest
         {
             Id = id ?? Snowflake.Generate(),
-            CodeHash = codeHash ?? "hash",
+            CodeHash = codeHash ?? "hash" + Guid.NewGuid().ToString("N").Substring(0, 8),
             UserId = userId ?? 1,
             EmailId = emailId ?? 1,
             User = user ?? NewUser(),
-            EmailAddress = emailAddress ?? NewEmailAddress()
+            EmailAddress = emailAddress ?? NewEmailAddress(),
+            ExpiresAt = expiresAt ?? DateTime.UtcNow.AddMinutes(10),
         };
     }
 }

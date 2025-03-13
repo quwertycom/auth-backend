@@ -23,6 +23,6 @@ public interface IGenerate
     OrganizationRole NewOrganizationRole(long? id = null, string? name = null, string? description = null, long? organizationId = null, Organization? organization = null);
     EmailAddress NewEmailAddress(long? id = null, string? value = null, long? userId = null, EmailType? type = null, EmailState? state = null, User? user = null);
     PhoneNumber NewPhoneNumber(long? id = null, string? value = null, long? userId = null, PhoneType? type = null, PhoneState? state = null, User? user = null);
-    EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null);
-    PasswordResetRequest NewPasswordResetRequest(long? id = null, string? codeHash = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null);
+    EmailVerificationRequest NewEmailVerificationRequest(long? id = null, string? code = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null);
+    PasswordResetRequest NewPasswordResetRequest(long? id = null, string? codeHash = null, long? userId = null, long? emailId = null, EmailAddress? emailAddress = null, User? user = null, DateTime? expiresAt = null);
 }
