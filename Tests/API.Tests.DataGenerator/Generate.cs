@@ -15,7 +15,7 @@ namespace API.Tests.DataGenerator;
 
 public class Generate
 {
-    public User New(long? id = null, string? username = null, string? firstName = null, string? lastName = null, string? passwordHash = null, string? passwordSalt = null, DateTime? birthDate = null, UserGender? gender = null, UserState? state = null)
+    public User NewUser(long? id = null, string? username = null, string? firstName = null, string? lastName = null, string? passwordHash = null, string? passwordSalt = null, DateTime? birthDate = null, UserGender? gender = null, UserState? state = null)
     {
         return new User
         {
