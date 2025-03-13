@@ -20,7 +20,7 @@ public abstract class TestBase : IDisposable
     protected readonly WebApplicationFactory<Program> _factory;
     protected readonly HttpClient _client;
     protected readonly IServiceScope _scope;
-    protected readonly Generate _generate;
+    protected readonly IGenerate _generate;
 
     protected TestBase()
     {
