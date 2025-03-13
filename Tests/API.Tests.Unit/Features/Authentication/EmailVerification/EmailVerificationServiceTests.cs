@@ -6,64 +6,12 @@ using API.Infrastructure.Database.Entities.User;
 using API.Infrastructure.Database.Entities.Verification;
 using API.Shared.Enums.Entities.User;
 using API.Shared.Utilities;
+using System.Reflection.Metadata;
 
 namespace API.Tests.Unit.Features.Authentication.EmailVerification;
 
 public class EmailVerificationServiceTests : TestBase
 {
-    #region Helper Methods
-
-    private API.Infrastructure.Database.Entities.User.User CreateMockUser(UserState state = UserState.PendingVerification)
-    {
-        return new API.Infrastructure.Database.Entities.User.User
-        {
-            Id = Snowflake.Generate(),
-            Username = "testuser",
-            FirstName = "Test",
-            LastName = "User",
-            PasswordHash = "hashedpassword",
-            PasswordSalt = "salt",
-            BirthDate = DateTime.Now.AddYears(-20),
-            Gender = UserGender.Male,
-            State = state
-        };
-    }
-
-    private EmailAddress CreateMockEmailAddress(string email, EmailState state, API.Infrastructure.Database.Entities.User.User? user = null)
-    {
-        var mockUser = user ?? CreateMockUser();
-        return new EmailAddress
-        {
-            Id = Snowflake.Generate(),
-            UserId = mockUser.Id,
-            Value = email,
-            State = state,
-            Type = EmailType.Primary,
-            User = mockUser
-        };
-    }
-
-    private EmailVerificationRequest CreateMockVerificationRequest(
-        string requestId,
-        string code,
-        EmailAddress emailAddress,
-        API.Infrastructure.Database.Entities.User.User user,
-        bool isUsed = false,
-        bool isExpired = false)
-    {
-        return new EmailVerificationRequest
-        {
-            Id = long.Parse(requestId),
-            Code = code,
-            User = user,
-            EmailAddress = emailAddress,
-            ExpiresAt = isExpired ? DateTime.UtcNow.AddMinutes(-5) : DateTime.UtcNow.AddMinutes(5),
-            IsUsed = isUsed
-        };
-    }
-
-    #endregion
-
     #region RequestEmailVerificationAsync Tests
 
     [Test]
@@ -71,8 +19,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: emailAddress, state: EmailState.PendingVerification, user: mockUser);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -147,8 +95,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: emailAddress, state: EmailState.PendingVerification, user: mockUser);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -183,8 +131,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.Active, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: emailAddress, state: EmailState.Active, user: mockUser);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -219,8 +167,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string emailAddress = "test@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(emailAddress, EmailState.PendingVerification, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: emailAddress, state: EmailState.PendingVerification, user: mockUser);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -296,9 +244,9 @@ public class EmailVerificationServiceTests : TestBase
         // Arrange
         string requestId = "123456789";
         string email = "test@example.com";
-        var mockUser = CreateMockUser();
-        var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
-        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
+        var mockUser = _generate.NewUser();
+        var emailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.PendingVerification, user: mockUser);
+        var verificationRequest = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: "12345678", user: mockUser, emailAddress: emailAddressEntity);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -367,9 +315,9 @@ public class EmailVerificationServiceTests : TestBase
         string email = "test@example.com";
         string differentEmail = "different@example.com";
 
-        var mockUser = CreateMockUser();
-        var emailAddressEntity = CreateMockEmailAddress(differentEmail, EmailState.PendingVerification, mockUser);
-        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser);
+        var mockUser = _generate.NewUser();
+        var emailAddressEntity = _generate.NewEmailAddress(value: differentEmail, state: EmailState.PendingVerification, user: mockUser);
+        var verificationRequest = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: "12345678", user: mockUser, emailAddress: emailAddressEntity);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -405,9 +353,9 @@ public class EmailVerificationServiceTests : TestBase
         string requestId = "123456789";
         string email = "test@example.com";
 
-        var mockUser = CreateMockUser();
-        var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
-        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isUsed: true);
+        var mockUser = _generate.NewUser();
+        var emailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.PendingVerification, user: mockUser);
+        var verificationRequest = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: "12345678", user: mockUser, emailAddress: emailAddressEntity, isUsed: true);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -443,9 +391,9 @@ public class EmailVerificationServiceTests : TestBase
         string requestId = "123456789";
         string email = "test@example.com";
 
-        var mockUser = CreateMockUser();
-        var emailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
-        var verificationRequest = CreateMockVerificationRequest(requestId, "12345678", emailAddressEntity, mockUser, isExpired: true);
+        var mockUser = _generate.NewUser();
+        var emailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.PendingVerification, user: mockUser);
+        var verificationRequest = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: "12345678", user: mockUser, emailAddress: emailAddressEntity, expiresAt: DateTime.UtcNow.AddDays(-1));
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -521,13 +469,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
 
-        var user = CreateMockUser();
+        var user = _generate.NewUser();
         user.Id = userId;
 
-        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        var emailAddress = _generate.NewEmailAddress(value: "test@example.com", state: EmailState.PendingVerification, user: user);
         emailAddress.Id = emailId;
 
-        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
+        var request = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: code, user: user, emailAddress: emailAddress);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -603,13 +551,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
 
-        var user = CreateMockUser();
+        var user = _generate.NewUser();
         user.Id = userId;
 
-        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        var emailAddress = _generate.NewEmailAddress(value: "test@example.com", state: EmailState.PendingVerification, user: user);
         emailAddress.Id = emailId;
 
-        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isUsed: true);
+        var request = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: code, user: user, emailAddress: emailAddress, isUsed: true);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
         var mockRandomGenerator = Substitute.For<IRandomGenerator>();
@@ -649,13 +597,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
 
-        var user = CreateMockUser();
+        var user = _generate.NewUser();
         user.Id = userId;
 
-        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        var emailAddress = _generate.NewEmailAddress(value: "test@example.com", state: EmailState.PendingVerification, user: user);
         emailAddress.Id = emailId;
 
-        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user, isExpired: true);
+        var request = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: code, user: user, emailAddress: emailAddress, expiresAt: DateTime.UtcNow.AddDays(-1));
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
         var mockRandomGenerator = Substitute.For<IRandomGenerator>();
@@ -696,13 +644,13 @@ public class EmailVerificationServiceTests : TestBase
         var userId = Snowflake.Generate();
         var emailId = Snowflake.Generate();
 
-        var user = CreateMockUser();
+        var user = _generate.NewUser();
         user.Id = userId;
 
-        var emailAddress = CreateMockEmailAddress("test@example.com", EmailState.PendingVerification, user);
+        var emailAddress = _generate.NewEmailAddress(value: "test@example.com", state: EmailState.PendingVerification, user: user);
         emailAddress.Id = emailId;
 
-        var request = CreateMockVerificationRequest(requestId, code, emailAddress, user);
+        var request = _generate.NewEmailVerificationRequest(id: long.Parse(requestId), code: code, user: user, emailAddress: emailAddress);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
         var mockRandomGenerator = Substitute.For<IRandomGenerator>();
@@ -777,8 +725,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "test@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.PendingVerification, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.PendingVerification, user: mockUser);
 
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
@@ -847,8 +795,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "verified@example.com";
-        var mockUser = CreateMockUser(UserState.Active);
-        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Active, mockUser);
+        var mockUser = _generate.NewUser(state: UserState.Active);
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.Active, user: mockUser);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
         var mockRandomGenerator = Substitute.For<IRandomGenerator>();
@@ -879,8 +827,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "blacklisted@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Blacklisted, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.Blacklisted, user: mockUser);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
         var mockRandomGenerator = Substitute.For<IRandomGenerator>();
@@ -911,8 +859,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "disabled@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Disabled, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.Disabled, user: mockUser);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
         var mockRandomGenerator = Substitute.For<IRandomGenerator>();
@@ -943,8 +891,8 @@ public class EmailVerificationServiceTests : TestBase
     {
         // Arrange
         string email = "deleted@example.com";
-        var mockUser = CreateMockUser();
-        var mockEmailAddressEntity = CreateMockEmailAddress(email, EmailState.Deleted, mockUser);
+        var mockUser = _generate.NewUser();
+        var mockEmailAddressEntity = _generate.NewEmailAddress(value: email, state: EmailState.Deleted, user: mockUser);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockVerificationRepository = Substitute.For<IVerificationRepository>();
         var mockRandomGenerator = Substitute.For<IRandomGenerator>();

@@ -11,70 +11,6 @@ namespace API.Tests.Unit.Features.Session.Refresh;
 
 public class RefreshSessionServiceTests : TestBase
 {
-    #region Helper Methods
-
-    private API.Infrastructure.Database.Entities.User.User CreateTestUser(
-        long id = 123,
-        string username = "testuser",
-        string firstName = "Test",
-        string lastName = "User",
-        string passwordHash = "hashed-password",
-        string passwordSalt = "salt",
-        DateTime? birthDate = null,
-        UserGender gender = UserGender.Male,
-        UserState state = UserState.Active)
-    {
-        return new API.Infrastructure.Database.Entities.User.User
-        {
-            Id = id,
-            Username = username,
-            FirstName = firstName,
-            LastName = lastName,
-            PasswordHash = passwordHash,
-            PasswordSalt = passwordSalt,
-            BirthDate = birthDate ?? DateTime.Now.AddYears(-20),
-            Gender = gender,
-            State = state
-        };
-    }
-
-    private API.Infrastructure.Database.Entities.Authentication.Session CreateTestSession(
-        long id = 1,
-        API.Infrastructure.Database.Entities.User.User? user = null,
-        SessionTarget target = SessionTarget.User,
-        bool isRevoked = false)
-    {
-        return new API.Infrastructure.Database.Entities.Authentication.Session
-        {
-            Id = id,
-            User = user ?? CreateTestUser(),
-            Target = target,
-            IsRevoked = isRevoked,
-            Tokens = new List<Token>()
-        };
-    }
-
-    private Token CreateTestToken(
-        string value = "refresh-token-123",
-        TokenType type = TokenType.Refresh,
-        TokenTarget target = TokenTarget.User,
-        API.Infrastructure.Database.Entities.Authentication.Session? session = null,
-        bool isRevoked = false,
-        API.Infrastructure.Database.Entities.User.User? user = null)
-    {
-        return new Token
-        {
-            Value = value,
-            Type = type,
-            Target = target,
-            IsRevoked = isRevoked,
-            Session = session!,
-            User = user!
-        };
-    }
-
-    #endregion
-
     #region RefreshSessionAsync Tests
 
     [Test]
@@ -108,7 +44,7 @@ public class RefreshSessionServiceTests : TestBase
         var mockJwtService = Substitute.For<IJwtService>();
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "revoked-session-token";
-        var session = CreateTestSession(isRevoked: true);
+        var session = _generate.NewSession(isRevoked: true);
 
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
@@ -133,7 +69,7 @@ public class RefreshSessionServiceTests : TestBase
         var mockJwtService = Substitute.For<IJwtService>();
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "token-not-in-db";
-        var session = CreateTestSession();
+        var session = _generate.NewSession();
 
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
@@ -161,8 +97,8 @@ public class RefreshSessionServiceTests : TestBase
         var mockJwtService = Substitute.For<IJwtService>();
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var accessToken = "access-token-123";
-        var session = CreateTestSession();
-        var token = CreateTestToken(value: accessToken, type: TokenType.Access);
+        var session = _generate.NewSession();
+        var token = _generate.NewToken(value: accessToken, type: TokenType.Access);
 
         MockSessionRepository!.GetSessionByTokenStringAsync(accessToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
@@ -190,8 +126,8 @@ public class RefreshSessionServiceTests : TestBase
         var mockJwtService = Substitute.For<IJwtService>();
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "revoked-refresh-token";
-        var session = CreateTestSession();
-        var token = CreateTestToken(value: refreshToken, isRevoked: true);
+        var session = _generate.NewSession(isRevoked: false);
+        var token = _generate.NewToken(value: refreshToken, isRevoked: true, type: TokenType.Refresh);
 
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
@@ -219,9 +155,9 @@ public class RefreshSessionServiceTests : TestBase
         var mockJwtService = Substitute.For<IJwtService>();
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "valid-refresh-token";
-        var user = CreateTestUser();
-        var session = CreateTestSession(user: user);
-        var token = CreateTestToken(value: refreshToken, user: user, session: session);
+        var user = _generate.NewUser();
+        var session = _generate.NewSession(user: user);
+        var token = _generate.NewToken(value: refreshToken, user: user, session: session, type: TokenType.Refresh);
 
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
@@ -259,9 +195,9 @@ public class RefreshSessionServiceTests : TestBase
         var mockJwtService = Substitute.For<IJwtService>();
         var refreshSessionService = new RefreshSessionService(MockSessionRepository, mockJwtService);
         var refreshToken = "valid-refresh-token";
-        var user = CreateTestUser();
-        var session = CreateTestSession(user: user);
-        var token = CreateTestToken(value: refreshToken, user: user, session: session);
+        var user = _generate.NewUser();
+        var session = _generate.NewSession(user: user);
+        var token = _generate.NewToken(value: refreshToken, user: user, session: session, type: TokenType.Refresh);
 
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));
@@ -301,9 +237,9 @@ public class RefreshSessionServiceTests : TestBase
         var refreshToken = "valid-refresh-token";
         var newRefreshToken = "new-valid-refresh-token";
         var newAccessToken = "new-access-token";
-        var user = CreateTestUser();
-        var session = CreateTestSession(user: user);
-        var token = CreateTestToken(value: refreshToken, user: user, session: session);
+        var user = _generate.NewUser();
+        var session = _generate.NewSession(user: user);
+        var token = _generate.NewToken(value: refreshToken, user: user, session: session, type: TokenType.Refresh);
 
         MockSessionRepository!.GetSessionByTokenStringAsync(refreshToken, true)
             .Returns(Task.FromResult<API.Infrastructure.Database.Entities.Authentication.Session?>(session));

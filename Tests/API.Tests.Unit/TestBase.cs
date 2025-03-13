@@ -6,6 +6,7 @@ using API.Features.Authentication.Register.Interfaces;
 using API.Features.Session.Refresh.Interfaces;
 using API.Shared.Utilities;
 using API.Shared.Configuration;
+using API.Tests.DataGenerator;
 
 namespace API.Tests.Unit;
 
@@ -20,6 +21,8 @@ public abstract class TestBase
     protected IJwtService MockJwtService { get; private set; } = null!;
     protected IRandomGenerator MockRandomGenerator { get; private set; } = null!;
 
+    protected IGenerate _generate { get; private set; } = null!;
+
     [SetUp]
     public virtual void Setup()
     {
@@ -31,6 +34,7 @@ public abstract class TestBase
         MockHasher = Substitute.For<IHasher>();
         MockJwtService = Substitute.For<IJwtService>();
         MockRandomGenerator = Substitute.For<IRandomGenerator>();
+        _generate = new Generate();
 
         // Initialize Snowflake for tests
         var snowflakeSettings = new SnowflakeSettings

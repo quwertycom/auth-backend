@@ -1,6 +1,5 @@
 using API.Features.Authentication.Login.Services;
 using API.Shared.Models.Infrastructure.Security.JwtService;
-using API.Shared.Enums.Entities.User;
 using API.Shared.Enums.Entities.Authentication;
 using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Security;
@@ -8,53 +7,12 @@ using API.Infrastructure.Database.Entities.Authentication;
 using API.Infrastructure.Database.Entities.User;
 using NSubstitute.ExceptionExtensions;
 using API.Shared.Models.Infrastructure.Hasher;
+using API.Shared.Enums.Entities.User;
 
 namespace API.Tests.Unit.Features.Authentication.Login;
 
 public class LoginServiceTests : TestBase
 {
-    #region Helper Methods
-
-    private API.Infrastructure.Database.Entities.User.User CreateTestUser(
-        long id = 123,
-        string username = "testuser",
-        string firstName = "Test",
-        string lastName = "User",
-        string passwordHash = "hashed-password",
-        string passwordSalt = "salt",
-        DateTime? birthDate = null,
-        UserGender gender = UserGender.Male,
-        UserState state = UserState.Active)
-    {
-        return new API.Infrastructure.Database.Entities.User.User
-        {
-            Id = id,
-            Username = username,
-            FirstName = firstName,
-            LastName = lastName,
-            PasswordHash = passwordHash,
-            PasswordSalt = passwordSalt,
-            BirthDate = birthDate ?? DateTime.Now.AddYears(-20),
-            Gender = gender,
-            State = state
-        };
-    }
-
-    private API.Infrastructure.Database.Entities.Authentication.Session CreateTestSession(
-        long userId = 123)
-    {
-        var user = CreateTestUser(id: userId);
-
-        return new API.Infrastructure.Database.Entities.Authentication.Session
-        {
-            User = user,
-            Target = SessionTarget.User,
-            Tokens = new List<Token>()
-        };
-    }
-
-    #endregion
-
     #region LoginAsync Tests
 
     [Test]
@@ -67,7 +25,7 @@ public class LoginServiceTests : TestBase
         var passwordSalt = "salt";
         var refreshToken = "refresh-token-123";
         var accessToken = "access-token-123";
-        var user = CreateTestUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
+        var user = _generate.NewUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockSessionRepository = Substitute.For<ISessionRepository>();
         var mockHasher = Substitute.For<IHasher>();
@@ -177,7 +135,7 @@ public class LoginServiceTests : TestBase
         var password = "WrongPassword123!";
         var passwordHash = "hashed-password";
         var passwordSalt = "salt";
-        var user = CreateTestUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
+        var user = _generate.NewUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockSessionRepository = Substitute.For<ISessionRepository>();
         var mockHasher = Substitute.For<IHasher>();
@@ -224,10 +182,7 @@ public class LoginServiceTests : TestBase
         var password = "Password123!";
         var passwordHash = "hashed-password";
         var passwordSalt = "salt";
-        var user = CreateTestUser(
-            passwordHash: passwordHash,
-            passwordSalt: passwordSalt,
-            state: UserState.PendingVerification);
+        var user = _generate.NewUser(passwordHash: passwordHash, passwordSalt: passwordSalt, state: UserState.PendingVerification);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockSessionRepository = Substitute.For<ISessionRepository>();
         var mockHasher = Substitute.For<IHasher>();
@@ -267,10 +222,7 @@ public class LoginServiceTests : TestBase
         var password = "Password123!";
         var passwordHash = "hashed-password";
         var passwordSalt = "salt";
-        var user = CreateTestUser(
-            passwordHash: passwordHash,
-            passwordSalt: passwordSalt,
-            state: UserState.Suspended);
+        var user = _generate.NewUser(passwordHash: passwordHash, passwordSalt: passwordSalt, state: UserState.Suspended);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockSessionRepository = Substitute.For<ISessionRepository>();
         var mockHasher = Substitute.For<IHasher>();
@@ -310,7 +262,7 @@ public class LoginServiceTests : TestBase
         var password = "Password123!";
         var passwordHash = "hashed-password";
         var passwordSalt = "salt";
-        var user = CreateTestUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
+        var user = _generate.NewUser(passwordHash: passwordHash, passwordSalt: passwordSalt);
         var mockUserRepository = Substitute.For<IUserRepository>();
         var mockSessionRepository = Substitute.For<ISessionRepository>();
         var mockHasher = Substitute.For<IHasher>();
