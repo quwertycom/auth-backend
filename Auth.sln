@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.Functional", "Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.Performance", "Tests\API.Tests.Performance\API.Tests.Performance.csproj", "{13180C79-80F8-4082-A604-18A64D7F723E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.DataGenerator", "Tests\DataGenerator\API.Tests.DataGenerator.csproj", "{A87EC558-55C4-4589-A1F2-1194BC820935}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Tests.DataGenerator", "Tests\API.Tests.DataGenerator\API.Tests.DataGenerator.csproj", "{A87EC558-55C4-4589-A1F2-1194BC820935}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
