@@ -310,51 +310,6 @@
             "hide": true
         },
         {
-            "label": "🧪 Run Performance Tests",
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Start API for Performance Tests"
-            ],
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "test",
-                "${workspaceFolder}/Tests/API.Tests.Performance/API.Tests.Performance.csproj",
-                "--logger:trx"
-            ],
-            "problemMatcher": "$msCompile",
-            "group": "test",
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": true
-            }
-        },
-        {
-            "label": "Start API for Performance Tests",
-            "type": "shell",
-            "command": "if [ -f .env ]; then docker compose -f docker-compose.dev.yml --env-file .env up --build -d api; else docker compose -f docker-compose.dev.yml up --build -d api; fi",
-            "problemMatcher": {
-                "pattern": {
-                    "regexp": "^.*$",
-                    "file": 1,
-                    "location": 2,
-                    "message": 3
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".*Starting.*",
-                    "endsPattern": ".*Application started.*"
-                }
-            },
-            "isBackground": true,
-            "presentation": {
-                "reveal": "silent",
-                "panel": "dedicated"
-            },
-            "hide": true
-        },
-        {
             "label": "🧪 Format Code",
             "command": "dotnet",
             "type": "process",
