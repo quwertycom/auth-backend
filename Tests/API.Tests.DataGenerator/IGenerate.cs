@@ -18,7 +18,7 @@ public interface IGenerate
     Developer NewDeveloper(long? id = null, string? name = null, string? contactEmail = null, long? organizationId = null);
     Organization NewOrganization(long? id = null, string? name = null, string? description = null);
     ApplicationAccount NewApplicationAccount(long? id = null, long? applicationId = null, long? accountId = null);
-    Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null, bool? isRevoked = null, User? user = null, Session? session = null);
+    Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null, bool? isRevoked = null, User? user = null, Session? session = null, DateTime? expiresAt = null);
     DeveloperAccount NewDeveloperAccount(long? id = null, string? name = null, long? developerId = null, long? accountId = null, Account? account = null);
     OrganizationRole NewOrganizationRole(long? id = null, string? name = null, string? description = null, long? organizationId = null, Organization? organization = null);
     EmailAddress NewEmailAddress(long? id = null, string? value = null, long? userId = null, EmailType? type = null, EmailState? state = null, User? user = null);

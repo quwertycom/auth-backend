@@ -109,7 +109,7 @@ public class Generate : IGenerate
         };
     }
 
-    public Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null, bool? isRevoked = null, User? user = null, Session? session = null)
+    public Token NewToken(long? id = null, string? value = null, long? sessionId = null, TokenType? type = null, TokenTarget? target = null, bool? isRevoked = null, User? user = null, Session? session = null, DateTime? expiresAt = null)
     {
         return new Token
         {
@@ -120,7 +120,8 @@ public class Generate : IGenerate
             Target = target ?? TokenTarget.User,
             Session = session ?? NewSession(),
             User = user ?? NewUser(),
-            IsRevoked = isRevoked ?? false
+            IsRevoked = isRevoked ?? false,
+            ExpiresAt = expiresAt ?? DateTime.UtcNow.AddDays(30)
         };
     }
 
