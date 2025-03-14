@@ -361,16 +361,18 @@ jobs:
           mkdir -p artifacts/api
           mkdir -p artifacts/tests/unit
           mkdir -p artifacts/tests/integration
-          mkdir -p artifacts/tests/performance
+          mkdir -p artifacts/tests/functional
+          mkdir -p artifacts/tests/data-generator
 
           # Copy API files
           cp -r API/bin/Release/net8.0/* artifacts/api/
           cp API/appsettings.json artifacts/api/
 
           # Copy test files to their respective directories
-          cp -r Tests/API.UnitTests/bin/Release/net8.0/* artifacts/tests/unit/
-          cp -r Tests/API.IntegrationTests/bin/Release/net8.0/* artifacts/tests/integration/
-          cp -r Tests/API.PerformanceTests/bin/Release/net8.0/* artifacts/tests/performance/
+          cp -r Tests/API.Tests.Unit/bin/Release/net8.0/* artifacts/tests/unit/
+          cp -r Tests/API.Tests.Integration/bin/Release/net8.0/* artifacts/tests/integration/
+          cp -r Tests/API.Tests.Functional/bin/Release/net8.0/* artifacts/tests/functional/
+          cp -r Tests/API.Tests.DataGenerator/bin/Release/net8.0/* artifacts/tests/data-generator/
 
       - name: Upload API Artifacts
         uses: actions/upload-artifact@v4
@@ -407,10 +409,10 @@ jobs:
         # Extract unit test artifacts to the correct location
       - name: Setup Test Environment
         run: |
-          mkdir -p Tests/API.UnitTests/bin/Release/net8.0
-          cp -r Tests/unit/* Tests/API.UnitTests/bin/Release/net8.0/
+          mkdir -p Tests/API.Tests.Unit/bin/Release/net8.0
+          cp -r Tests/unit/* Tests/API.Tests.Unit/bin/Release/net8.0/
       - name: Run Unit Tests
-        run: dotnet test Tests/API.UnitTests/API.UnitTests.csproj --no-build --verbosity normal --configuration Release
+        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --no-build --verbosity normal --configuration Release
 
   integration-tests:
     name: Integration Tests
@@ -449,8 +451,8 @@ jobs:
         # Extract integration test artifacts to the correct location
       - name: Setup Test Environment
         run: |
-          mkdir -p Tests/API.IntegrationTests/bin/Release/net8.0
-          cp -r Tests/integration/* Tests/API.IntegrationTests/bin/Release/net8.0/
+          mkdir -p Tests/API.Tests.Integration/bin/Release/net8.0
+          cp -r Tests/integration/* Tests/API.Tests.Integration/bin/Release/net8.0/
       - name: Run Integration Tests
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
@@ -475,12 +477,12 @@ jobs:
           # PasswordHasher settings
           PASSWORD_HASHER__ITERATIONS: ${{ env.PASSWORD_HASHER_ITERATIONS }}
           PASSWORD_HASHER__SALT_SIZE: ${{ env.PASSWORD_HASHER_SALT_SIZE }}
-          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER_KEY_SIZE }}
+          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER__KEY_SIZE }}
           # Snowflake settings
           SNOWFLAKE__DATACENTERID: ${{ env.SNOWFLAKE_DATACENTER_ID }}
           SNOWFLAKE__WORKERID: ${{ env.SNOWFLAKE_WORKER_ID }}
           SNOWFLAKE__EPOCH: ${{ env.SNOWFLAKE_EPOCH }}
-        run: dotnet test Tests/API.IntegrationTests/API.IntegrationTests.csproj --no-build --verbosity normal --configuration Release
+        run: dotnet test Tests/API.Tests.Integration/API.Tests.Integration.csproj --no-build --verbosity normal --configuration Release
 
   functional-tests:
     name: Functional Tests
@@ -504,8 +506,8 @@ jobs:
           path: Tests
       - name: Setup Test Environment
         run: |
-          mkdir -p Tests/API.FunctionalTests/bin/Release/net8.0
-          cp -r Tests/performance/* Tests/API.FunctionalTests/bin/Release/net8.0/
+          mkdir -p Tests/API.Tests.Functional/bin/Release/net8.0
+          cp -r Tests/functional/* Tests/API.Tests.Functional/bin/Release/net8.0/
       - name: Run Functional Tests
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
@@ -514,41 +516,7 @@ jobs:
           JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
           JWT__Issuer: ${{ env.JWT_ISSUER }}
           JWT__Audience: ${{ env.JWT_AUDIENCE }}
-        run: dotnet test Tests/API.FunctionalTests/API.FunctionalTests.csproj --no-build --verbosity normal --configuration Release
-
-  performance-tests:
-    name: Performance Tests
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-artifacts
-          path: API/bin/Release/net8.0
-      - name: Download Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: test-artifacts
-          path: Tests
-      - name: Setup Test Environment
-        run: |
-          mkdir -p Tests/API.PerformanceTests/bin/Release/net8.0
-          cp -r Tests/performance/* Tests/API.PerformanceTests/bin/Release/net8.0/
-      - name: Run Performance Tests
-        env:
-          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
-          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # JWT settings
-          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ env.JWT_ISSUER }}
-          JWT__Audience: ${{ env.JWT_AUDIENCE }}
-        run: dotnet test Tests/API.PerformanceTests/API.PerformanceTests.csproj --no-build --verbosity normal --configuration Release
+        run: dotnet test Tests/API.Tests.Functional/API.Tests.Functional.csproj --no-build --verbosity normal --configuration Release
 
   api-compatibility:
     name: API Compatibility Check
@@ -667,7 +635,7 @@ jobs:
           # PasswordHasher settings
           PASSWORD_HASHER__ITERATIONS: ${{ env.PASSWORD_HASHER_ITERATIONS }}
           PASSWORD_HASHER__SALT_SIZE: ${{ env.PASSWORD_HASHER_SALT_SIZE }}
-          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER_KEY_SIZE }}
+          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER__KEY_SIZE }}
           # Snowflake settings
           SNOWFLAKE__DATACENTERID: ${{ env.SNOWFLAKE_DATACENTER_ID }}
           SNOWFLAKE__WORKERID: ${{ env.SNOWFLAKE_WORKER_ID }}

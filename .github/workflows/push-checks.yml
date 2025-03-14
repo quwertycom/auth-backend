@@ -203,16 +203,16 @@ jobs:
           mkdir -p artifacts/api
           mkdir -p artifacts/tests/unit
           mkdir -p artifacts/tests/integration
-          mkdir -p artifacts/tests/performance
+          mkdir -p artifacts/tests/datagenerator
 
           # Copy API files
           cp -r API/bin/Release/net8.0/* artifacts/api/
           cp API/appsettings.json artifacts/api/
 
           # Copy test files to their respective directories
-          cp -r Tests/API.UnitTests/bin/Release/net8.0/* artifacts/tests/unit/
-          cp -r Tests/API.IntegrationTests/bin/Release/net8.0/* artifacts/tests/integration/
-          cp -r Tests/API.PerformanceTests/bin/Release/net8.0/* artifacts/tests/performance/
+          cp -r Tests/API.Tests.Unit/bin/Release/net8.0/* artifacts/tests/unit/
+          cp -r Tests/API.Tests.Integration/bin/Release/net8.0/* artifacts/tests/integration/
+          cp -r Tests/API.Tests.DataGenerator/bin/Release/net8.0/* artifacts/tests/datagenerator/
 
       - name: Upload API Artifacts
         uses: actions/upload-artifact@v4
@@ -245,14 +245,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: test-artifacts
-          path: Tests
+          path: artifacts/tests
         # Extract unit test artifacts to the correct location
       - name: Setup Test Environment
         run: |
-          mkdir -p Tests/API.UnitTests/bin/Release/net8.0
-          cp -r Tests/unit/* Tests/API.UnitTests/bin/Release/net8.0/
+          mkdir -p Tests/API.Tests.Unit/bin/Release/net8.0
+          cp -r artifacts/tests/unit/* Tests/API.Tests.Unit/bin/Release/net8.0/
       - name: Run Unit Tests
-        run: dotnet test Tests/API.UnitTests/API.UnitTests.csproj --no-build --verbosity normal --configuration Release
+        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --no-build --verbosity normal --configuration Release
 
   integration-tests:
     name: Integration Tests
@@ -292,12 +292,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: test-artifacts
-          path: Tests
+          path: artifacts/tests
         # Extract integration test artifacts to the correct location
       - name: Setup Test Environment
         run: |
-          mkdir -p Tests/API.IntegrationTests/bin/Release/net8.0
-          cp -r Tests/integration/* Tests/API.IntegrationTests/bin/Release/net8.0/
+          mkdir -p Tests/API.Tests.Integration/bin/Release/net8.0
+          cp -r artifacts/tests/integration/* Tests/API.Tests.Integration/bin/Release/net8.0/
       - name: Run Integration Tests
         env:
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
@@ -315,7 +315,7 @@ jobs:
           Email__Username: ${{ env.EMAIL_USERNAME }}
           Email__Password: ${{ env.EMAIL_PASSWORD }}
           Email__FromEmail: ${{ env.EMAIL_FROM }}
-        run: dotnet test Tests/API.IntegrationTests/API.IntegrationTests.csproj --no-build --verbosity normal --configuration Release
+        run: dotnet test Tests/API.Tests.Integration/API.Tests.Integration.csproj --no-build --verbosity normal --configuration Release
 
   api-health:
     name: API Health Check
@@ -364,8 +364,8 @@ jobs:
               "Host": "${{ env.EMAIL_HOST }}",
               "Port": ${{ env.EMAIL_PORT }},
               "EnableSsl": ${{ env.EMAIL_ENABLE_SSL }},
-              "Username": "${{ env.EMAIL_USERNAME }}",
-              "Password": "${{ env.EMAIL_PASSWORD }}",
+              "Username": ${{ env.EMAIL_USERNAME }}",
+              "Password": ${{ env.EMAIL_PASSWORD }}",
               "FromEmail": "${{ env.EMAIL_FROM }}",
               "Timeout": ${{ env.EMAIL_TIMEOUT }},
               "UseDefaultCredentials": ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
@@ -435,4 +435,4 @@ jobs:
           done
       - name: Check API Health
         run: |
-          curl -f http://localhost:8000/health || exit 1 
+          curl -f http://localhost:8000/health || exit 1
