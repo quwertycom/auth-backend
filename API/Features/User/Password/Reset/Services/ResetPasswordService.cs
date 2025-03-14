@@ -199,7 +199,6 @@ public class ResetPasswordService : IResetPasswordService
                 Status = "ERROR",
                 HttpStatusCode = 500
             };
-            
         }
     }
 
