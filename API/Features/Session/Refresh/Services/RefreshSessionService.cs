@@ -75,6 +75,16 @@ public class RefreshSessionService : IRefreshSessionService
                     HttpStatusCode = 400
                 };
             }
+            else if (token.ExpiresAt < DateTime.UtcNow)
+            {
+                return new RefreshSessionResult
+                {
+                    IsSuccess = false,
+                    Status = "ERROR",
+                    Message = "Token has expired",
+                    HttpStatusCode = 400
+                };
+            }
 
             var tokenTarget = session.Target == SessionTarget.User ? TokenTarget.User
                             : session.Target == SessionTarget.Account ? TokenTarget.Account
