@@ -14,36 +14,36 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   
   # PostgreSQL Settings (from .env)
-  POSTGRES_USER: qauth_user
-  POSTGRES_DB: qauth_db
-  POSTGRES_HOST: localhost
-  POSTGRES_PORT: 5432
-  # Secret: POSTGRES_PASSWORD
+  Postgres__User: qauth_user
+  Postgres__Database: qauth_db
+  Postgres__Host: localhost
+  Postgres__Port: 5432
+  Postgres__Password: ${{ secrets.POSTGRES_PASSWORD }} # Secret: POSTGRES_PASSWORD
 
   # JWT Settings (from .env)
-  JWT_ISSUER: auth-backend-ci
-  JWT_AUDIENCE: auth-client-ci
-  # Secret: JWT_SECRET_KEY
+  Jwt__Issuer: auth-backend-ci
+  Jwt__Audience: auth-client-ci
+  Jwt__SecretKey: ${{ secrets.JWT_SECRET_KEY }} # Secret: JWT_SECRET_KEY
 
   # Email Settings (from .env)
-  EMAIL_HOST: localhost  # Using MailHog in CI
-  EMAIL_PORT: 1025      # MailHog SMTP port
-  EMAIL_USERNAME: test
-  EMAIL_PASSWORD: test
-  EMAIL_FROM: noreply@example.com
-  EMAIL_ENABLE_SSL: false
-  EMAIL_TIMEOUT: 10000
-  EMAIL_USE_DEFAULT_CREDENTIALS: false
+  Email__Host: localhost  # Using MailHog in CI
+  Email__Port: 1025      # MailHog SMTP port
+  Email__Username: ${{ secrets.EMAIL_USERNAME }}
+  Email__Password: ${{ secrets.EMAIL_PASSWORD }}
+  Email__FromEmail: noreply@example.com
+  Email__EnableSsl: false
+  Email__Timeout: 10000
+  Email__UseDefaultCredentials: false
 
   # PasswordHasher Settings
-  PASSWORD_HASHER_ITERATIONS: 10000
-  PASSWORD_HASHER_SALT_SIZE: 16
-  PASSWORD_HASHER_KEY_SIZE: 32
+  PasswordHasher__Iterations: 10000
+  PasswordHasher__SaltSize: 16
+  PasswordHasher__KeySize: 32
 
   # Snowflake Settings
-  SNOWFLAKE_DATACENTER_ID: 1
-  SNOWFLAKE_WORKER_ID: 1
-  SNOWFLAKE_EPOCH: "2024-01-01T00:00:00Z"
+  Snowflake__DatacenterId: 1
+  Snowflake__WorkerId: 1
+  Snowflake__Epoch: "2024-01-01T00:00:00Z"
 
   # Other settings
   ASPNETCORE_ENVIRONMENT: Production

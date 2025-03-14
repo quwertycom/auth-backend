@@ -26,6 +26,7 @@ build/
 !.env.example
 appsettings.*.json
 !appsettings.json
+!appsettings.Testing.json
 
 # Logs and temporary files
 *.log
