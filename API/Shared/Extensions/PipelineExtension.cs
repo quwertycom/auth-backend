@@ -39,7 +39,7 @@ public static class PipelineExtensions
             {
                 return new API.Shared.Contracts.Responses.Common.ErrorResponse
                 {
-                    Status = "Error",
+                    Status = "ERROR",
                     Message = "Validation Error",
                     Details = failures.GroupBy(f => f.PropertyName)
                         .ToDictionary(
