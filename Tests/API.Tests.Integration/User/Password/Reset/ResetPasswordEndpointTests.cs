@@ -45,14 +45,14 @@ public class ResetPasswordEndpointTests : ResetPasswordTestBase
 
         var resetService = GetRequiredService<API.Features.User.Password.Reset.Interfaces.IResetPasswordService>();
         var resetResult = await resetService.ResetPasswordAsync(code, newPassword, CancellationToken.None);
-        
+
         Assert.IsTrue(resetResult.IsSuccess, $"Password reset should succeed. Error: {resetResult.Message}");
         Assert.AreEqual(200, resetResult.HttpStatusCode, "Password reset should return HTTP 200");
-        
+
         var loginService = GetRequiredService<API.Features.Authentication.Login.Interfaces.ILoginService>();
         var loginResult = await loginService.LoginAsync(username, newPassword, CancellationToken.None);
-        
-        Assert.IsTrue(loginResult.IsSuccess, 
+
+        Assert.IsTrue(loginResult.IsSuccess,
             $"Login with new password should succeed. Error: {loginResult.Message}");
         Assert.AreEqual(200, loginResult.HttpStatusCode, "Login should return HTTP 200");
     }

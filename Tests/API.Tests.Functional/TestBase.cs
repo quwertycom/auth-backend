@@ -96,7 +96,7 @@ public abstract class TestBase : IDisposable
             services.Remove(emailSenderDescriptor);
         }
         services.AddScoped<IEmailSender, MockEmailSender>();
-        
+
         // Configure JWT settings for testing
         services.Configure<JwtSettings>(options =>
         {
@@ -191,14 +191,14 @@ public class MockEmailSender : IEmailSender
         SentEmails.Add((to, subject, htmlContent));
         return Task.CompletedTask;
     }
-    
+
     public Task<bool> SendOtpEmailAsync(string toEmail, string otp, string firstName, string language = "en")
     {
         Console.WriteLine($"Mock OTP email sent to: {toEmail}, Code: {otp}, FirstName: {firstName}, Language: {language}");
         SentOtpEmails.Add((toEmail, otp, firstName, language));
         return Task.FromResult(true);
     }
-    
+
     public Task<bool> SendResetPasswordEmailAsync(string toEmail, string code, string language = "en")
     {
         Console.WriteLine($"Mock Reset Password email sent to: {toEmail}, Code: {code}, Language: {language}");

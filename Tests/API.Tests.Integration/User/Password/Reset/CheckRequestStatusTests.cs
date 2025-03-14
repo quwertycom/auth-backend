@@ -21,7 +21,7 @@ public class CheckRequestStatusTests : ResetPasswordTestBase
     {
         var (code, _) = await CreatePasswordResetRequestAsync();
         var response = await GetAsync($"/api/user/password/reset/request-status?code={code}");
-        
+
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadFromJsonAsync<CheckRequestStatusResponse>();
         Assert.IsNotNull(content);
@@ -35,7 +35,7 @@ public class CheckRequestStatusTests : ResetPasswordTestBase
     {
         var invalidCode = "invalid-reset-code-format-1234567890";
         var response = await GetAsync($"/api/user/password/reset/request-status?code={invalidCode}");
-        
+
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
         var errorContent = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         Assert.IsNotNull(errorContent);
@@ -47,7 +47,7 @@ public class CheckRequestStatusTests : ResetPasswordTestBase
     {
         var (code, _) = await CreateExpiredPasswordResetRequestAsync();
         var response = await GetAsync($"/api/user/password/reset/request-status?code={code}");
-        
+
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadFromJsonAsync<CheckRequestStatusResponse>();
         Assert.IsNotNull(content);
@@ -61,7 +61,7 @@ public class CheckRequestStatusTests : ResetPasswordTestBase
     {
         var (code, _) = await CreateAndUsePasswordResetRequestAsync();
         var response = await GetAsync($"/api/user/password/reset/request-status?code={code}");
-        
+
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadFromJsonAsync<CheckRequestStatusResponse>();
         Assert.IsNotNull(content);

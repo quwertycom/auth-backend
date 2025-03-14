@@ -19,13 +19,13 @@ namespace API.Tests.Functional.Authentication;
 public class RegisterWorkflowTests : TestBase
 {
     private IUserRepository? _userRepository;
-    
+
     [SetUp]
     public void Setup()
     {
         _userRepository = GetRequiredService<IUserRepository>();
     }
-    
+
     [Test]
     public async Task Register_Endpoint_Should_BeAccessible()
     {
@@ -50,7 +50,7 @@ public class RegisterWorkflowTests : TestBase
 
         var response = await _client.PostAsJsonAsync("/api/authentication/register", request);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var responseBody = await response.Content.ReadAsStringAsync();
         responseBody.Should().Contain("SUCCESS");
         responseBody.Should().Contain("requestId");
@@ -116,7 +116,7 @@ public class RegisterWorkflowTests : TestBase
     {
         var userRepo = GetRequiredService<IUserRepository>();
         var hasher = GetRequiredService<IHasher>();
-        
+
         var hashedPassword = hasher.Hash("Password123!");
         var existingUser = _generate.NewUser(
             username: "testusertest3",

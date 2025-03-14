@@ -59,7 +59,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -121,7 +122,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -171,7 +173,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -216,7 +219,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -262,7 +266,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -306,7 +311,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -352,7 +358,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -393,7 +400,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -437,7 +445,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",
@@ -481,7 +490,8 @@ public class RegisterServiceTests : TestBase
         );
 
         // Setup default behavior for the Hasher
-        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult {
+        MockHasher.Hash(Arg.Any<string>()).Returns(new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = "hashedpassword",

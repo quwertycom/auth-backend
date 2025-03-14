@@ -153,7 +153,7 @@ public class Generate : IGenerate
     }
 
     public EmailAddress NewEmailAddress(long? id = null, string? value = null, long? userId = null, EmailType? type = null, EmailState? state = null, User? user = null)
-    {   
+    {
         return new EmailAddress
         {
             Id = id ?? Snowflake.Generate(),

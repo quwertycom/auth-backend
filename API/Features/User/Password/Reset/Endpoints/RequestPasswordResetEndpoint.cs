@@ -38,7 +38,7 @@ public class RequestPasswordResetEndpoint : Endpoint<RequestPasswordResetRequest
         else if (!string.IsNullOrEmpty(req.Username))
         {
             result = await _resetPasswordService.RequestPasswordResetViaUsernameAsync(req.Username, ct);
-            
+
             await SendAsync(new RequestPasswordResetResponse
             {
                 Status = result.Status,

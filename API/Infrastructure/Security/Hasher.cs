@@ -54,7 +54,8 @@ public class Hasher : IHasher
             _keySize
         );
 
-        return new HashResult {
+        return new HashResult
+        {
             IsSuccess = true,
             Status = "OK",
             Hash = Convert.ToBase64String(hash),
@@ -79,7 +80,8 @@ public class Hasher : IHasher
             );
 
             // Compare the hashes
-            return new CompareResult {
+            return new CompareResult
+            {
                 IsSuccess = true,
                 Status = "OK",
                 IsMatch = CryptographicOperations.FixedTimeEquals(hash, newHash)
@@ -87,7 +89,8 @@ public class Hasher : IHasher
         }
         catch
         {
-            return new CompareResult {
+            return new CompareResult
+            {
                 IsSuccess = false,
                 Status = "ERROR",
                 IsMatch = false

@@ -23,7 +23,8 @@ public class ResetPasswordEndpoint : Endpoint<ResetPasswordRequest, ResetPasswor
     {
         var result = await _resetPasswordService.ResetPasswordAsync(req.Code, req.NewPassword, ct);
 
-        await SendAsync(new ResetPasswordResponse {
+        await SendAsync(new ResetPasswordResponse
+        {
             Status = result.Status,
             Message = result.Message
         }, statusCode: result.HttpStatusCode ?? (result.IsSuccess ? 200 : 400), ct);

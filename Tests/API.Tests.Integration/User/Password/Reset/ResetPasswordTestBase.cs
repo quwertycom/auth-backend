@@ -23,14 +23,14 @@ public abstract class ResetPasswordTestBase : TestBase
         var email = $"reset-{Guid.NewGuid()}@example.com";
 
         var newUser = _generate.NewUser(
-            username: _testUsername, 
+            username: _testUsername,
             passwordHash: hasher.Hash("Password123!").Hash,
             state: UserState.Active
         );
         await userRepository.AddUserAsync(newUser);
 
         var newEmail = _generate.NewEmailAddress(
-            value: email, 
+            value: email,
             user: newUser,
             state: EmailState.Active,
             type: EmailType.Primary

@@ -136,7 +136,7 @@ public class ResetPasswordServiceTests : TestBase
     {
         // Arrange
         var email = "nonexistent@example.com";
-        
+
         _userRepository!.GetEmailAdressByEmailStringAsync(email, true).Returns((EmailAddress)null!);
 
         // Act
@@ -228,7 +228,7 @@ public class ResetPasswordServiceTests : TestBase
     {
         // Arrange
         var email = "test@example.com";
-        
+
         _userRepository!.When(x => x.GetEmailAdressByEmailStringAsync(email, true))
             .Do(x => { throw new Exception("Test exception"); });
 
@@ -380,8 +380,8 @@ public class ResetPasswordServiceTests : TestBase
 
         _hasher!.Hash(code, "").Returns(codeHash);
         _verificationRepository!.GetPasswordResetRequestByCodeHashAsync(
-            Arg.Any<string>(), 
-            includeUser: Arg.Any<bool>(), 
+            Arg.Any<string>(),
+            includeUser: Arg.Any<bool>(),
             includeEmailAddress: Arg.Any<bool>())
             .Returns(mockRequest);
         _userRepository!.GetEmailAdressByIdAsync(mockEmailAddress.Id, Arg.Any<bool>()).Returns(mockEmailAddress);
@@ -433,11 +433,11 @@ public class ResetPasswordServiceTests : TestBase
         var mockRequest = CreateMockPasswordResetRequest(codeHash, mockUser, mockEmailAddress, isExpired: true);
 
         _hasher!.Hash(code, "").Returns(codeHash);
-        
+
         // Use a more explicit approach for setting up the mock - specify both boolean parameters
         _verificationRepository!.GetPasswordResetRequestByCodeHashAsync(
-            Arg.Any<string>(), 
-            includeUser: Arg.Any<bool>(), 
+            Arg.Any<string>(),
+            includeUser: Arg.Any<bool>(),
             includeEmailAddress: Arg.Any<bool>())
             .Returns(mockRequest);
 
@@ -463,11 +463,11 @@ public class ResetPasswordServiceTests : TestBase
         var mockRequest = CreateMockPasswordResetRequest(codeHash, mockUser, mockEmailAddress, isUsed: true);
 
         _hasher!.Hash(code, "").Returns(codeHash);
-        
+
         // Use a more explicit approach for setting up the mock - specify both boolean parameters
         _verificationRepository!.GetPasswordResetRequestByCodeHashAsync(
-            Arg.Any<string>(), 
-            includeUser: Arg.Any<bool>(), 
+            Arg.Any<string>(),
+            includeUser: Arg.Any<bool>(),
             includeEmailAddress: Arg.Any<bool>())
             .Returns(mockRequest);
 
@@ -494,8 +494,8 @@ public class ResetPasswordServiceTests : TestBase
 
         _hasher!.Hash(code, "").Returns(codeHash);
         _verificationRepository!.GetPasswordResetRequestByCodeHashAsync(
-            Arg.Any<string>(), 
-            includeUser: Arg.Any<bool>(), 
+            Arg.Any<string>(),
+            includeUser: Arg.Any<bool>(),
             includeEmailAddress: Arg.Any<bool>())
             .Returns(mockRequest);
         _userRepository!.GetEmailAdressByIdAsync(mockEmailAddress.Id, Arg.Any<bool>()).Returns((EmailAddress)null!);
@@ -535,8 +535,8 @@ public class ResetPasswordServiceTests : TestBase
 
         _hasher!.Hash(code, "").Returns(codeHash);
         _verificationRepository!.GetPasswordResetRequestByCodeHashAsync(
-            Arg.Any<string>(), 
-            includeUser: Arg.Any<bool>(), 
+            Arg.Any<string>(),
+            includeUser: Arg.Any<bool>(),
             includeEmailAddress: Arg.Any<bool>())
             .Returns(mockRequest);
         _userRepository!.GetEmailAdressByIdAsync(mockEmailAddress.Id, Arg.Any<bool>()).Returns(emailWithoutUser);
@@ -561,12 +561,12 @@ public class ResetPasswordServiceTests : TestBase
         var exceptionMessage = "Test exception";
 
         _hasher!.Hash(code, "").Returns(codeHash);
-        
+
         // Set up the mock to throw an exception when called
-        _verificationRepository!.When(x => 
+        _verificationRepository!.When(x =>
             x.GetPasswordResetRequestByCodeHashAsync(
-                Arg.Any<string>(), 
-                Arg.Any<bool>(), 
+                Arg.Any<string>(),
+                Arg.Any<bool>(),
                 Arg.Any<bool>()))
             .Do(x => { throw new Exception(exceptionMessage); });
 

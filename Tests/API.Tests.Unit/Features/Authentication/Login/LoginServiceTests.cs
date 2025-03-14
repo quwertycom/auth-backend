@@ -41,7 +41,8 @@ public class LoginServiceTests : TestBase
             .Returns(user);
 
         mockHasher!.Compare(password, passwordHash, passwordSalt)
-            .Returns(new CompareResult {
+            .Returns(new CompareResult
+            {
                 IsSuccess = true,
                 Status = "OK",
                 IsMatch = true
@@ -151,7 +152,8 @@ public class LoginServiceTests : TestBase
             .Returns(user);
 
         mockHasher!.Compare(password, passwordHash, passwordSalt)
-            .Returns(new CompareResult {
+            .Returns(new CompareResult
+            {
                 IsSuccess = true,
                 Status = "OK",
                 IsMatch = false
@@ -278,7 +280,8 @@ public class LoginServiceTests : TestBase
             .Returns(user);
 
         mockHasher!.Compare(password, passwordHash, passwordSalt)
-            .Returns(new CompareResult {
+            .Returns(new CompareResult
+            {
                 IsSuccess = true,
                 Status = "OK",
                 IsMatch = true

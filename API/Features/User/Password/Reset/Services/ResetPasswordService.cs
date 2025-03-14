@@ -28,10 +28,12 @@ public class ResetPasswordService : IResetPasswordService
 
     public async Task<RequestPasswordResetResult> RequestPasswordResetViaEmailAsync(string email, CancellationToken cancellationToken)
     {
-        try {
+        try
+        {
             var emailAdress = await _userRepository.GetEmailAdressByEmailStringAsync(email, includeUser: true);
 
-            if (emailAdress == null || emailAdress.User == null) {
+            if (emailAdress == null || emailAdress.User == null)
+            {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -42,7 +44,8 @@ public class ResetPasswordService : IResetPasswordService
             }
 
             // Ensure email is active
-            if (emailAdress.State != EmailState.Active) {
+            if (emailAdress.State != EmailState.Active)
+            {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -66,7 +69,8 @@ public class ResetPasswordService : IResetPasswordService
 
             var emailSent = await _emailSender.SendResetPasswordEmailAsync(emailAdress.Value, code, "en");
 
-            if (!emailSent) {
+            if (!emailSent)
+            {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -86,7 +90,8 @@ public class ResetPasswordService : IResetPasswordService
                 HttpStatusCode = 200
             };
         }
-        catch {
+        catch
+        {
             return new RequestPasswordResetResult
             {
                 IsSuccess = false,
@@ -99,10 +104,12 @@ public class ResetPasswordService : IResetPasswordService
 
     public async Task<RequestPasswordResetResult> RequestPasswordResetViaUsernameAsync(string username, CancellationToken cancellationToken)
     {
-        try {
+        try
+        {
             var user = await _userRepository.GetUserByUsernameAsync(username, includeEmails: true);
-            
-            if (user == null) {
+
+            if (user == null)
+            {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -113,7 +120,8 @@ public class ResetPasswordService : IResetPasswordService
             }
 
             var activeEmail = user.EmailAddresses.FirstOrDefault(e => e.State == EmailState.Active);
-            if (activeEmail == null) {
+            if (activeEmail == null)
+            {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -135,7 +143,8 @@ public class ResetPasswordService : IResetPasswordService
 
             var emailSent = await _emailSender.SendResetPasswordEmailAsync(activeEmail.Value, code, "en");
 
-            if (!emailSent) {
+            if (!emailSent)
+            {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -155,7 +164,8 @@ public class ResetPasswordService : IResetPasswordService
                 HttpStatusCode = 200
             };
         }
-        catch {
+        catch
+        {
             return new RequestPasswordResetResult
             {
                 IsSuccess = false,
@@ -168,11 +178,13 @@ public class ResetPasswordService : IResetPasswordService
 
     public async Task<CheckRequestStatusResult> CheckRequestStatusAsync(string code, CancellationToken cancellationToken)
     {
-        try {
+        try
+        {
             var codeHash = _hasher.Hash(code, "");
             var request = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync(codeHash.Hash);
 
-            if (request == null) {
+            if (request == null)
+            {
                 return new CheckRequestStatusResult
                 {
                     IsSuccess = false,
@@ -191,7 +203,9 @@ public class ResetPasswordService : IResetPasswordService
                 IsExpired = request.ExpiresAt < DateTime.UtcNow,
                 IsUsed = request.IsUsed,
             };
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             return new CheckRequestStatusResult
             {
                 IsSuccess = false,
@@ -204,12 +218,14 @@ public class ResetPasswordService : IResetPasswordService
 
     public async Task<ResetPasswordResult> ResetPasswordAsync(string code, string newPassword, CancellationToken cancellationToken)
     {
-        try {
+        try
+        {
             // Generate code hash using empty salt
             var codeHash = _hasher.Hash(code, "");
             var request = await _verificationRepository.GetPasswordResetRequestByCodeHashAsync(codeHash.Hash, includeEmailAddress: true);
-            
-            if (request == null) {
+
+            if (request == null)
+            {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -217,9 +233,10 @@ public class ResetPasswordService : IResetPasswordService
                     Message = "Request not found",
                     HttpStatusCode = 404
                 };
-            } 
-            
-            if (request.ExpiresAt < DateTime.UtcNow) {
+            }
+
+            if (request.ExpiresAt < DateTime.UtcNow)
+            {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -227,9 +244,10 @@ public class ResetPasswordService : IResetPasswordService
                     Message = "Request expired",
                     HttpStatusCode = 400
                 };
-            } 
-            
-            if (request.IsUsed) {
+            }
+
+            if (request.IsUsed)
+            {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -241,8 +259,9 @@ public class ResetPasswordService : IResetPasswordService
 
             // Get user information
             var email = await _userRepository.GetEmailAdressByIdAsync(request.EmailAddress.Id, includeUser: true);
-            
-            if (email == null) {
+
+            if (email == null)
+            {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -250,9 +269,10 @@ public class ResetPasswordService : IResetPasswordService
                     Message = "Email not found",
                     HttpStatusCode = 404
                 };
-            } 
-            
-            if (email.User == null) {
+            }
+
+            if (email.User == null)
+            {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -261,8 +281,9 @@ public class ResetPasswordService : IResetPasswordService
                     HttpStatusCode = 404
                 };
             }
-            
-            if (email.User.Id != request.User.Id) {
+
+            if (email.User.Id != request.User.Id)
+            {
                 return new ResetPasswordResult
                 {
                     IsSuccess = false,
@@ -271,14 +292,14 @@ public class ResetPasswordService : IResetPasswordService
                     HttpStatusCode = 400
                 };
             }
-            
+
             // Generate a new hash and salt for the password
             // Don't pass a custom salt - let the hasher generate a fresh one
             var hashedPassword = _hasher.Hash(newPassword);
-            
+
             // Update the user's password with both the new hash and salt
             await _userRepository.UpdateUserPasswordAsync(email.User.Id, hashedPassword.Hash, hashedPassword.Salt);
-            
+
             // Mark the request as used
             await _verificationRepository.MarkPasswordResetRequestAsUsedAsync(request.Id);
 
@@ -289,7 +310,9 @@ public class ResetPasswordService : IResetPasswordService
                 Message = "Password reset successfully",
                 HttpStatusCode = 200
             };
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             return new ResetPasswordResult
             {
                 IsSuccess = false,

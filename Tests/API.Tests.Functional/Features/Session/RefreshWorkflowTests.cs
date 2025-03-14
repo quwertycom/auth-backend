@@ -99,7 +99,7 @@ public class RefreshWorkflowTests : TestBase
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/session/refresh", request);
-        
+
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -178,7 +178,7 @@ public class RefreshWorkflowTests : TestBase
 
         // Generate refresh token
         var refreshTokenResult = jwtService.GenerateRefreshToken(
-            TokenTarget.User, 
+            TokenTarget.User,
             (userId: user.Id, accountId: null, applicationId: null)
         );
 
@@ -262,7 +262,7 @@ public class RefreshWorkflowTests : TestBase
 
         // Generate refresh token
         var refreshTokenResult = jwtService.GenerateRefreshToken(
-            TokenTarget.User, 
+            TokenTarget.User,
             (userId: user.Id, accountId: null, applicationId: null)
         );
 

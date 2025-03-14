@@ -5,6 +5,6 @@ namespace API.Features.User.Password.Reset.Models.Contracts;
 
 public record CheckRequestStatusResponse : ResponseBase
 {
-  public bool? IsExpired { get; set; }
-  public bool? IsUsed { get; set; }
+    public bool? IsExpired { get; set; }
+    public bool? IsUsed { get; set; }
 }
