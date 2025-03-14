@@ -5,6 +5,7 @@ using API.Shared.Interfaces.Database.Repositories;
 using API.Shared.Interfaces.Email;
 using API.Shared.Interfaces.Security;
 using API.Shared.Enums.Entities.User;
+using Microsoft.Extensions.Logging;
 
 namespace API.Features.User.Password.Reset.Services;
 
@@ -30,7 +31,7 @@ public class ResetPasswordService : IResetPasswordService
         try {
             var emailAdress = await _userRepository.GetEmailAdressByEmailStringAsync(email, includeUser: true);
 
-            if (emailAdress == null) {
+            if (emailAdress == null || emailAdress.User == null) {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -38,17 +39,10 @@ public class ResetPasswordService : IResetPasswordService
                     Message = "Email not found",
                     HttpStatusCode = 404
                 };
-            } else if (emailAdress.User == null)
-            {
-                return new RequestPasswordResetResult
-                {
-                    IsSuccess = false,
-                    Status = "ERROR",
-                    Message = "User not found",
-                    HttpStatusCode = 404
-                };
-            } else if (emailAdress.State != EmailState.Active)
-            {
+            }
+
+            // Ensure email is active
+            if (emailAdress.State != EmailState.Active) {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
@@ -91,13 +85,13 @@ public class ResetPasswordService : IResetPasswordService
                 Message = "Password reset request sent",
                 HttpStatusCode = 200
             };
-            
-        } catch (Exception ex) {
+        }
+        catch {
             return new RequestPasswordResetResult
             {
                 IsSuccess = false,
-                Message = ex.Message,
                 Status = "ERROR",
+                Message = "An error occurred while processing your request",
                 HttpStatusCode = 500
             };
         }
@@ -106,8 +100,8 @@ public class ResetPasswordService : IResetPasswordService
     public async Task<RequestPasswordResetResult> RequestPasswordResetViaUsernameAsync(string username, CancellationToken cancellationToken)
     {
         try {
-            var user = await _userRepository.GetUserByUsernameAsync(username);
-
+            var user = await _userRepository.GetUserByUsernameAsync(username, includeEmails: true);
+            
             if (user == null) {
                 return new RequestPasswordResetResult
                 {
@@ -118,32 +112,13 @@ public class ResetPasswordService : IResetPasswordService
                 };
             }
 
-            var emailAdress = await _userRepository.GetUserPrimaryEmailAddressAsync(user.Id);
-
-            if (emailAdress == null) {
+            var activeEmail = user.EmailAddresses.FirstOrDefault(e => e.State == EmailState.Active);
+            if (activeEmail == null) {
                 return new RequestPasswordResetResult
                 {
                     IsSuccess = false,
                     Status = "ERROR",
-                    Message = "Email not found",
-                    HttpStatusCode = 404
-                };
-            } else if (emailAdress.User == null)
-            {
-                return new RequestPasswordResetResult
-                {
-                    IsSuccess = false,
-                    Status = "ERROR",
-                    Message = "User not found",
-                    HttpStatusCode = 404
-                };
-            } else if (emailAdress.State != EmailState.Active)
-            {
-                return new RequestPasswordResetResult
-                {
-                    IsSuccess = false,
-                    Status = "ERROR",
-                    Message = "This email is not active and cannot be used to reset your password",
+                    Message = "No active email found for this user",
                     HttpStatusCode = 400
                 };
             }
@@ -154,11 +129,11 @@ public class ResetPasswordService : IResetPasswordService
             var newRequest = new PasswordResetRequest
             {
                 CodeHash = codeHash.Hash,
-                EmailAddress = emailAdress,
+                EmailAddress = activeEmail,
                 User = user
             };
 
-            var emailSent = await _emailSender.SendResetPasswordEmailAsync(emailAdress.Value, code, "en");
+            var emailSent = await _emailSender.SendResetPasswordEmailAsync(activeEmail.Value, code, "en");
 
             if (!emailSent) {
                 return new RequestPasswordResetResult
@@ -179,13 +154,13 @@ public class ResetPasswordService : IResetPasswordService
                 Message = "Password reset request sent",
                 HttpStatusCode = 200
             };
-            
-        } catch (Exception ex) {
+        }
+        catch {
             return new RequestPasswordResetResult
             {
                 IsSuccess = false,
-                Message = ex.Message,
                 Status = "ERROR",
+                Message = "An error occurred while processing your request",
                 HttpStatusCode = 500
             };
         }

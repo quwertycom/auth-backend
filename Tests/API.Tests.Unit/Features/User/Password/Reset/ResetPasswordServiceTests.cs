@@ -22,7 +22,6 @@ public class ResetPasswordServiceTests : TestBase
     private IRandomGenerator? _randomGenerator;
     private IHasher? _hasher;
     private IEmailSender? _emailSender;
-
     #endregion
 
     #region Setup
@@ -42,7 +41,8 @@ public class ResetPasswordServiceTests : TestBase
             _verificationRepository,
             _randomGenerator,
             _hasher,
-            _emailSender);
+            _emailSender
+        );
     }
 
     #endregion
@@ -174,7 +174,7 @@ public class ResetPasswordServiceTests : TestBase
         // Assert
         Assert.IsFalse(result.IsSuccess);
         Assert.AreEqual("ERROR", result.Status);
-        Assert.AreEqual("User not found", result.Message);
+        Assert.AreEqual("Email not found", result.Message);
         Assert.AreEqual(404, result.HttpStatusCode);
     }
 
@@ -238,7 +238,7 @@ public class ResetPasswordServiceTests : TestBase
         // Assert
         Assert.IsFalse(result.IsSuccess);
         Assert.AreEqual("ERROR", result.Status);
-        Assert.AreEqual("Test exception", result.Message);
+        Assert.AreEqual("An error occurred while processing your request", result.Message);
         Assert.AreEqual(500, result.HttpStatusCode);
     }
 
