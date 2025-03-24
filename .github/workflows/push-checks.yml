@@ -136,8 +136,8 @@ jobs:
       - name: Verify Database Context with Factory
         run: |
           echo "Verifying database context and models using factory..."
-          dotnet ef dbcontext info --project API/API.csproj --context API.Infrastructure.Database.AuthDbContextFactory
-          dotnet ef dbcontext list --project API/API.csproj --context API.Infrastructure.Database.AuthDbContextFactory
+          dotnet ef dbcontext info --project API/API.csproj
+          dotnet ef dbcontext list --project API/API.csproj
   format-check:
     name: Check Code Format
     needs: restore
