@@ -33,14 +33,12 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ${{ env.SOLUTION_FILE }}
         
-      - name: Cache restored packages
+      - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
           path: |
             ~/.nuget/packages
             ~/.local/share/NuGet
-            **/bin
-            **/obj
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
@@ -77,6 +75,7 @@ jobs:
           path: |
             API/bin/Release/net8.0/
             API/appsettings.json
+            Tests/API.Tests.Unit/bin/Release/net8.0/
 
   unit-tests:
     name: Run Unit Tests
@@ -99,6 +98,12 @@ jobs:
             **/bin
             **/obj
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+          
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: .
           
       - name: Run Unit Tests
         run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
