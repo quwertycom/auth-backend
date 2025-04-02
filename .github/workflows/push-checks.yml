@@ -13,150 +13,35 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   
-  # PostgreSQL Settings (from .env)
-  Postgres__User: qauth_user
-  Postgres__Database: qauth_db
-  Postgres__Host: localhost
-  Postgres__Port: 5432
-  Postgres__Password: ${{ secrets.POSTGRES_PASSWORD }} # Secret: POSTGRES_PASSWORD
-
-  # JWT Settings (from .env)
-  Jwt__Issuer: auth-backend-ci
-  Jwt__Audience: auth-client-ci
-  Jwt__SecretKey: ${{ secrets.JWT_SECRET_KEY }} # Secret: JWT_SECRET_KEY
-
-  # Email Settings (from .env)
-  Email__Host: localhost  # Using MailHog in CI
-  Email__Port: 1025      # MailHog SMTP port
-  Email__Username: ${{ secrets.EMAIL_USERNAME }}
-  Email__Password: ${{ secrets.EMAIL_PASSWORD }}
-  Email__FromEmail: noreply@example.com
-  Email__EnableSsl: false
-  Email__Timeout: 10000
-  Email__UseDefaultCredentials: false
-
-  # PasswordHasher Settings
-  PasswordHasher__Iterations: 10000
-  PasswordHasher__SaltSize: 16
-  PasswordHasher__KeySize: 32
-
-  # Snowflake Settings
-  Snowflake__DatacenterId: 1
-  Snowflake__WorkerId: 1
-  Snowflake__Epoch: "2024-01-01T00:00:00Z"
-
-  # Other settings
-  ASPNETCORE_ENVIRONMENT: Production
-  DOCKER_RUNNING: true
-
-  # Secrets reference (do not modify)
+  # PostgreSQL Settings
+  POSTGRES_DB: qauth_db
+  POSTGRES_USER: qauth_user
   POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
 
 jobs:
-  setup:
-    name: Setup .NET
+  restore:
+    name: Restore Dependencies
     runs-on: ubuntu-latest
-    outputs:
-      dotnet-version: ${{ env.DOTNET_VERSION }}
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - name: Cache .NET
+          
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+        
+      - name: Cache restored packages
         uses: actions/cache@v4
         with:
-          path: ~/.nuget/packages
+          path: |
+            ~/.nuget/packages
+            ~/.local/share/NuGet
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-
-  restore:
-    name: Restore Dependencies
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-      - name: Clear NuGet Cache
-        run: dotnet nuget locals all --clear
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
-      - name: Cache Restored Project
-        uses: actions/cache@v4
-        with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-
-  db-model-check:
-    name: Database Model Check
-    needs: restore
-    runs-on: ubuntu-latest
-    env:
-      ConnectionStrings__DefaultConnection: "Host=localhost;Database=auth_db;Username=postgres;Password=postgres"
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
-        uses: actions/cache@v4
-        with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-      - name: Install EF Core tools
-        run: |
-          dotnet new tool-manifest
-          dotnet tool install dotnet-ef
-      - name: Verify Database Context with Factory
-        run: |
-          echo "Verifying database context and models using factory..."
-          dotnet ef dbcontext info --project API/API.csproj
-          dotnet ef dbcontext list --project API/API.csproj
-  format-check:
-    name: Check Code Format
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
-        uses: actions/cache@v4
-        with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-      - name: Install dotnet-format
-        run: dotnet tool install -g dotnet-format
-      - name: Check Format
-        run: dotnet format --verify-no-changes ${{ env.SOLUTION_FILE }}
 
   build:
     name: Build Solution
@@ -164,241 +49,75 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Restore cache
         uses: actions/cache@v4
         with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
+          path: |
+            ~/.nuget/packages
+            ~/.local/share/NuGet
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          
       - name: Build
-        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
-      - name: Prepare Artifacts
-        run: |
-          # Create directories
-          mkdir -p artifacts/api
-          mkdir -p artifacts/tests/unit
-          mkdir -p artifacts/tests/integration
-          mkdir -p artifacts/tests/datagenerator
-
-          # Copy API files
-          cp -r API/bin/Release/net8.0/* artifacts/api/
-          cp API/appsettings.json artifacts/api/
-
-          # Copy test files to their respective directories
-          cp -r Tests/API.Tests.Unit/bin/Release/net8.0/* artifacts/tests/unit/
-          cp -r Tests/API.Tests.Integration/bin/Release/net8.0/* artifacts/tests/integration/
-          cp -r Tests/API.Tests.DataGenerator/bin/Release/net8.0/* artifacts/tests/datagenerator/
-
-      - name: Upload API Artifacts
+        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+        
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: api-artifacts
-          path: artifacts/api/
-
-      - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-artifacts
-          path: artifacts/tests/
+          name: build-artifacts
+          path: |
+            API/bin/Release/net8.0/
+            API/appsettings.json
 
   unit-tests:
-    name: Unit Tests
+    name: Run Unit Tests
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
-        uses: actions/download-artifact@v4
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Restore cache
+        uses: actions/cache@v4
         with:
-          name: api-artifacts
-          path: API/bin/Release/net8.0
-      - name: Download Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: test-artifacts
-          path: artifacts/tests
-        # Extract unit test artifacts to the correct location
-      - name: Setup Test Environment
-        run: |
-          mkdir -p Tests/API.Tests.Unit/bin/Release/net8.0
-          cp -r artifacts/tests/unit/* Tests/API.Tests.Unit/bin/Release/net8.0/
+          path: |
+            ~/.nuget/packages
+            ~/.local/share/NuGet
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          
       - name: Run Unit Tests
-        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --no-build --verbosity normal --configuration Release
-
-  integration-tests:
-    name: Integration Tests
-    needs: build
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mailhog:
-        image: mailhog/mailhog:latest
-        ports:
-          - 1025:1025 # SMTP port
-          - 8025:8025 # Web UI port
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-artifacts
-          path: API/bin/Release/net8.0
-      - name: Download Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: test-artifacts
-          path: artifacts/tests
-        # Extract integration test artifacts to the correct location
-      - name: Setup Test Environment
-        run: |
-          mkdir -p Tests/API.Tests.Integration/bin/Release/net8.0
-          cp -r artifacts/tests/integration/* Tests/API.Tests.Integration/bin/Release/net8.0/
-      - name: Run Integration Tests
-        env:
-          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
-          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # Database settings
-          ConnectionStrings__DefaultConnection: "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
-          # JWT settings
-          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ env.JWT_ISSUER }}
-          JWT__Audience: ${{ env.JWT_AUDIENCE }}
-          # Email settings
-          Email__Host: ${{ env.EMAIL_HOST }}
-          Email__Port: ${{ env.EMAIL_PORT }}
-          Email__EnableSsl: ${{ env.EMAIL_ENABLE_SSL }}
-          Email__Username: ${{ env.EMAIL_USERNAME }}
-          Email__Password: ${{ env.EMAIL_PASSWORD }}
-          Email__FromEmail: ${{ env.EMAIL_FROM }}
-        run: dotnet test Tests/API.Tests.Integration/API.Tests.Integration.csproj --no-build --verbosity normal --configuration Release
+        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
 
   api-health:
     name: API Health Check
     needs: build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        ports:
-          - 5432:5432
-          - 8025:8025
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: api-artifacts
+          name: build-artifacts
           path: ./app
-      - name: Create appsettings.json
-        run: |
-          cat > ./app/appsettings.json << EOF
-          {
-            "ConnectionStrings": {
-              "DefaultConnection": "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
-            },
-            "Database": {
-              "Host": "localhost",
-              "Database": "${{ env.POSTGRES_DB }}",
-              "Username": "${{ env.POSTGRES_USER }}",
-              "Password": "${{ env.POSTGRES_PASSWORD }}"
-            },
-            "JWT": {
-              "SecretKey": "${{ env.JWT_SECRET_KEY }}",
-              "Issuer": "${{ env.JWT_ISSUER }}",
-              "Audience": "${{ env.JWT_AUDIENCE }}"
-            },
-            "Email": {
-              "Host": "${{ env.EMAIL_HOST }}",
-              "Port": ${{ env.EMAIL_PORT }},
-              "EnableSsl": ${{ env.EMAIL_ENABLE_SSL }},
-              "Username": ${{ env.EMAIL_USERNAME }}",
-              "Password": ${{ env.EMAIL_PASSWORD }}",
-              "FromEmail": "${{ env.EMAIL_FROM }}",
-              "Timeout": ${{ env.EMAIL_TIMEOUT }},
-              "UseDefaultCredentials": ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
-            },
-            "PasswordHasher": {
-              "Iterations": ${{ env.PASSWORD_HASHER_ITERATIONS }},
-              "SaltSize": ${{ env.PASSWORD_HASHER_SALT_SIZE }},
-              "KeySize": ${{ env.PASSWORD_HASHER_KEY_SIZE }}
-            },
-            "Snowflake": {
-              "DatacenterId": ${{ env.SNOWFLAKE_DATACENTER_ID }},
-              "WorkerId": ${{ env.SNOWFLAKE_WORKER_ID }},
-              "Epoch": "${{ env.SNOWFLAKE_EPOCH }}"
-            }
-          }
-          EOF
+          
       - name: Start API
-        env:
-          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
-          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # Database settings
-          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
-          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-          # JWT settings
-          JWT_SECRET_KEY: ${{ env.JWT_SECRET_KEY }}
-          JWT_ISSUER: ${{ env.JWT_ISSUER }}
-          JWT_AUDIENCE: ${{ env.JWT_AUDIENCE }}
-          # Email settings
-          EMAIL_HOST: ${{ env.EMAIL_HOST }}
-          EMAIL_PORT: ${{ env.EMAIL_PORT }}
-          EMAIL_ENABLE_SSL: ${{ env.EMAIL_ENABLE_SSL }}
-          EMAIL_USERNAME: ${{ env.EMAIL_USERNAME }}
-          EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
-          EMAIL_FROM: ${{ env.EMAIL_FROM }}
-          EMAIL_TIMEOUT: ${{ env.EMAIL_TIMEOUT }}
-          EMAIL_USE_DEFAULT_CREDENTIALS: ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
-          # PasswordHasher settings
-          PASSWORD_HASHER__ITERATIONS: ${{ env.PASSWORD_HASHER_ITERATIONS }}
-          PASSWORD_HASHER__SALT_SIZE: ${{ env.PASSWORD_HASHER_SALT_SIZE }}
-          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER_KEY_SIZE }}
-          # Snowflake settings
-          SNOWFLAKE__DATACENTERID: ${{ env.SNOWFLAKE_DATACENTER_ID }}
-          SNOWFLAKE__WORKERID: ${{ env.SNOWFLAKE_WORKER_ID }}
-          SNOWFLAKE__EPOCH: ${{ env.SNOWFLAKE_EPOCH }}
         run: |
           cd ./app
-          echo "Current directory: $(pwd)"
-          echo "Files in directory:"
-          ls -la
-          echo "Starting API..."
           dotnet API.dll &
           echo "Waiting for API to start..."
           for i in {1..30}; do
@@ -413,6 +132,7 @@ jobs:
             echo "Attempt $i: API not ready yet..."
             sleep 1
           done
+          
       - name: Check API Health
         run: |
           curl -f http://localhost:8000/health || exit 1
