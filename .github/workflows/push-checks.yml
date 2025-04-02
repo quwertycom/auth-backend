@@ -39,7 +39,9 @@ jobs:
           path: |
             ~/.nuget/packages
             ~/.local/share/NuGet
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+            **/bin
+            **/obj
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
@@ -61,7 +63,9 @@ jobs:
           path: |
             ~/.nuget/packages
             ~/.local/share/NuGet
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+            **/bin
+            **/obj
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           
       - name: Build
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
@@ -92,7 +96,9 @@ jobs:
           path: |
             ~/.nuget/packages
             ~/.local/share/NuGet
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+            **/bin
+            **/obj
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           
       - name: Run Unit Tests
         run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
