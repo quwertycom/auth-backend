@@ -132,31 +132,24 @@ jobs:
 
   security-scan:
     name: Security Scan
-    needs: build
+    needs: restore
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
     steps:
       - uses: actions/checkout@v4
       
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          name: build-artifacts
-          path: .
+          dotnet-version: ${{ env.DOTNET_VERSION }}
           
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: csharp
-          queries: security-and-quality
-          
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:csharp"
+      - name: Restore Dependencies
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+        
+      - name: Check for vulnerable packages
+        run: dotnet list package --vulnerable --include-transitive
+        
+      - name: Security build check
+        run: dotnet build ${{ env.SOLUTION_FILE }} /warnaserror /p:TreatWarningsAsErrors=true --configuration Release
 
   unit-tests:
     name: Run Unit Tests
