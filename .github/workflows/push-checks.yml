@@ -95,8 +95,14 @@ jobs:
             ~/.local/share/NuGet
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: .
+          
       - name: Run Unit Tests
-        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release
+        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
 
   api-health:
     name: API Health Check
