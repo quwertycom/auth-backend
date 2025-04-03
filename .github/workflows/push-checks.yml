@@ -72,6 +72,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+  code-style-check:
+    name: Check Code Style
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Install dotnet-format
+        run: dotnet tool install -g dotnet-format
+        
+      - name: Check code style
+        run: |
+          echo "Checking code style..."
+          dotnet format --verify-no-changes ${{ env.SOLUTION_FILE }}
+          if [ $? -ne 0 ]; then
+            echo "Code style check failed. Please run 'dotnet format' locally to fix formatting issues."
+            exit 1
+          fi
+          echo "Code style check passed!"
+
   build:
     name: Build Solution
     needs: restore
@@ -143,10 +168,16 @@ jobs:
       ASPNETCORE_URLS: http://0.0.0.0:8000
       DOTNET_USE_POLLING_FILE_WATCHER: 1
       ASPNETCORE_DETAILED_ERRORS: 1
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      
+      # Database Settings
       Postgres__Host: localhost
       Postgres__Database: qauth_db
       Postgres__User: qauth_user
       Postgres__Password: qauth_password
+      
+      # Application Settings
       Jwt__SecretKey: your-super-secret-key-at-least-32-chars-long
       Jwt__Issuer: auth-backend-dev
       Jwt__Audience: auth-client-dev
@@ -193,24 +224,47 @@ jobs:
           name: build-artifacts
           path: .
           
+      - name: Verify NuGet Config
+        run: |
+          echo "Checking NuGet configuration..."
+          dotnet nuget list source
+          
+      - name: Restore dependencies
+        run: |
+          echo "Restoring dependencies..."
+          dotnet restore ${{ env.SOLUTION_FILE }}
+          
       - name: Debug directory structure
         run: |
           echo "Current directory: $(pwd)"
           echo "Directory contents:"
           ls -la
+          echo "Checking for project.assets.json files:"
+          find . -name "project.assets.json"
+          
+      - name: Wait for PostgreSQL
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h localhost -p 5432; do
+            echo "PostgreSQL is unavailable - sleeping"
+            sleep 1
+          done
+          echo "PostgreSQL is up and running!"
           
       - name: Start API
         run: |
           echo "Starting API from $(pwd)"
-          dotnet run --project ./API/API.csproj &
+          dotnet run --project ./API/API.csproj > /tmp/api.log 2>&1 &
           echo "Waiting for API to start..."
-          for i in {1..30}; do
+          for i in {1..45}; do
             if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
               echo "API is up!"
               break
             fi
-            if [ $i -eq 30 ]; then
-              echo "API failed to start within 30 seconds"
+            if [ $i -eq 45 ]; then
+              echo "API failed to start within 45 seconds"
+              echo "Last few lines of API logs:"
+              tail -n 50 /tmp/api.log
               exit 1
             fi
             echo "Attempt $i: API not ready yet..."
@@ -219,4 +273,4 @@ jobs:
           
       - name: Check API Health
         run: |
-          curl -f http://localhost:8000/health || exit 1
+          curl -v http://localhost:8000/health || exit 1
