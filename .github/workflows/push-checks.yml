@@ -177,12 +177,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
-          path: ./app
+          path: .
+          
+      - name: Debug directory structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
           
       - name: Start API
         run: |
-          cd ./app
-          dotnet run --project API/API.csproj &
+          echo "Starting API from $(pwd)"
+          dotnet run --project ./API/API.csproj &
           echo "Waiting for API to start..."
           for i in {1..30}; do
             if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
