@@ -165,6 +165,20 @@ jobs:
       PasswordHasher__SaltSize: 16
       PasswordHasher__KeySize: 32
       Api__Port: 8000
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: qauth_db
+          POSTGRES_USER: qauth_user
+          POSTGRES_PASSWORD: qauth_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       
