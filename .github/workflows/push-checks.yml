@@ -96,6 +96,42 @@ jobs:
             exit 1
           fi
           echo "Code style check passed!"
+  
+  project-structure:
+    name: Project Structure Check
+    needs: restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Install NetArchTest
+        run: dotnet tool install -g NetArchTest.Rules
+        
+      - name: Validate Project Structure
+        run: |
+          echo "Checking solution structure..."
+          # Verify no test projects are referenced by main projects
+          ! find . -name "*.csproj" ! -path "*/Tests/*" -exec grep -l "ProjectReference.*Tests" {} \;
+          
+          # Verify test projects follow naming convention
+          for proj in $(find . -path "*/Tests/*" -name "*.csproj"); do
+            if [[ ! $proj =~ \.Tests\. ]]; then
+              echo "Error: Test project $proj doesn't follow .Tests naming convention"
+              exit 1
+            fi
+          done
+          
+          # Verify each project has proper structure
+          for proj in $(find . -name "*.csproj" ! -path "*/Tests/*"); do
+            if [ ! -f "$(dirname $proj)/Properties/AssemblyInfo.cs" ] && [ ! -f "$(dirname $proj)/Properties/launchSettings.json" ]; then
+              echo "Warning: Project $proj missing standard Properties files"
+            fi
+          done
 
   build:
     name: Build Solution
