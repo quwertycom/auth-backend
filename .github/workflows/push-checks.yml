@@ -18,6 +18,34 @@ env:
   POSTGRES_USER: qauth_user
   POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
+  # Application Settings
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_URLS: http://0.0.0.0:8000
+  DOTNET_USE_POLLING_FILE_WATCHER: 1
+  ASPNETCORE_DETAILED_ERRORS: 1
+  Postgres__Host: localhost
+  Postgres__Database: qauth_db
+  Postgres__User: qauth_user
+  Postgres__Password: qauth_password
+  Jwt__SecretKey: your-super-secret-key-at-least-32-chars-long
+  Jwt__Issuer: auth-backend-dev
+  Jwt__Audience: auth-client-dev
+  Email__Host: 127.0.0.1
+  Email__Port: 9100
+  Email__EnableSsl: false
+  Email__Username: test
+  Email__Password: test
+  Email__From: auth@example.com
+  Email__Timeout: 10000
+  Email__UseDefaultCredentials: false
+  Snowflake__DatacenterId: 1
+  Snowflake__WorkerId: 1
+  Snowflake__Epoch: 2024-01-01T00:00:00Z
+  PasswordHasher__Iterations: 10000
+  PasswordHasher__SaltSize: 16
+  PasswordHasher__KeySize: 32
+  Api__Port: 8000
+
 jobs:
   restore:
     name: Restore Dependencies
@@ -39,6 +67,7 @@ jobs:
           path: |
             ~/.nuget/packages
             ~/.local/share/NuGet
+            **/obj/project.assets.json
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
@@ -61,6 +90,7 @@ jobs:
           path: |
             ~/.nuget/packages
             ~/.local/share/NuGet
+            **/obj/project.assets.json
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           
       - name: Build
