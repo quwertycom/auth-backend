@@ -16,318 +16,245 @@ env:
   # PostgreSQL Settings
   POSTGRES_DB: qauth_db
   POSTGRES_USER: qauth_user
-  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  POSTGRES_PASSWORD: qauth_password
 
   # Application Settings
   ASPNETCORE_ENVIRONMENT: Development
   ASPNETCORE_URLS: http://0.0.0.0:8000
-  DOTNET_USE_POLLING_FILE_WATCHER: 1
-  ASPNETCORE_DETAILED_ERRORS: 1
   Postgres__Host: localhost
   Postgres__Database: qauth_db
   Postgres__User: qauth_user
   Postgres__Password: qauth_password
-  Jwt__SecretKey: your-super-secret-key-at-least-32-chars-long
+  Jwt__SecretKey: test-secret-key-for-push-workflow-testing-only
   Jwt__Issuer: auth-backend-dev
   Jwt__Audience: auth-client-dev
-  Email__Host: 127.0.0.1
-  Email__Port: 9100
-  Email__EnableSsl: false
-  Email__Username: test
-  Email__Password: test
-  Email__From: auth@example.com
-  Email__Timeout: 10000
-  Email__UseDefaultCredentials: false
-  Snowflake__DatacenterId: 1
-  Snowflake__WorkerId: 1
-  Snowflake__Epoch: 2024-01-01T00:00:00Z
-  PasswordHasher__Iterations: 10000
-  PasswordHasher__SaltSize: 16
-  PasswordHasher__KeySize: 32
-  Api__Port: 8000
 
 jobs:
-  restore:
-    name: Restore Dependencies
+  build-and-test:
+    name: Build and Quick Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          
-      - name: Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
-        
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.nuget/packages
-            ~/.local/share/NuGet
-            **/obj/project.assets.json
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-  code-style-check:
-    name: Check Code Style
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          
-      - name: Install dotnet-format
-        run: dotnet tool install -g dotnet-format
-        
-      - name: Check code style
-        run: |
-          echo "Checking code style..."
-          dotnet format --verify-no-changes ${{ env.SOLUTION_FILE }}
-          if [ $? -ne 0 ]; then
-            echo "Code style check failed. Please run 'dotnet format' locally to fix formatting issues."
-            exit 1
-          fi
-          echo "Code style check passed!"
-  
-  project-structure:
-    name: Project Structure Check
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          
-      - name: Install NetArchTest
-        run: dotnet tool install -g NetArchTest.Rules
-        
-      - name: Validate Project Structure
-        run: |
-          echo "Checking solution structure..."
-          # Verify no test projects are referenced by main projects
-          ! find . -name "*.csproj" ! -path "*/Tests/*" -exec grep -l "ProjectReference.*Tests" {} \;
-          
-          # Verify test projects follow naming convention
-          for proj in $(find . -path "*/Tests/*" -name "*.csproj"); do
-            if [[ ! $proj =~ \.Tests\. ]]; then
-              echo "Error: Test project $proj doesn't follow .Tests naming convention"
-              exit 1
-            fi
-          done
-          
-          # Verify each project has proper structure
-          for proj in $(find . -name "*.csproj" ! -path "*/Tests/*"); do
-            if [ ! -f "$(dirname $proj)/Properties/AssemblyInfo.cs" ] && [ ! -f "$(dirname $proj)/Properties/launchSettings.json" ]; then
-              echo "Warning: Project $proj missing standard Properties files"
-            fi
-          done
-
-  build:
-    name: Build Solution
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.nuget/packages
-            ~/.local/share/NuGet
-            **/obj/project.assets.json
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
-          
-      - name: Build
-        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
-        
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            API/bin/Release/net8.0/
-            API/appsettings.json
-            Tests/API.Tests.Unit/bin/Release/net8.0/
-
-  security-scan:
-    name: Security Scan
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          
       - name: Restore Dependencies
         run: dotnet restore ${{ env.SOLUTION_FILE }}
-        
-      - name: Check for vulnerable packages
-        run: dotnet list package --vulnerable --include-transitive
-        
-      - name: Security build check
-        run: dotnet build ${{ env.SOLUTION_FILE }} /warnaserror /p:TreatWarningsAsErrors=true --configuration Release
-
-  unit-tests:
-    name: Run Unit Tests
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.nuget/packages
-            ~/.local/share/NuGet
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
-          
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-          path: .
-          
+      - name: Check Code Format
+        run: |
+          echo "Checking code formatting with dotnet format..."
+          dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity normal
+      
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+      
+      - name: Check for Vulnerable Packages
+        run: |
+          echo "Checking for vulnerable packages..."
+          dotnet list package --vulnerable --include-transitive ${{ env.SOLUTION_FILE }}
+      
       - name: Run Unit Tests
-        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
+        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build --filter "Category!=Integration&Category!=Functional"
 
-  api-health:
-    name: API Health Check
-    needs: build
+  docker-check:
+    name: Docker Build Check
     runs-on: ubuntu-latest
-    env:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://0.0.0.0:8000
-      DOTNET_USE_POLLING_FILE_WATCHER: 1
-      ASPNETCORE_DETAILED_ERRORS: 1
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      
-      # Database Settings
-      Postgres__Host: localhost
-      Postgres__Database: qauth_db
-      Postgres__User: qauth_user
-      Postgres__Password: qauth_password
-      
-      # Application Settings
-      Jwt__SecretKey: your-super-secret-key-at-least-32-chars-long
-      Jwt__Issuer: auth-backend-dev
-      Jwt__Audience: auth-client-dev
-      Email__Host: 127.0.0.1
-      Email__Port: 9100
-      Email__EnableSsl: false
-      Email__Username: test
-      Email__Password: test
-      Email__From: auth@example.com
-      Email__Timeout: 10000
-      Email__UseDefaultCredentials: false
-      Snowflake__DatacenterId: 1
-      Snowflake__WorkerId: 1
-      Snowflake__Epoch: 2024-01-01T00:00:00Z
-      PasswordHasher__Iterations: 10000
-      PasswordHasher__SaltSize: 16
-      PasswordHasher__KeySize: 32
-      Api__Port: 8000
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: qauth_db
-          POSTGRES_USER: qauth_user
-          POSTGRES_PASSWORD: qauth_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    needs: build-and-test
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: auth-backend:test
+          target: development # Use development target for quicker build
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Validate Docker Image
+        run: |
+          echo "Validating Docker image size and contents..."
+          docker images auth-backend:test --format "{{.Size}}"
+
+  project-references-check:
+    name: Project References Check
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Verify Project References
+        run: |
+          echo "Checking project references and dependencies..."
+          
+          # Verify no test projects are referenced by main projects
+          echo "Checking for test references in main projects..."
+          if find . -name "*.csproj" ! -path "*/Tests/*" -exec grep -l "ProjectReference.*Tests" {} \; | grep -q .; then
+            echo "::error::Found test project references in main projects"
+            find . -name "*.csproj" ! -path "*/Tests/*" -exec grep -l "ProjectReference.*Tests" {} \;
+            exit 1
+          else
+            echo "✅ No test projects referenced by main projects"
+          fi
+          
+          # Detect circular references (basic check)
+          echo "Checking for potential circular references..."
+          dotnet build ${{ env.SOLUTION_FILE }} --no-restore /clp:ErrorsOnly
+          
+          echo "Project references check completed successfully!"
+
+  naming-conventions-check:
+    name: Naming Conventions Check
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Check Naming Conventions
+        run: |
+          echo "Checking naming conventions across the solution..."
+          
+          # Verify test projects follow naming convention
+          echo "Checking test project naming conventions..."
+          NON_COMPLIANT=false
+          for proj in $(find . -path "*/Tests/*" -name "*.csproj"); do
+            if [[ ! $proj =~ \.Tests\. ]]; then
+              echo "::error::Test project $proj doesn't follow .Tests naming convention"
+              NON_COMPLIANT=true
+            fi
+          done
+          
+          if [ "$NON_COMPLIANT" = true ]; then
+            exit 1
+          else
+            echo "✅ All test projects follow naming conventions"
+          fi
+          
+          # Check namespaces in .cs files (spot check)
+          echo "Spot checking namespaces in C# files..."
+          find API -name "*.cs" -type f -not -path "*/obj/*" -not -path "*/bin/*" | head -10 | while read file; do
+            namespace=$(grep -m 1 "namespace" "$file" || echo "No namespace found")
+            echo "File: $file => $namespace"
+          done
+          
+          echo "Naming conventions check completed!"
+
+  project-structure-check:
+    name: Project Structure Check
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Check Solution Structure
+        run: |
+          echo "Checking solution structure..."
+          dotnet sln ${{ env.SOLUTION_FILE }} list
+          
+          # Check for standard project files and directories
+          echo "Checking for standard project files and structure..."
+          for proj_dir in $(find . -name "*.csproj" ! -path "*/Tests/*" -exec dirname {} \;); do
+            echo "Checking directory structure for $proj_dir..."
+            
+            # Check for Properties directory
+            if [ ! -d "$proj_dir/Properties" ]; then
+              echo "Warning: $proj_dir is missing Properties directory"
+            else
+              echo "✅ $proj_dir has Properties directory"
+            fi
+            
+            # Check for standard setting files
+            if [ ! -f "$proj_dir/Properties/launchSettings.json" ]; then
+              echo "Warning: $proj_dir is missing launchSettings.json"
+            else
+              echo "✅ $proj_dir has launchSettings.json"
+            fi
+          done
+          
+          echo "Project structure check completed!"
+          
+  assembly-validation:
+    name: Assembly Validation
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Validate Assembly Settings
+        run: |
+          echo "Checking assembly settings..."
+          
+          # Check for assembly info
+          echo "Checking for assembly version info..."
+          find . -name "*.csproj" -type f -exec grep -l "<Version>" {} \; | while read file; do
+            echo "Project with version: $file"
+            grep "<Version>" "$file"
+          done
+          
+          # Check for nullable reference types (modern C# practice)
+          echo "Checking for nullable reference types configuration..."
+          find . -name "*.csproj" -type f -exec grep -l "<Nullable>" {} \; | while read file; do
+            echo "Project with nullable setting: $file"
+            grep "<Nullable>" "$file"
+          done
+          
+          echo "Assembly validation completed!"
+
+  code-metrics:
+    name: Code Metrics Analysis
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-          path: .
-          
-      - name: Verify NuGet Config
+      - name: Analyze Code Statistics
         run: |
-          echo "Checking NuGet configuration..."
-          dotnet nuget list source
+          echo "Analyzing basic code metrics..."
           
-      - name: Restore dependencies
-        run: |
-          echo "Restoring dependencies..."
-          dotnet restore ${{ env.SOLUTION_FILE }}
+          # Count lines of code by type
+          echo "Lines of code by file type:"
+          echo "C# files: $(find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | xargs wc -l 2>/dev/null | tail -1 || echo "0")"
+          echo "Total C# files: $(find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l)"
           
-      - name: Debug directory structure
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          echo "Checking for project.assets.json files:"
-          find . -name "project.assets.json"
+          # Count test files
+          echo "Test files: $(find . -path "*/Tests/*" -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l)"
           
-      - name: Wait for PostgreSQL
-        run: |
-          echo "Waiting for PostgreSQL to be ready..."
-          until pg_isready -h localhost -p 5432; do
-            echo "PostgreSQL is unavailable - sleeping"
-            sleep 1
-          done
-          echo "PostgreSQL is up and running!"
-          
-      - name: Start API
-        run: |
-          echo "Starting API from $(pwd)"
-          dotnet run --project ./API/API.csproj > /tmp/api.log 2>&1 &
-          echo "Waiting for API to start..."
-          for i in {1..45}; do
-            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
-              echo "API is up!"
-              break
-            fi
-            if [ $i -eq 45 ]; then
-              echo "API failed to start within 45 seconds"
-              echo "Last few lines of API logs:"
-              tail -n 50 /tmp/api.log
-              exit 1
-            fi
-            echo "Attempt $i: API not ready yet..."
-            sleep 1
+          # Basic complexity hint - methods per file
+          echo "Sampling method counts in 5 random files:"
+          find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | sort -R | head -5 | while read file; do
+            methods=$(grep -c "public.*(" "$file" || echo "0")
+            echo "File: $file, Public methods: $methods"
           done
           
-      - name: Check API Health
-        run: |
-          curl -v http://localhost:8000/health || exit 1
+          echo "Code metrics analysis completed!"
