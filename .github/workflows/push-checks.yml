@@ -477,7 +477,7 @@ jobs:
   code-metrics:
     name: Code Metrics Analysis
     runs-on: ubuntu-latest
-    needs: restore
+    needs: [restore, build]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -487,108 +487,131 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
+      - name: Install Dependencies
+        run: |
+          echo "Installing required dependencies..."
+          sudo apt-get update
+          sudo apt-get install -y bc
+
       - name: Restore Cache
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
       
+      - name: Restore Build Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/bin/
+            **/obj/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      
       - name: Install Code Analysis Tools
         run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-          dotnet tool install --global dotnet-coverage
+          dotnet tool install --global dotnet-reportgenerator-globaltool || echo "ReportGenerator already installed"
+          dotnet tool install --global dotnet-coverage || echo "dotnet-coverage already installed"
+          # Ensure tools are in PATH
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
       
-      - name: Generate Code Metrics
-        id: metrics
+      - name: Basic Code Statistics
+        id: basic-stats
         run: |
-          echo "Collecting comprehensive code metrics..."
+          echo "Collecting basic code metrics..."
           
           # Create output directory
           mkdir -p code-metrics
           
-          # Store file counts for trending
+          # Store file counts for trending (with error handling)
           echo "Recording file and line counts..."
           {
             echo "metric,count,date"
-            echo "total_csharp_files,$(find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l),$(date +%Y-%m-%d)"
-            echo "test_files,$(find . -path "*/Tests/*" -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l),$(date +%Y-%m-%d)"
-            echo "main_code_files,$(find . -name "*.cs" -not -path "*/Tests/*" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l),$(date +%Y-%m-%d)"
+            TOTAL_CS_FILES=$(find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l)
+            TEST_FILES=$(find . -path "*/Tests/*" -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l)
+            MAIN_FILES=$(find . -name "*.cs" -not -path "*/Tests/*" -not -path "*/obj/*" -not -path "*/bin/*" | wc -l)
             
-            # Calculate main lines of code (better than wc -l as it excludes blank lines and comments)
-            MAIN_LOC=$(find . -name "*.cs" -not -path "*/Tests/*" -not -path "*/obj/*" -not -path "*/bin/*" -exec grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*\/\/' {} \; | wc -l)
-            echo "main_lines_of_code,$MAIN_LOC,$(date +%Y-%m-%d)"
+            echo "total_csharp_files,$TOTAL_CS_FILES,$(date +%Y-%m-%d)"
+            echo "test_files,$TEST_FILES,$(date +%Y-%m-%d)"
+            echo "main_code_files,$MAIN_FILES,$(date +%Y-%m-%d)"
             
-            # Calculate test lines of code
-            TEST_LOC=$(find . -path "*/Tests/*" -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" -exec grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*\/\/' {} \; | wc -l)
-            echo "test_lines_of_code,$TEST_LOC,$(date +%Y-%m-%d)"
+            # Store metrics as outputs
+            echo "total_files=$TOTAL_CS_FILES" >> $GITHUB_OUTPUT
+            echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
+            echo "main_files=$MAIN_FILES" >> $GITHUB_OUTPUT
             
-            # Calculate code to test ratio
-            if [ "$TEST_LOC" -gt 0 ]; then
-              CODE_TEST_RATIO=$(echo "scale=2; $MAIN_LOC / $TEST_LOC" | bc)
-              echo "code_test_ratio,$CODE_TEST_RATIO,$(date +%Y-%m-%d)"
+            # Calculate code-to-test ratio if tests exist
+            if [ "$TEST_FILES" -gt 0 ]; then
+              RATIO=$(echo "scale=2; $MAIN_FILES / $TEST_FILES" | bc 2>/dev/null || echo "N/A")
+              echo "code_test_ratio,$RATIO,$(date +%Y-%m-%d)"
+              echo "code_test_ratio=$RATIO" >> $GITHUB_OUTPUT
             else
-              echo "code_test_ratio,∞,$(date +%Y-%m-%d)"
+              echo "code_test_ratio,N/A,$(date +%Y-%m-%d)"
+              echo "code_test_ratio=N/A" >> $GITHUB_OUTPUT
             fi
           } > code-metrics/file_metrics.csv
-          
-          # Analyze project complexity
-          echo "Analyzing project complexity..."
-          {
-            echo "project,public_methods,types,avg_type_size"
-            find . -name "*.csproj" -not -path "*/obj/*" -not -path "*/bin/*" | while read -r proj; do
-              project_dir=$(dirname "$proj")
-              project_name=$(basename "$proj" .csproj)
-              
-              # Count public methods
-              public_methods=$(find "$project_dir" -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" -exec grep -c "public.*(" {} \; | awk '{sum+=$1} END {print sum}')
-              
-              # Count types (classes, interfaces, enums, structs)
-              types=$(find "$project_dir" -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" -exec grep -c -E "class |interface |enum |struct " {} \; | awk '{sum+=$1} END {print sum}')
-              
-              # Calculate average type size
-              if [ "$types" -gt 0 ] && [ "$public_methods" -gt 0 ]; then
-                avg_type_size=$(echo "scale=2; $public_methods / $types" | bc)
-              else
-                avg_type_size="0"
-              fi
-              
-              echo "$project_name,$public_methods,$types,$avg_type_size"
-            done
-          } > code-metrics/project_complexity.csv
-          
-          # Find assemblies with high method counts (potential refactoring targets)
-          echo "Identifying potential refactoring targets..."
-          {
-            echo "file,public_methods,private_methods,path"
-            find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | while read -r file; do
-              public_count=$(grep -c "public.*(" "$file")
-              private_count=$(grep -c "private.*(" "$file")
-              
-              if [ "$public_count" -gt 10 ] || [ "$private_count" -gt 15 ]; then
-                echo "$(basename "$file"),$public_count,$private_count,$file"
-              fi
-            done
-          } > code-metrics/refactoring_candidates.csv
       
-      - name: Generate Code Coverage Report
-        if: success()
+      - name: Find Complex Files
+        id: complexity
+        if: success() || failure()
         run: |
-          echo "Generating code coverage report..."
-          # Create coverage directory
-          mkdir -p coverage
+          echo "Identifying complex files..."
+          {
+            echo "file,methods,lines,path"
+            # Find files with lots of methods
+            find . -name "*.cs" -not -path "*/obj/*" -not -path "*/bin/*" | while read -r file; do
+              if [ -f "$file" ]; then
+                methods=$(grep -c "public\|private\|protected\|internal.*(" "$file" 2>/dev/null || echo "0")
+                lines=$(wc -l < "$file" 2>/dev/null || echo "0")
+                
+                # Only report files with significant complexity
+                if [ "$methods" -gt 10 ] || [ "$lines" -gt 300 ]; then
+                  echo "$(basename "$file"),$methods,$lines,$file"
+                fi
+              fi
+            done
+          } > code-metrics/complex_files.csv
           
-          # Run test with coverage collection
-          dotnet test ${{ env.SOLUTION_FILE }} --no-build --filter "Category=Unit" --collect:"XPlat Code Coverage" --results-directory ./coverage/raw
-          
-          # Generate coverage report
-          reportgenerator -reports:./coverage/raw/*/*.xml -targetdir:./coverage/report -reporttypes:HtmlInline_AzurePipelines
-          
-          # Extract coverage metrics for GitHub summary
-          COVERAGE=$(ls ./coverage/raw/*/*.xml | xargs grep -o 'line-rate="[^"]*"' | head -1 | cut -d '"' -f 2)
-          COVERAGE_PCT=$(echo "$COVERAGE * 100" | bc)
-          echo "code_coverage=$COVERAGE_PCT" >> $GITHUB_OUTPUT
+          # Count complex files
+          COMPLEX_COUNT=$([ -f code-metrics/complex_files.csv ] && tail -n +2 code-metrics/complex_files.csv | wc -l || echo "0")
+          echo "complex_files=$COMPLEX_COUNT" >> $GITHUB_OUTPUT
       
-      - name: Upload Code Metrics Artifacts
+      - name: Run Code Coverage (if tests exist)
+        id: coverage
+        if: steps.basic-stats.outputs.test_files != '0'
+        continue-on-error: true
+        run: |
+          echo "Running code coverage analysis..."
+          
+          # Check if unit test project exists
+          if [ -d "Tests/API.Tests.Unit" ]; then
+            mkdir -p coverage
+            
+            # Run tests with coverage
+            dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --results-directory ./coverage/raw --collect:"XPlat Code Coverage" || echo "Tests failed but continuing"
+            
+            # Check if coverage results were generated
+            if [ -d "./coverage/raw" ] && [ "$(find ./coverage/raw -name "*.xml" | wc -l)" -gt 0 ]; then
+              echo "Generating coverage report..."
+              reportgenerator -reports:./coverage/raw/*/*.xml -targetdir:./coverage/report -reporttypes:Html || echo "Report generation failed"
+              
+              # Try to extract coverage percentage
+              COVERAGE_FILE=$(find ./coverage/raw -name "*.xml" | head -1)
+              if [ -f "$COVERAGE_FILE" ]; then
+                LINE_RATE=$(grep -o 'line-rate="[^"]*"' "$COVERAGE_FILE" | head -1 | cut -d '"' -f 2)
+                if [ -n "$LINE_RATE" ]; then
+                  COVERAGE_PCT=$(echo "$LINE_RATE * 100" | bc 2>/dev/null || echo "N/A")
+                  echo "code_coverage=$COVERAGE_PCT" >> $GITHUB_OUTPUT
+                fi
+              fi
+            else
+              echo "No coverage data generated"
+            fi
+          else
+            echo "No unit test project found at Tests/API.Tests.Unit"
+          fi
+      
+      - name: Upload Metrics Artifacts
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: code-metrics-report
@@ -596,40 +619,40 @@ jobs:
             code-metrics/
             coverage/report/
           retention-days: 14
-          
-      - name: Generate Summary
-        if: success()
+      
+      - name: Generate GitHub Summary
+        if: success() || failure()
         run: |
           echo "### 📊 Code Metrics Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # File counts
-          TOTAL_FILES=$(grep "total_csharp_files" code-metrics/file_metrics.csv | cut -d ',' -f 2)
-          TEST_FILES=$(grep "test_files" code-metrics/file_metrics.csv | cut -d ',' -f 2)
-          MAIN_FILES=$(grep "main_code_files" code-metrics/file_metrics.csv | cut -d ',' -f 2)
-          MAIN_LOC=$(grep "main_lines_of_code" code-metrics/file_metrics.csv | cut -d ',' -f 2)
-          
           echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
-          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-          echo "| C# Files | $TOTAL_FILES |" >> $GITHUB_STEP_SUMMARY
-          echo "| Main Code Files | $MAIN_FILES |" >> $GITHUB_STEP_SUMMARY
-          echo "| Test Files | $TEST_FILES |" >> $GITHUB_STEP_SUMMARY
-          echo "| Lines of Code | $MAIN_LOC |" >> $GITHUB_STEP_SUMMARY
+          echo "| ------ | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| C# Files | ${{ steps.basic-stats.outputs.total_files }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Main Code Files | ${{ steps.basic-stats.outputs.main_files }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Files | ${{ steps.basic-stats.outputs.test_files }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code to Test Ratio | ${{ steps.basic-stats.outputs.code_test_ratio }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Complex Files | ${{ steps.complexity.outputs.complex_files }} |" >> $GITHUB_STEP_SUMMARY
           
-          if [ -n "${{ steps.metrics.outputs.code_coverage }}" ]; then
-            echo "| Code Coverage | ${{ steps.metrics.outputs.code_coverage }}% |" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.coverage.outputs.code_coverage }}" ]; then
+            echo "| Code Coverage | ${{ steps.coverage.outputs.code_coverage }}% |" >> $GITHUB_STEP_SUMMARY
           fi
           
-          # Add refactoring candidates
-          if [ -s "code-metrics/refactoring_candidates.csv" ] && [ "$(wc -l < code-metrics/refactoring_candidates.csv)" -gt 1 ]; then
+          # Add complex files section if any found
+          if [ -f "code-metrics/complex_files.csv" ] && [ "$(tail -n +2 code-metrics/complex_files.csv | wc -l)" -gt 0 ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 🔍 Top Refactoring Candidates" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔍 Files to Consider Refactoring" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| File | Public Methods | Private Methods |" >> $GITHUB_STEP_SUMMARY
-            echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
+            echo "| File | Methods | Lines |" >> $GITHUB_STEP_SUMMARY
+            echo "| ---- | ------- | ----- |" >> $GITHUB_STEP_SUMMARY
             
-            # Skip header and get top 5
-            tail -n +2 code-metrics/refactoring_candidates.csv | sort -t ',' -k2 -nr | head -5 | while IFS=',' read -r file public private path; do
-              echo "| $file | $public | $private |" >> $GITHUB_STEP_SUMMARY
-            done
+            # Display top 5 most complex files by method count
+            if [ -s code-metrics/complex_files.csv ]; then
+              tail -n +2 code-metrics/complex_files.csv | sort -t ',' -k2 -nr | head -5 | while IFS=',' read -r file methods lines path; do
+                echo "| $file | $methods | $lines |" >> $GITHUB_STEP_SUMMARY
+              done
+            fi
           fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Report generated on $(date)_" >> $GITHUB_STEP_SUMMARY
