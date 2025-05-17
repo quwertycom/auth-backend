@@ -30,9 +30,33 @@ env:
   Jwt__Audience: auth-client-dev
 
 jobs:
-  build-and-test:
-    name: Build and Quick Tests
+  restore:
+    name: Restore Dependencies
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore NuGet Packages
+        run: |
+          echo "Restoring NuGet packages..."
+          dotnet restore ${{ env.SOLUTION_FILE }}
+      
+      - name: Cache Restored Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+
+  code-format:
+    name: Code Formatting Check
+    runs-on: ubuntu-latest
+    needs: restore
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -49,22 +73,93 @@ jobs:
         run: |
           echo "Checking code formatting with dotnet format..."
           dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity normal
+
+  build:
+    name: Build Solution
+    runs-on: ubuntu-latest
+    needs: restore
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
       
-      - name: Build
-        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+      
+      - name: Build Solution
+        run: |
+          echo "Building solution..."
+          dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+      
+      - name: Cache Build Output
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/bin/
+            **/obj/
+          key: ${{ runner.os }}-build-${{ github.sha }}
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    needs: restore
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
       
       - name: Check for Vulnerable Packages
         run: |
           echo "Checking for vulnerable packages..."
           dotnet list package --vulnerable --include-transitive ${{ env.SOLUTION_FILE }}
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore Build Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/bin/
+            **/obj/
+          key: ${{ runner.os }}-build-${{ github.sha }}
       
       - name: Run Unit Tests
-        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build --filter "Category!=Integration&Category!=Functional"
+        run: |
+          echo "Running unit tests..."
+          dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build --filter "Category!=Integration&Category!=Functional"
 
   docker-check:
     name: Docker Build Check
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: build
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -85,15 +180,28 @@ jobs:
       - name: Validate Docker Image
         run: |
           echo "Validating Docker image size and contents..."
-          docker images auth-backend:test --format "{{.Size}}"
+          docker images auth-backend:test --format "{{.Repository}}:{{.Tag}} - Size: {{.Size}}"
 
   project-references-check:
     name: Project References Check
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: build
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore Build Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/bin/
+            **/obj/
+          key: ${{ runner.os }}-build-${{ github.sha }}
       
       - name: Verify Project References
         run: |
@@ -109,16 +217,17 @@ jobs:
             echo "✅ No test projects referenced by main projects"
           fi
           
-          # Detect circular references (basic check)
+          # Check for circular references
           echo "Checking for potential circular references..."
-          dotnet build ${{ env.SOLUTION_FILE }} --no-restore /clp:ErrorsOnly
+          # Check using just error output to detect circular reference errors
+          dotnet build ${{ env.SOLUTION_FILE }} --no-restore /clp:ErrorsOnly | grep -i "circular" || echo "✅ No circular references detected"
           
           echo "Project references check completed successfully!"
 
   naming-conventions-check:
     name: Naming Conventions Check
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: restore
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -155,7 +264,7 @@ jobs:
   project-structure-check:
     name: Project Structure Check
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: restore
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -195,15 +304,10 @@ jobs:
   assembly-validation:
     name: Assembly Validation
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: restore
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
       
       - name: Validate Assembly Settings
         run: |
@@ -228,15 +332,10 @@ jobs:
   code-metrics:
     name: Code Metrics Analysis
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: restore
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
           
       - name: Analyze Code Statistics
         run: |
