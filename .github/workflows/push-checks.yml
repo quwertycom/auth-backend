@@ -60,7 +60,7 @@ jobs:
         run: dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity normal
       
       - name: Security Check
-        run: dotnet list package --vulnerable --include-transitive ${{ env.SOLUTION_FILE }}
+        run: dotnet list package --vulnerable --include-transitive
       
       - name: Run Unit Tests
         run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
