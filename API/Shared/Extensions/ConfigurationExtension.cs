@@ -21,7 +21,7 @@ public static class ConfigurationExtensions
         LoadEnvironmentVariables(services);
         return services;
     }
-    
+
     private static void RegisterServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<EmailSettings>(configuration.GetSection("Email"));
