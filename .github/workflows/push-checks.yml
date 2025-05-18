@@ -70,4 +70,4 @@ jobs:
           file: API/Dockerfile
           push: false
           tags: auth-backend:test
-          target: development
+          target: build
