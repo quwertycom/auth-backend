@@ -20,13 +20,11 @@ env:
   # Application Settings
   ASPNETCORE_ENVIRONMENT: Development
   ASPNETCORE_URLS: http://0.0.0.0:8000
-  Postgres__Host: localhost
-  Postgres__Database: qauth_db
-  Postgres__User: qauth_user
-  Postgres__Password: qauth_password
-  Jwt__SecretKey: test-secret-key-for-pr-workflow-testing-only
-  Jwt__Issuer: auth-backend-dev
-  Jwt__Audience: auth-client-dev
+  POSTGRES_HOST: localhost
+  POSTGRES_DATABASE: qauth_db
+  JWT_SECRET_KEY: test-secret-key-for-pr-workflow-testing-only
+  JWT_ISSUER: auth-backend-dev
+  JWT_AUDIENCE: auth-client-dev
 
 jobs:
   restore:
