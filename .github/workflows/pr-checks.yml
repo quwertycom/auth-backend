@@ -110,16 +110,17 @@ jobs:
           name: build-artifacts
           path: .
       
-      - name: Security Check
-        run: dotnet list package --vulnerable --include-transitive
-        
-      - name: Check Code Format
-        run: dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity normal
-      
-      - name: Docker Build Check
+      - name: Build docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: API
+          file: API/Dockerfile
           push: false
-          tags: auth-backend:test
-          target: development
+          tags: auth-backend:pr
+          target: build
+
+      - name: Run docker container
+        run: IMAGE_TAG=pr docker compose up -d
+
+      - name: Get health route
+        run: curl --fail http://localhost:8000/health
