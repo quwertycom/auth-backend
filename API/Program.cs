@@ -19,10 +19,6 @@ public class Program
             .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
 
-        Env.Load();
-        Console.WriteLine("email host: " + Environment.GetEnvironmentVariable("EMAIL_HOST"));
-        Console.WriteLine("email host: " + Environment.GetEnvironmentVariable("EMAIL:HOST"));
-
         // Configure services using extension methods
         builder.Services.AddAppConfiguration(builder.Configuration);
         builder.Services.AddDatabaseServices(builder.Configuration);
