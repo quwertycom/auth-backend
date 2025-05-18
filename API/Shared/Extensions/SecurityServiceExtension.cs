@@ -20,7 +20,7 @@ public static class SecurityServiceExtensions
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+                policy.WithOrigins(configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
                     .AllowAnyMethod()
                     .AllowAnyHeader();
             });
@@ -50,11 +50,9 @@ public static class SecurityServiceExtensions
         });
 
         // Configure authorization
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
-            options.AddPolicy("RequireDeveloperRole", policy => policy.RequireRole("Developer"));
-        });
+        services.AddAuthorizationBuilder()
+            .AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"))
+            .AddPolicy("RequireDeveloperRole", policy => policy.RequireRole("Developer"));
 
         // Add rate limiting
         services.AddRateLimiter(options =>

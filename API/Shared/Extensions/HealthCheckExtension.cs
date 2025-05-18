@@ -9,7 +9,7 @@ namespace API.Shared.Extensions;
 
 public static class HealthCheckExtensions
 {
-    public static IServiceCollection AddHealthCheckServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddHealthCheckServices(this IServiceCollection services)
     {
         var healthChecks = services.AddHealthChecks();
 

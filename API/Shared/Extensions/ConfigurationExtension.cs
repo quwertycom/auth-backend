@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using DotNetEnv;
 using System.IO;
 using Microsoft.Extensions.Hosting;
+using System.Net.NetworkInformation;
 
 namespace API.Shared.Extensions;
 
@@ -16,77 +17,59 @@ public static class ConfigurationExtensions
     /// </summary>
     public static IServiceCollection AddAppConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        // Register configuration settings with IOptions pattern
+        RegisterServices(services, configuration);
+        LoadEnvironmentVariables(services);
+        return services;
+    }
+    
+    private static void RegisterServices(this IServiceCollection services, IConfiguration configuration)
+    {
         services.Configure<EmailSettings>(configuration.GetSection("Email"));
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.Configure<ApiSettings>(configuration.GetSection("Api"));
-        services.Configure<DatabaseSettings>(configuration.GetSection("ConnectionStrings"));
+        services.Configure<DatabaseSettings>(configuration.GetSection("Database"));
         services.Configure<PasswordHasherSettings>(configuration.GetSection("PasswordHasher"));
         services.Configure<SnowflakeSettings>(configuration.GetSection("Snowflake"));
-
-        // Initialize Snowflake immediately to prevent initialization issues
-        var snowflakeSettings = configuration.GetSection("Snowflake").Get<SnowflakeSettings>()
-            ?? throw new InvalidOperationException("Snowflake settings are missing from configuration");
-        Snowflake.Initialize(Options.Create(snowflakeSettings));
-
-        return services;
     }
 
-    /// <summary>
-    /// Loads environment variables from .env file in development and adds them to configuration with high priority
-    /// </summary>
-    public static IConfigurationBuilder AddDotEnvConfiguration(this IConfigurationBuilder builder, IHostEnvironment environment)
+    private static void LoadEnvironmentVariables(this IServiceCollection services)
     {
-        if (environment.IsDevelopment()) // Conditionally load .env only in development
+        Env.Load();
+
+
+        services.PostConfigure<ApiSettings>(settings =>
         {
-            // Find .env file location - check both project directory and solution root
-            var projectDir = Directory.GetCurrentDirectory();
-            var solutionDir = Directory.GetParent(projectDir)?.FullName;
-
-            var projectEnvPath = Path.Combine(projectDir, ".env");
-            var solutionEnvPath = solutionDir != null ? Path.Combine(solutionDir, ".env") : null;
-
-            // Try loading from project directory first, then solution directory
-            if (File.Exists(projectEnvPath))
-            {
-                Env.Load(projectEnvPath);
-            }
-            else if (solutionEnvPath != null && File.Exists(solutionEnvPath))
-            {
-                Env.Load(solutionEnvPath);
-            }
-        }
-
-        // Add environment variables with highest priority
-        builder.AddEnvironmentVariables();
-
-        return builder;
-    }
-
-    /// <summary>
-    /// Binds and validates configuration section to strongly typed options
-    /// </summary>
-    public static IServiceCollection AddConfigurationWithValidation<TOptions>(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string sectionName) where TOptions : class, new()
-    {
-        // Register the configuration instance with validation
-        services.AddOptions<TOptions>()
-            .Bind(configuration.GetSection(sectionName))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Extension method to get strongly typed configuration sections
-    /// </summary>
-    public static T GetTypedSection<T>(this IConfiguration configuration, string sectionName) where T : class, new()
-    {
-        var section = new T();
-        configuration.GetSection(sectionName).Bind(section);
-        return section;
+            settings.Port = Environment.GetEnvironmentVariable("API_PORT") ?? settings.Port.ToString();
+        });
+        services.PostConfigure<JwtSettings>(settings =>
+        {
+            settings.SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? settings.SecretKey;
+            settings.Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? settings.Issuer;
+            settings.Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? settings.Audience;
+        });
+        services.PostConfigure<PasswordHasherSettings>(settings =>
+        {
+            settings.Iterations = int.Parse(Environment.GetEnvironmentVariable("PASSWORD_HASHER_ITERATIONS") ?? settings.Iterations.ToString());
+            settings.SaltSize = int.Parse(Environment.GetEnvironmentVariable("PASSWORD_HASHER_SALT_SIZE") ?? settings.SaltSize.ToString());
+            settings.KeySize = int.Parse(Environment.GetEnvironmentVariable("PASSWORD_HASHER_KEY_SIZE") ?? settings.KeySize.ToString());
+        });
+        services.PostConfigure<DatabaseSettings>(settings =>
+        {
+            settings.Host = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? settings.Host;
+            settings.Database = Environment.GetEnvironmentVariable("POSTGRES_DATABASE") ?? settings.Database;
+            settings.Username = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? settings.Username;
+            settings.Password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? settings.Password;
+        });
+        services.PostConfigure<EmailSettings>(settings =>
+        {
+            settings.Host = Environment.GetEnvironmentVariable("EMAIL_HOST") ?? settings.Host;
+            settings.Port = int.Parse(Environment.GetEnvironmentVariable("EMAIL_PORT") ?? settings.Port.ToString());
+            settings.EnableSsl = bool.Parse(Environment.GetEnvironmentVariable("EMAIL_ENABLE_SSL") ?? settings.EnableSsl.ToString());
+            settings.Username = Environment.GetEnvironmentVariable("EMAIL_USERNAME") ?? settings.Username;
+            settings.Password = Environment.GetEnvironmentVariable("EMAIL_PASSWORD") ?? settings.Password;
+            settings.DefaultFromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM_DEFAULT") ?? settings.DefaultFromEmail;
+            settings.Timeout = int.Parse(Environment.GetEnvironmentVariable("EMAIL_TIMEOUT") ?? settings.Timeout.ToString());
+            settings.UseDefaultCredentials = bool.Parse(Environment.GetEnvironmentVariable("EMAIL_USE_DEFAULT_CREDENTIALS") ?? settings.UseDefaultCredentials.ToString());
+        });
     }
 }

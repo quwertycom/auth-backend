@@ -11,22 +11,8 @@ public static class DatabaseServiceExtensions
 {
     public static IServiceCollection AddDatabaseServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // First configure DatabaseSettings from configuration
         services.Configure<DatabaseSettings>(configuration.GetSection("ConnectionStrings"));
 
-        // Then override with environment variables if they exist
-        services.PostConfigure<DatabaseSettings>(settings =>
-        {
-            var isDocker = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOCKER_RUNNING"));
-
-            // Docker environment may use different host names (like 'db' instead of 'localhost')
-            settings.Host = (Environment.GetEnvironmentVariable("Postgres__Host") == "db" && !isDocker) ? "localhost" : Environment.GetEnvironmentVariable("Postgres__Host") ?? "localhost";
-            settings.Database = Environment.GetEnvironmentVariable("Postgres__Database") ?? "qauth_db";
-            settings.Username = Environment.GetEnvironmentVariable("Postgres__User") ?? "postgres";
-            settings.Password = Environment.GetEnvironmentVariable("Postgres__Password") ?? "postgres";
-        });
-
-        // Register DbContext using the DatabaseSettings
         services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
         {
             var dbSettings = serviceProvider.GetRequiredService<IOptions<DatabaseSettings>>().Value;
@@ -41,7 +27,6 @@ public static class DatabaseServiceExtensions
             });
         });
 
-        // Register repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IVerificationRepository, VerificationRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
@@ -54,10 +39,6 @@ public static class DatabaseServiceExtensions
         // For testing purposes
         services.AddDbContext<AuthDbContext>(options =>
             options.UseInMemoryDatabase("TestDb"));
-
-        // Register repositories
-        // services.AddScoped<IUnitOfWork, UnitOfWork>();
-        // services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
         return services;
     }
