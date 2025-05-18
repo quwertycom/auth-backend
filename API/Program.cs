@@ -85,3 +85,13 @@ public class Program
         app.Run();
     }
 }
+
+// okay so two things:
+// 1. i got this error in health check job in secuirty check step:
+// Run dotnet list package --vulnerable --include-transitive
+  
+// The following sources were used:
+//    https://api.nuget.org/v3/index.json
+// No assets file was found for `/home/runner/work/auth-backend/auth-backend/API/API.csproj`. Please run restore before running this command.
+// Error: Process completed with exit code 1.
+// 2. things like security check, code format, docker build check will be in separated jobs, you shoud run api there and check if it correctly respond to healthca
