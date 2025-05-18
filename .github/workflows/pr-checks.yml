@@ -127,6 +127,7 @@ jobs:
           for i in $(seq 1 10); do
             echo "Attempt $i of 10: Checking health endpoint..."
             sleep 5
+            docker compose logs qauth-api
             if curl --fail http://localhost:8000/health; then
               echo "Health check successful."
               exit 0
