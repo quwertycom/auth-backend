@@ -12,47 +12,54 @@ services:
       - "8000:8000"
     networks:
       - qauth-network
+    volumes:
+      - dataprotection_keys:/root/.aspnet/DataProtection-Keys
     environment:
       # ASP.NET Core settings
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8000
-      
+
       # Database settings
-      - Postgres__Host=db
-      - Postgres__Database=${POSTGRES_DB:-qauth_db}
-      - Postgres__User=${POSTGRES_USER:-qauth_user}
-      - Postgres__Password=${POSTGRES_PASSWORD:-qauth_password}
-      
+      - POSTGRES_HOST=db
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-qauth_db}
+      - POSTGRES_USER=${POSTGRES_USER:-qauth_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-qauth_password}
+
       # JWT settings
-      - Jwt__SecretKey=${Jwt__SecretKey:-prod-secret-key-for-jwt-token-authentication}
-      - Jwt__Issuer=${Jwt__Issuer:-auth-backend}
-      - Jwt__Audience=${Jwt__Audience:-auth-client}
-      
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-prod-secret-key-for-jwt-token-authentication}
+      - JWT_ISSUER=${JWT_ISSUER:-auth-backend}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-auth-client}
+
       # Email settings
-      - Email__Host=${Email__Host:-smtp.example.com}
-      - Email__Port=${Email__Port:-587}
-      - Email__EnableSsl=${Email__EnableSsl:-true}
-      - Email__Username=${Email__Username:-smtp_user}
-      - Email__Password=${Email__Password:-smtp_password}
-      - Email__FromEmail=${Email__FromEmail:-noreply@example.com}
-      - Email__Timeout=${Email__Timeout:-10000}
-      - Email__UseDefaultCredentials=${Email__UseDefaultCredentials:-false}
-      
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.example.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_ENABLE_SSL=${EMAIL_ENABLE_SSL:-true}
+      - EMAIL_USERNAME=${EMAIL_USERNAME:-smtp_user}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-smtp_password}
+      - EMAIL_FROM_EMAIL=${EMAIL_FROM_EMAIL:-noreply@example.com}
+      - EMAIL_TIMEOUT=${EMAIL_TIMEOUT:-10000}
+      - EMAIL_USE_DEFAULT_CREDENTIALS=${EMAIL_USE_DEFAULT_CREDENTIALS:-false}
+
       # Snowflake settings
-      - Snowflake__DatacenterId=${Snowflake__DatacenterId:-1}
-      - Snowflake__WorkerId=${Snowflake__WorkerId:-1}
-      - Snowflake__Epoch=${Snowflake__Epoch:-2024-01-01T00:00:00Z}
-      
+      - SNOWFLAKE_DATACENTER_ID=${SNOWFLAKE_DATACENTER_ID:-1}
+      - SNOWFLAKE_WORKER_ID=${SNOWFLAKE_WORKER_ID:-1}
+      - SNOWFLAKE_EPOCH=${SNOWFLAKE_EPOCH:-2024-01-01T00:00:00Z}
+
       # PasswordHasher settings
-      - PasswordHasher__Iterations=${PasswordHasher__Iterations:-10000}
-      - PasswordHasher__SaltSize=${PasswordHasher__SaltSize:-16}
-      - PasswordHasher__KeySize=${PasswordHasher__KeySize:-32}
-      
+      - PASSWORD_HASHER_ITERATIONS=${PASSWORD_HASHER_ITERATIONS:-10000}
+      - PASSWORD_HASHER_SALT_SIZE=${PASSWORD_HASHER_SALT_SIZE:-16}
+      - PASSWORD_HASHER_KEY_SIZE=${PASSWORD_HASHER_KEY_SIZE:-32}
+
       # API settings
-      - ApiSettings__Port=${Api__Port:-8000}
-      
+      - API_SETTINGS_PORT=${API_SETTINGS_PORT:-8000}
+
       # Docker indicator
       - DOCKER_RUNNING=true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     depends_on:
       - db
 
@@ -76,7 +83,11 @@ services:
 
 volumes:
   postgres_data:
+    name: qauth-postgres-data
+  dataprotection_keys:
+    name: qauth-dataprotection-keys
 
 networks:
   qauth-network:
-    driver: bridge 
+    name: qauth-network
+    driver: bridge
