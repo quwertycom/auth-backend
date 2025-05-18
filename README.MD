@@ -3,7 +3,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- .NET 9.0
+- .NET 8.0
 - Docker
 - Docker Compose
 
@@ -45,7 +45,7 @@ You have two options for running the application in development:
 
 ### 🏭 Production
 
-1. Set required environment variables on your host system:
+1. Set required environment variables on your host system (or use the defaults in docker-compose.yml):
    - `POSTGRES_USER`
    - `POSTGRES_PASSWORD`
    - `POSTGRES_DB`
@@ -82,10 +82,10 @@ VS Code tasks are organized by function:
 ```
 auth-backend/
 ├── API/                # Main API project
+│   └── Dockerfile      # API-specific Docker build
 ├── docker-compose.yml  # Production Docker setup
 ├── docker-compose.dev.yml # Development Docker setup
-├── Dockerfile         # Multi-stage Docker build
-└── .env.example      # Environment variables template
+└── .env.example        # Environment variables template
 ```
 
 ## 🔒 Environment Variables
@@ -98,9 +98,18 @@ POSTGRES_PASSWORD=your_password
 POSTGRES_DB=your_database
 
 # API Configuration
-ASPNETCORE_ENVIRONMENT=Development
-ASPNETCORE_URLS=http://+:80
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://+:8000
 ```
+
+## API Endpoints
+
+The API runs on port 8000. You can check the following endpoints:
+
+- Health check: `http://localhost:8000/health`
+- Authentication endpoints: `http://localhost:8000/api/authentication/*`
+- Session endpoints: `http://localhost:8000/api/session/*`
+- User endpoints: `http://localhost:8000/api/user/*`
 
 ## 🤝 Contributing
 
