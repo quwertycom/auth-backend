@@ -33,10 +33,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="API.UnitTests" />
-    <InternalsVisibleTo Include="API.IntegrationTests" />
-    <InternalsVisibleTo Include="API.FunctionalTests" />
-    <InternalsVisibleTo Include="API.PerformanceTests" />
+    <InternalsVisibleTo Include="API.Tests.Unit" />
+    <InternalsVisibleTo Include="API.Tests.Integration" />
+    <InternalsVisibleTo Include="API.Tests.Functional" />
+    <InternalsVisibleTo Include="API.Tests.DataGenerator" />
   </ItemGroup>
 
 </Project>

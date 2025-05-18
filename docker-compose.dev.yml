@@ -16,6 +16,14 @@ services:
       - .:/app
       - /app/API/bin
       - /app/API/obj
+      - /app/Tests/API.Tests.Unit/bin
+      - /app/Tests/API.Tests.Unit/obj
+      - /app/Tests/API.Tests.Integration/bin
+      - /app/Tests/API.Tests.Integration/obj
+      - /app/Tests/API.Tests.Functional/bin
+      - /app/Tests/API.Tests.Functional/obj
+      - /app/Tests/API.Tests.DataGenerator/bin
+      - /app/Tests/API.Tests.DataGenerator/obj
       - nuget_cache:/root/.nuget/packages
       - dataprotection_keys:/root/.aspnet/DataProtection-Keys
     environment:
@@ -57,7 +65,7 @@ services:
       - PasswordHasher__KeySize=32
       
       # API settings
-      - ApiSettings__Port={Api__Port}
+      - ApiSettings__Port=${Api__Port}
       
       # Docker indicator
       - DOCKER_RUNNING=true
@@ -69,6 +77,12 @@ services:
           ignore:
             - API/bin/
             - API/obj/
+        - action: sync
+          path: ./Tests
+          target: /app/Tests
+          ignore:
+            - Tests/*/bin/
+            - Tests/*/obj/
         - action: rebuild
           path: API.csproj
     healthcheck:

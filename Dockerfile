@@ -7,10 +7,10 @@ WORKDIR /src
 # Copy only solution and project files first
 COPY ["Auth.sln", "."]
 COPY ["API/API.csproj", "API/"]
-COPY ["Tests/API.UnitTests/API.UnitTests.csproj", "Tests/API.UnitTests/"]
-COPY ["Tests/API.IntegrationTests/API.IntegrationTests.csproj", "Tests/API.IntegrationTests/"]
-COPY ["Tests/API.FunctionalTests/API.FunctionalTests.csproj", "Tests/API.FunctionalTests/"]
-COPY ["Tests/API.PerformanceTests/API.PerformanceTests.csproj", "Tests/API.PerformanceTests/"]
+COPY ["Tests/API.Tests.Unit/API.Tests.Unit.csproj", "Tests/API.Tests.Unit/"]
+COPY ["Tests/API.Tests.Integration/API.Tests.Integration.csproj", "Tests/API.Tests.Integration/"]
+COPY ["Tests/API.Tests.Functional/API.Tests.Functional.csproj", "Tests/API.Tests.Functional/"]
+COPY ["Tests/API.Tests.DataGenerator/API.Tests.DataGenerator.csproj", "Tests/API.Tests.DataGenerator/"]
 
 # Restore NuGet packages
 RUN dotnet restore "Auth.sln"
@@ -29,10 +29,10 @@ WORKDIR /app
 # Copy solution and project files
 COPY ["Auth.sln", "."]
 COPY ["API/API.csproj", "API/"]
-COPY ["Tests/API.UnitTests/API.UnitTests.csproj", "Tests/API.UnitTests/"]
-COPY ["Tests/API.IntegrationTests/API.IntegrationTests.csproj", "Tests/API.IntegrationTests/"]
-COPY ["Tests/API.FunctionalTests/API.FunctionalTests.csproj", "Tests/API.FunctionalTests/"]
-COPY ["Tests/API.PerformanceTests/API.PerformanceTests.csproj", "Tests/API.PerformanceTests/"]
+COPY ["Tests/API.Tests.Unit/API.Tests.Unit.csproj", "Tests/API.Tests.Unit/"]
+COPY ["Tests/API.Tests.Integration/API.Tests.Integration.csproj", "Tests/API.Tests.Integration/"]
+COPY ["Tests/API.Tests.Functional/API.Tests.Functional.csproj", "Tests/API.Tests.Functional/"]
+COPY ["Tests/API.Tests.DataGenerator/API.Tests.DataGenerator.csproj", "Tests/API.Tests.DataGenerator/"]
 
 # Restore packages in the correct location
 RUN dotnet restore "Auth.sln"
