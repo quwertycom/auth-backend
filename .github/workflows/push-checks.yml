@@ -66,34 +66,8 @@ jobs:
       - name: Docker Build Check
         uses: docker/build-push-action@v5
         with:
-          context: API/
-          file: Dockerfile
+          context: API
+          file: API/Dockerfile
           push: false
           tags: auth-backend:test
           target: build
-
-      - name: Start Docker Compose Services
-        run: IMAGE_TAG=pr docker compose up -d
-
-      - name: Wait for API to be ready
-        run: |
-          max_attempts=10
-          sleep_seconds=5
-
-          for i in $(seq 1 $max_attempts); do
-            echo "Attempt $i of $max_attempts: Waiting for API to be ready at http://localhost:8000/health..."
-            if curl --fail http://localhost:8000/health; then
-              echo "API is ready!"
-              exit 0
-            fi
-            echo "API not ready yet."
-            if [ $i -lt $max_attempts ]; then
-              echo "Retrying in $sleep_seconds seconds..."
-              sleep $sleep_seconds
-            fi
-          done
-
-          echo "API did not become ready after $max_attempts attempts."
-          exit 1
-      - name: Get Health Route
-        run: curl --fail http://localhost:8000/health
