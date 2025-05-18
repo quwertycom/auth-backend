@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using API.Shared.Extensions;
 using FastEndpoints;
+using DotNetEnv;
 
 namespace API;
 
@@ -8,51 +9,39 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // Enable legacy timestamp behavior for Npgsql
-        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         // Create builder
         var builder = WebApplication.CreateBuilder(args);
 
-        // Configure environment variables and configuration sources with proper priority
+        // Load configuration
         builder.Configuration
-            .AddDotEnvConfiguration(builder.Environment)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables();
+
+        Env.Load();
+        Console.WriteLine("email host: " + Environment.GetEnvironmentVariable("EMAIL_HOST"));
+        Console.WriteLine("email host: " + Environment.GetEnvironmentVariable("EMAIL:HOST"));
 
         // Configure services using extension methods
         builder.Services.AddAppConfiguration(builder.Configuration);
         builder.Services.AddDatabaseServices(builder.Configuration);
         builder.Services.AddSecurityServices(builder.Configuration);
-        builder.Services.AddEmailServices(builder.Configuration);
+        builder.Services.AddEmailServices();
 
         // Add FastEndpoints
         builder.Services.AddFastEndpoints();
 
         // Add Swagger/OpenAPI
-        builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerServices();
 
         // Add application modules
         builder.Services.AddApplicationModules();
 
         // Add health checks
-        builder.Services.AddHealthCheckServices(builder.Configuration);
+        builder.Services.AddHealthCheckServices();
 
         builder.Services.AddProblemDetails();
-
-        // Configure CORS - (Note: This is already in SecurityServiceExtensions)
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.SetIsOriginAllowed(_ => true) // Be careful with this in production
-                      .AllowAnyMethod()
-                      .AllowAnyHeader()
-                      .AllowCredentials();
-            });
-        });
 
         builder.Services.Configure<ApiBehaviorOptions>(options =>
         {
@@ -62,7 +51,7 @@ public class Program
                     .Where(e => e.Value != null && e.Value.Errors.Count > 0)
                     .ToDictionary(
                         kvp => kvp.Key,
-                        kvp => kvp.Value?.Errors?.Select(e => e.ErrorMessage ?? "").ToArray() ?? Array.Empty<string>()
+                        kvp => kvp.Value?.Errors?.Select(e => e.ErrorMessage ?? "").ToArray() ?? []
                     );
 
                 return new BadRequestObjectResult(new
@@ -76,22 +65,10 @@ public class Program
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline using extension methods
         app.ConfigurePipeline();
 
-        // Explicitly bind to all interfaces
         app.Urls.Add("http://0.0.0.0:8000");
 
         app.Run();
     }
 }
-
-// okay so two things:
-// 1. i got this error in health check job in secuirty check step:
-// Run dotnet list package --vulnerable --include-transitive
-  
-// The following sources were used:
-//    https://api.nuget.org/v3/index.json
-// No assets file was found for `/home/runner/work/auth-backend/auth-backend/API/API.csproj`. Please run restore before running this command.
-// Error: Process completed with exit code 1.
-// 2. things like security check, code format, docker build check will be in separated jobs, you shoud run api there and check if it correctly respond to healthca

@@ -30,8 +30,6 @@ public static class Snowflake
     private const int WorkerIdShift = SequenceBits;
 
     // Maximum values for each component
-    private const long MaxWorkerId = -1L ^ (-1L << WorkerIdBits);
-    private const long MaxDatacenterId = -1L ^ (-1L << DatacenterIdBits);
     private const long SequenceMask = -1L ^ (-1L << SequenceBits);
 
     /// <summary>
