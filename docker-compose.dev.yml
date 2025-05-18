@@ -4,43 +4,33 @@ version: '3.8'
 services:
   api:
     build:
-      context: .
+      context: ./API
       dockerfile: Dockerfile
-      target: development
+      target: final
     container_name: qauth-api-dev
     ports:
       - "8000:8000"
     networks:
       - qauth-network
     volumes:
-      - .:/app
-      - /app/API/bin
-      - /app/API/obj
-      - /app/Tests/API.Tests.Unit/bin
-      - /app/Tests/API.Tests.Unit/obj
-      - /app/Tests/API.Tests.Integration/bin
-      - /app/Tests/API.Tests.Integration/obj
-      - /app/Tests/API.Tests.Functional/bin
-      - /app/Tests/API.Tests.Functional/obj
-      - /app/Tests/API.Tests.DataGenerator/bin
-      - /app/Tests/API.Tests.DataGenerator/obj
+      - ./API:/app/src
       - nuget_cache:/root/.nuget/packages
       - dataprotection_keys:/root/.aspnet/DataProtection-Keys
     environment:
       # ASP.NET Core settings
-      - ASPNETCORE_ENVIRONMENT=DockerDevelopment
-      - ASPNETCORE_URLS=http://0.0.0.0:8000
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8000
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - ASPNETCORE_DETAILED_ERRORS=1
       
       # Database settings
       - Postgres__Host=db
-      - Postgres__Database=${Postgres__Database}
-      - Postgres__User=${Postgres__User}
-      - Postgres__Password=${Postgres__Password}
+      - Postgres__Database=${POSTGRES_DB:-qauth_db_dev}
+      - Postgres__User=${POSTGRES_USER:-qauth_user_dev}
+      - Postgres__Password=${POSTGRES_PASSWORD:-qauth_password_dev}
       
       # JWT settings
-      - Jwt__SecretKey=${Jwt__SecretKey}
+      - Jwt__SecretKey=${Jwt__SecretKey:-dev-secret-key-for-jwt-token-authentication}
       - Jwt__Issuer=auth-backend-dev
       - Jwt__Audience=auth-client-dev
       
@@ -50,7 +40,7 @@ services:
       - Email__EnableSsl=false
       - Email__Username=test
       - Email__Password=test
-      - Email__FromEmail=${EMAIL_FROM}
+      - Email__FromEmail=${EMAIL_FROM:-noreply@example.com}
       - Email__Timeout=10000
       - Email__UseDefaultCredentials=false
       
@@ -65,28 +55,12 @@ services:
       - PasswordHasher__KeySize=32
       
       # API settings
-      - ApiSettings__Port=${Api__Port}
+      - ApiSettings__Port=${Api__Port:-8000}
       
       # Docker indicator
       - DOCKER_RUNNING=true
-    develop:
-      watch:
-        - action: sync
-          path: ./API
-          target: /app/API
-          ignore:
-            - API/bin/
-            - API/obj/
-        - action: sync
-          path: ./Tests
-          target: /app/Tests
-          ignore:
-            - Tests/*/bin/
-            - Tests/*/obj/
-        - action: rebuild
-          path: API.csproj
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://0.0.0.0:8000/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -101,15 +75,15 @@ services:
     networks:
       - qauth-network
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-qauth_user_dev}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-qauth_password_dev}
+      - POSTGRES_DB=${POSTGRES_DB:-qauth_db_dev}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qauth_user_dev} -d ${POSTGRES_DB:-qauth_db_dev}"]
       interval: 10s
       timeout: 5s
       retries: 5

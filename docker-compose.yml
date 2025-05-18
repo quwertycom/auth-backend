@@ -4,58 +4,52 @@ version: '3.8'
 services:
   api:
     build:
-      context: .
+      context: ./API
       dockerfile: Dockerfile
-      target: production
+      target: final
     container_name: qauth-api
     ports:
-      - "8000:80"
-      - "8800:443"
+      - "8000:8000"
     networks:
       - qauth-network
-    volumes:
-      - ${HOME}/.aspnet/https:/https/
     environment:
       # ASP.NET Core settings
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:80;https://+:443
-      - ASPNETCORE_HTTPS_PORT=${ASPNETCORE_HTTPS_PORT:-443}
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_Kestrel__Certificates__Default__Password:-YourSecurePassword123!}
+      - ASPNETCORE_URLS=http://+:8000
       
       # Database settings
-      - Postgres__Host=${Postgres__Host}
-      - Postgres__Database=${Postgres__Database}
-      - Postgres__User=${Postgres__User}
-      - Postgres__Password=${Postgres__Password}
+      - Postgres__Host=db
+      - Postgres__Database=${POSTGRES_DB:-qauth_db}
+      - Postgres__User=${POSTGRES_USER:-qauth_user}
+      - Postgres__Password=${POSTGRES_PASSWORD:-qauth_password}
       
       # JWT settings
-      - Jwt__SecretKey=${Jwt__SecretKey}
-      - Jwt__Issuer=${Jwt__Issuer}
-      - Jwt__Audience=${Jwt__Audience}
+      - Jwt__SecretKey=${Jwt__SecretKey:-prod-secret-key-for-jwt-token-authentication}
+      - Jwt__Issuer=${Jwt__Issuer:-auth-backend}
+      - Jwt__Audience=${Jwt__Audience:-auth-client}
       
       # Email settings
-      - Email__Host=${Email__Host}
-      - Email__Port=${Email__Port}
+      - Email__Host=${Email__Host:-smtp.example.com}
+      - Email__Port=${Email__Port:-587}
       - Email__EnableSsl=${Email__EnableSsl:-true}
-      - Email__Username=${Email__Username}
-      - Email__Password=${Email__Password}
-      - Email__FromEmail=${Email__FromEmail}
+      - Email__Username=${Email__Username:-smtp_user}
+      - Email__Password=${Email__Password:-smtp_password}
+      - Email__FromEmail=${Email__FromEmail:-noreply@example.com}
       - Email__Timeout=${Email__Timeout:-10000}
       - Email__UseDefaultCredentials=${Email__UseDefaultCredentials:-false}
       
       # Snowflake settings
-      - Snowflake__DatacenterId=${Snowflake__DatacenterId}
-      - Snowflake__WorkerId=${Snowflake__WorkerId}
-      - Snowflake__Epoch=${Snowflake__Epoch}
+      - Snowflake__DatacenterId=${Snowflake__DatacenterId:-1}
+      - Snowflake__WorkerId=${Snowflake__WorkerId:-1}
+      - Snowflake__Epoch=${Snowflake__Epoch:-2024-01-01T00:00:00Z}
       
       # PasswordHasher settings
-      - PasswordHasher__Iterations=${PasswordHasher__Iterations}
-      - PasswordHasher__SaltSize=${PasswordHasher__SaltSize}
-      - PasswordHasher__KeySize=${PasswordHasher__KeySize}
+      - PasswordHasher__Iterations=${PasswordHasher__Iterations:-10000}
+      - PasswordHasher__SaltSize=${PasswordHasher__SaltSize:-16}
+      - PasswordHasher__KeySize=${PasswordHasher__KeySize:-32}
       
       # API settings
-      - ApiSettings__Port=${Api__Port}
+      - ApiSettings__Port=${Api__Port:-8000}
       
       # Docker indicator
       - DOCKER_RUNNING=true
@@ -69,13 +63,13 @@ services:
     networks:
       - qauth-network
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-qauth_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-qauth_password}
+      - POSTGRES_DB=${POSTGRES_DB:-qauth_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qauth_user} -d ${POSTGRES_DB:-qauth_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
