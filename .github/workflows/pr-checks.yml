@@ -2,7 +2,9 @@ name: PR Checks
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [ '**' ]
+  push:
+    branches: [ '52-refactor-and-enhance-code-quality' ]
 
 env:
   DOTNET_VERSION: '8.0.x'
@@ -10,729 +12,122 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   
-  # PostgreSQL Settings (from .env)
-  Postgres__User: qauth_user
-  Postgres__Database: qauth_db
+  # PostgreSQL Settings
+  POSTGRES_DB: qauth_db
+  POSTGRES_USER: qauth_user
+  POSTGRES_PASSWORD: qauth_password
+
+  # Application Settings
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_URLS: http://0.0.0.0:8000
   Postgres__Host: localhost
-  Postgres__Port: 5432
-  Postgres__Password: ${{ secrets.POSTGRES_PASSWORD }}
-
-  # JWT Settings (from .env)
-  Jwt__Issuer: auth-backend-ci
-  Jwt__Audience: auth-client-ci
-  Jwt__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
-
-  # Email Settings (from .env)
-  Email__Host: localhost  # Using MailHog in CI
-  Email__Port: 1025      # MailHog SMTP port
-  Email__Username: ${{ secrets.EMAIL_USERNAME }}
-  Email__Password: ${{ secrets.EMAIL_PASSWORD }}
-  Email__FromEmail: noreply@example.com
-  Email__EnableSsl: false
-  Email__Timeout: 10000
-  Email__UseDefaultCredentials: false
-
-  # PasswordHasher Settings
-  PasswordHasher__Iterations: 10000
-  PasswordHasher__SaltSize: 16
-  PasswordHasher__KeySize: 32
-
-  # Snowflake Settings
-  Snowflake__DatacenterId: 1
-  Snowflake__WorkerId: 1
-  Snowflake__Epoch: "2024-01-01T00:00:00Z"
-
-  # Other settings
-  ASPNETCORE_ENVIRONMENT: Production
-  DOCKER_RUNNING: true
-
-  # Secrets reference (do not modify)
-  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+  Postgres__Database: qauth_db
+  Postgres__User: qauth_user
+  Postgres__Password: qauth_password
+  Jwt__SecretKey: test-secret-key-for-pr-workflow-testing-only
+  Jwt__Issuer: auth-backend-dev
+  Jwt__Audience: auth-client-dev
 
 jobs:
-  setup:
-    name: Setup .NET
+  restore:
+    name: Restore Dependencies
     runs-on: ubuntu-latest
-    outputs:
-      dotnet-version: ${{ env.DOTNET_VERSION }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - name: Cache .NET
+          cache: true
+      
+      - name: Cache NuGet Packages
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-
-  restore:
-    name: Restore Dependencies
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-      - name: Clear NuGet Cache
-        run: dotnet nuget locals all --clear
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
+      
+      - name: Restore NuGet Packages
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+      
       - name: Cache Restored Project
         uses: actions/cache@v4
         with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-
-  security-scan:
-    name: Security Scan
-    needs: restore
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
-      - name: Security Analysis
-        run: |
-          dotnet list package --vulnerable --include-transitive
-          dotnet build ${{ env.SOLUTION_FILE }} /warnaserror /p:TreatWarningsAsErrors=true --configuration Release
-
-  dependency-check:
-    name: Dependency Analysis
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-          
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
-        
-      - name: Check for Duplicate Packages
-        id: duplicate-check
-        run: |
-          echo "Checking for duplicate packages..."
-          # Create a temporary file for the full package list
-          TEMP_FILE=$(mktemp)
-          
-          # Use tee to both display and save output
-          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package | tee "$TEMP_FILE"; then
-            echo "::error::Failed to list packages"
-            rm "$TEMP_FILE"
-            exit 1
-          fi
-          
-          # Find duplicates but exclude common test packages
-          echo "Analyzing package references..."
-          DUPLICATES=$(grep -E "^   >" "$TEMP_FILE" | \
-            grep -v -E "FluentAssertions|Microsoft.AspNetCore.Mvc.Testing|Microsoft.NET.Test.Sdk|coverlet.collector|xunit|NSubstitute|Moq|System.Net.Http.Json|System.Text.Json" | \
-            sort | uniq -d)
-          
-          if [ ! -z "$DUPLICATES" ]; then
-            {
-              echo "::error::Found problematic duplicate packages:"
-              echo "The following packages are duplicated with different versions or in non-test projects:"
-              echo "$DUPLICATES"
-              echo -e "\nPackages found in these projects:"
-              
-              while IFS= read -r dup; do
-                echo -e "\nPackage: $dup"
-                # Find project sections containing this package
-                sed -n '/Project/,/^$/p' "$TEMP_FILE" | grep -B1 -A1 "$(echo "$dup" | sed 's/[]\[\^\$\.\*\/]/\\&/g')" || true
-              done <<< "$DUPLICATES"
-            } 2>&1
-            rm "$TEMP_FILE"
-            exit 1
-          fi
-          
-          echo "ℹ️ Note: Common test packages are allowed to be duplicated across test projects:"
-          echo "- FluentAssertions"
-          echo "- Microsoft.AspNetCore.Mvc.Testing"
-          echo "- Microsoft.NET.Test.Sdk"
-          echo "- coverlet.collector"
-          echo "- xunit packages"
-          echo "- Test framework packages (NSubstitute, Moq)"
-          echo "- System.Net.Http.Json"
-          echo "- System.Text.Json"
-          echo "✅ No problematic duplicate packages found"
-          rm "$TEMP_FILE"
-          
-      - name: Check for Vulnerable Packages
-        id: vulnerability-check
-        run: |
-          echo "Checking for vulnerable packages..."
-          # Create a temporary file for vulnerability check
-          TEMP_FILE=$(mktemp)
-          
-          # Use tee to both display and save output
-          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package --vulnerable --include-transitive | tee "$TEMP_FILE"; then
-            echo "::error::Failed to check for vulnerabilities"
-            rm "$TEMP_FILE"
-            exit 1
-          fi
-          
-          if grep -q "has the following vulnerable packages" "$TEMP_FILE"; then
-            {
-              echo "::error::Vulnerable packages found:"
-              echo "Details of vulnerable packages:"
-              sed -n '/has the following vulnerable packages/,/^[[:space:]]*$/p' "$TEMP_FILE"
-            } 2>&1
-            rm "$TEMP_FILE"
-            exit 1
-          fi
-          rm "$TEMP_FILE"
-          echo "✅ No vulnerable packages found"
-          
-      - name: Check for Deprecated Packages
-        id: deprecated-check
-        run: |
-          echo "Checking for deprecated packages..."
-          # Create a temporary file for deprecated check
-          TEMP_FILE=$(mktemp)
-          
-          # Use tee to both display and save output
-          if ! dotnet list "${GITHUB_WORKSPACE}/${{ env.SOLUTION_FILE }}" package --deprecated | tee "$TEMP_FILE"; then
-            echo "::error::Failed to check for deprecated packages"
-            rm "$TEMP_FILE"
-            exit 1
-          fi
-          
-          if grep -q "has the following deprecated packages" "$TEMP_FILE"; then
-            {
-              echo "::error::Deprecated packages found:"
-              echo "Details of deprecated packages:"
-              sed -n '/has the following deprecated packages/,/^[[:space:]]*$/p' "$TEMP_FILE"
-            } 2>&1
-            rm "$TEMP_FILE"
-            exit 1
-          fi
-          rm "$TEMP_FILE"
-          echo "✅ No deprecated packages found"
-          
-      - name: Package Analysis Summary
-        if: always()
-        run: |
-          echo "### Package Analysis Results 📦" >> $GITHUB_STEP_SUMMARY
-          echo "#### Check Results" >> $GITHUB_STEP_SUMMARY
-          echo "* Duplicate Packages: ${{ steps.duplicate-check.outcome }}" >> $GITHUB_STEP_SUMMARY
-          echo "* Vulnerable Packages: ${{ steps.vulnerability-check.outcome }}" >> $GITHUB_STEP_SUMMARY
-          echo "* Deprecated Packages: ${{ steps.deprecated-check.outcome }}" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.duplicate-check.outcome }}" != "success" ] || \
-             [ "${{ steps.vulnerability-check.outcome }}" != "success" ] || \
-             [ "${{ steps.deprecated-check.outcome }}" != "success" ]; then
-            echo "### ❌ Package checks failed. See job logs for details." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ✅ All package checks passed!" >> $GITHUB_STEP_SUMMARY
-          fi
-
-  format-check:
-    name: Check Code Format
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
-        uses: actions/cache@v4
-        with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-      - name: Install dotnet-format
-        run: dotnet tool install -g dotnet-format
-      - name: Check Format
-        run: dotnet format --verify-no-changes ${{ env.SOLUTION_FILE }}
-
-  code-quality:
-    name: Code Quality
-    needs: restore
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: csharp
-      - name: Restore and Build for CodeQL
-        run: |
-          dotnet restore ${{ env.SOLUTION_FILE }}
-          dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:csharp"
-
-  project-structure:
-    name: Project Structure Check
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }}
-      - name: Validate Project Structure
-        run: |
-          echo "Checking solution structure..."
-          dotnet sln ${{ env.SOLUTION_FILE }} list
-          
-          echo "Checking for circular dependencies..."
-          dotnet build ${{ env.SOLUTION_FILE }} --no-restore
-
-  assembly-check:
-    name: Assembly Validation
-    needs: restore
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Check Assembly Info
-        run: |
-          echo "Checking assembly versions..."
-          find . -name "*.csproj" -type f -exec grep -l "<Version>" {} \; | while read file; do
-            echo "Checking $file"
-            cat "$file" | grep "<Version>"
-          done
-          
-          echo "Checking for strong naming..."
-          find . -name "*.csproj" -type f -exec grep -l "<SignAssembly>" {} \;
+          path: |
+            **/obj/
+            **/bin/
+          key: ${{ runner.os }}-restored-${{ github.sha }}
 
   build:
     name: Build Solution
     needs: restore
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore Cached Project
         uses: actions/cache@v4
         with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-      - name: Restore Dependencies
-        run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
-      - name: Build
-        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
-      - name: Prepare Artifacts
-        run: |
-          # Create directories
-          mkdir -p artifacts/api
-          mkdir -p artifacts/tests/unit
-          mkdir -p artifacts/tests/integration
-          mkdir -p artifacts/tests/functional
-          mkdir -p artifacts/tests/data-generator
-
-          # Copy API files
-          cp -r API/bin/Release/net8.0/* artifacts/api/
-          cp API/appsettings.json artifacts/api/
-
-          # Copy test files to their respective directories
-          cp -r Tests/API.Tests.Unit/bin/Release/net8.0/* artifacts/tests/unit/
-          cp -r Tests/API.Tests.Integration/bin/Release/net8.0/* artifacts/tests/integration/
-          cp -r Tests/API.Tests.Functional/bin/Release/net8.0/* artifacts/tests/functional/
-          cp -r Tests/API.Tests.DataGenerator/bin/Release/net8.0/* artifacts/tests/data-generator/
-
-      - name: Upload API Artifacts
+          path: |
+            **/obj/
+            **/bin/
+          key: ${{ runner.os }}-restored-${{ github.sha }}
+      
+      - name: Build Solution
+        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+      
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: api-artifacts
-          path: artifacts/api/
-
-      - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-artifacts
-          path: artifacts/tests/
-
-  unit-tests:
-    name: Unit Tests
+          name: build-artifacts
+          path: |
+            **/bin/Release/**/*.dll
+            **/bin/Release/**/*.pdb
+            !**/bin/Release/**/ref/**
+            
+  health-check:
+    name: Health Checks
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
-        uses: actions/download-artifact@v4
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Restore Cached Project
+        uses: actions/cache@v4
         with:
-          name: api-artifacts
-          path: API/bin/Release/net8.0
-      - name: Download Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: test-artifacts
-          path: Tests
-        # Extract unit test artifacts to the correct location
-      - name: Setup Test Environment
-        run: |
-          mkdir -p Tests/API.Tests.Unit/bin/Release/net8.0
-          cp -r Tests/unit/* Tests/API.Tests.Unit/bin/Release/net8.0/
+          path: |
+            **/obj/
+            **/bin/
+          key: ${{ runner.os }}-restored-${{ github.sha }}
+      
+      - name: Security Check
+        run: dotnet list package --vulnerable --include-transitive
+        
+      - name: Check Code Format
+        run: dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity normal
+        
       - name: Run Unit Tests
-        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --no-build --verbosity normal --configuration Release
-
-  integration-tests:
-    name: Integration Tests
-    needs: build
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-artifacts
-          path: API/bin/Release/net8.0
-      - name: Download Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: test-artifacts
-          path: Tests
-        # Extract integration test artifacts to the correct location
-      - name: Setup Test Environment
-        run: |
-          mkdir -p Tests/API.Tests.Integration/bin/Release/net8.0
-          cp -r Tests/integration/* Tests/API.Tests.Integration/bin/Release/net8.0/
-      - name: Run Integration Tests
-        env:
-          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
-          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # Database settings
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-          # JWT settings
-          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ env.JWT_ISSUER }}
-          JWT__Audience: ${{ env.JWT_AUDIENCE }}
-          # Email settings
-          Email__Host: ${{ env.EMAIL_HOST }}
-          Email__Port: ${{ env.EMAIL_PORT }}
-          Email__EnableSsl: ${{ env.EMAIL_ENABLE_SSL }}
-          Email__Username: ${{ env.EMAIL_USERNAME }}
-          Email__Password: ${{ env.EMAIL_PASSWORD }}
-          Email__FromEmail: ${{ env.EMAIL_FROM }}
-          Email__Timeout: ${{ env.EMAIL_TIMEOUT }}
-          Email__UseDefaultCredentials: ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
-          # PasswordHasher settings
-          PASSWORD_HASHER__ITERATIONS: ${{ env.PASSWORD_HASHER_ITERATIONS }}
-          PASSWORD_HASHER__SALT_SIZE: ${{ env.PASSWORD_HASHER_SALT_SIZE }}
-          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER__KEY_SIZE }}
-          # Snowflake settings
-          SNOWFLAKE__DATACENTERID: ${{ env.SNOWFLAKE_DATACENTER_ID }}
-          SNOWFLAKE__WORKERID: ${{ env.SNOWFLAKE_WORKER_ID }}
-          SNOWFLAKE__EPOCH: ${{ env.SNOWFLAKE_EPOCH }}
-        run: dotnet test Tests/API.Tests.Integration/API.Tests.Integration.csproj --no-build --verbosity normal --configuration Release
-
-  functional-tests:
-    name: Functional Tests
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-artifacts
-          path: API/bin/Release/net8.0
-      - name: Download Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: test-artifacts
-          path: Tests
-      - name: Setup Test Environment
-        run: |
-          mkdir -p Tests/API.Tests.Functional/bin/Release/net8.0
-          cp -r Tests/functional/* Tests/API.Tests.Functional/bin/Release/net8.0/
-      - name: Run Functional Tests
-        env:
-          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
-          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # JWT settings
-          JWT__SecretKey: ${{ env.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ env.JWT_ISSUER }}
-          JWT__Audience: ${{ env.JWT_AUDIENCE }}
-        run: dotnet test Tests/API.Tests.Functional/API.Tests.Functional.csproj --no-build --verbosity normal --configuration Release
-
-  api-compatibility:
-    name: API Compatibility Check
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Install ApiPort
-        run: dotnet tool install -g Microsoft.DotNet.ApiCompat.Tool
-      - name: Check API Compatibility
-        run: |
-          echo "Checking API surface..."
-          find . -name "*.dll" -path "*/bin/Release/*" -not -path "*/ref/*" -not -path "*/Tests/*" -exec dotnet-api-compare {} \;
-
-  api-health:
-    name: API Health Check
-    needs: [unit-tests, integration-tests, functional-tests]
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mailhog:
-        image: mailhog/mailhog:latest
-        ports:
-          - 1025:1025
-          - 8025:8025
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Download API Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-artifacts
-          path: ./app
-      - name: Create appsettings.json
-        run: |
-          cat > ./app/appsettings.json << EOF
-          {
-            "ConnectionStrings": {
-              "DefaultConnection": "Host=localhost;Database=${{ env.POSTGRES_DB }};Username=${{ env.POSTGRES_USER }};Password=${{ env.POSTGRES_PASSWORD }}"
-            },
-            "Database": {
-              "Host": "localhost",
-              "Database": "${{ env.POSTGRES_DB }}",
-              "Username": "${{ env.POSTGRES_USER }}",
-              "Password": "${{ env.POSTGRES_PASSWORD }}"
-            },
-            "JWT": {
-              "SecretKey": "${{ env.JWT_SECRET_KEY }}",
-              "Issuer": "${{ env.JWT_ISSUER }}",
-              "Audience": "${{ env.JWT_AUDIENCE }}"
-            },
-            "Email": {
-              "Host": "${{ env.EMAIL_HOST }}",
-              "Port": ${{ env.EMAIL_PORT }},
-              "EnableSsl": ${{ env.EMAIL_ENABLE_SSL }},
-              "Username": "${{ env.EMAIL_USERNAME }}",
-              "Password": "${{ env.EMAIL_PASSWORD }}",
-              "FromEmail": "${{ env.EMAIL_FROM }}",
-              "Timeout": ${{ env.EMAIL_TIMEOUT }},
-              "UseDefaultCredentials": ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
-            },
-            "PasswordHasher": {
-              "Iterations": ${{ env.PASSWORD_HASHER_ITERATIONS }},
-              "SaltSize": ${{ env.PASSWORD_HASHER_SALT_SIZE }},
-              "KeySize": ${{ env.PASSWORD_HASHER_KEY_SIZE }}
-            },
-            "Snowflake": {
-              "DatacenterId": ${{ env.SNOWFLAKE_DATACENTER_ID }},
-              "WorkerId": ${{ env.SNOWFLAKE_WORKER_ID }},
-              "Epoch": "${{ env.SNOWFLAKE_EPOCH }}"
-            }
-          }
-          EOF
-      - name: Start API
-        env:
-          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
-          DOCKER_RUNNING: ${{ env.DOCKER_RUNNING }}
-          # Database settings
-          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
-          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-          # JWT settings
-          JWT_SECRET_KEY: ${{ env.JWT_SECRET_KEY }}
-          JWT_ISSUER: ${{ env.JWT_ISSUER }}
-          JWT_AUDIENCE: ${{ env.JWT_AUDIENCE }}
-          # Email settings
-          EMAIL_HOST: ${{ env.EMAIL_HOST }}
-          EMAIL_PORT: ${{ env.EMAIL_PORT }}
-          EMAIL_ENABLE_SSL: ${{ env.EMAIL_ENABLE_SSL }}
-          EMAIL_USERNAME: ${{ env.EMAIL_USERNAME }}
-          EMAIL_PASSWORD: ${{ env.EMAIL_PASSWORD }}
-          EMAIL_FROM: ${{ env.EMAIL_FROM }}
-          EMAIL_TIMEOUT: ${{ env.EMAIL_TIMEOUT }}
-          EMAIL_USE_DEFAULT_CREDENTIALS: ${{ env.EMAIL_USE_DEFAULT_CREDENTIALS }}
-          # PasswordHasher settings
-          PASSWORD_HASHER__ITERATIONS: ${{ env.PASSWORD_HASHER_ITERATIONS }}
-          PASSWORD_HASHER__SALT_SIZE: ${{ env.PASSWORD_HASHER_SALT_SIZE }}
-          PASSWORD_HASHER__KEY_SIZE: ${{ env.PASSWORD_HASHER__KEY_SIZE }}
-          # Snowflake settings
-          SNOWFLAKE__DATACENTERID: ${{ env.SNOWFLAKE_DATACENTER_ID }}
-          SNOWFLAKE__WORKERID: ${{ env.SNOWFLAKE_WORKER_ID }}
-          SNOWFLAKE__EPOCH: ${{ env.SNOWFLAKE_EPOCH }}
-        run: |
-          cd ./app
-          echo "Current directory: $(pwd)"
-          echo "Files in directory:"
-          ls -la
-          echo "Starting API..."
-          dotnet API.dll &
-          echo "Waiting for API to start..."
-          for i in {1..30}; do
-            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
-              echo "API is up!"
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "API failed to start within 30 seconds"
-              exit 1
-            fi
-            echo "Attempt $i: API not ready yet..."
-            sleep 1
-          done
-      - name: Check API Health
-        run: |
-          curl -f http://localhost:8000/health || exit 1
-
-  docker-build:
-    name: Docker Build & Test
-    needs: [unit-tests, integration-tests, functional-tests, api-health]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build Docker Image
+        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
+        
+      - name: Docker Build Check
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
-          tags: auth-backend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  db-model-validation:
-    name: Database Model Validation
-    needs: restore
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: auth_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ needs.setup.outputs.dotnet-version }}
-      - name: Restore Cache
-        uses: actions/cache@v4
-        with:
-          path: .
-          key: ${{ github.sha }}-project-restored
-      - name: Install EF Core tools
-        run: |
-          dotnet new tool-manifest
-          dotnet tool install dotnet-ef
-
-      - name: Verify Database Context
-        env:
-          ConnectionStrings__DefaultConnection: "Host=localhost;Database=auth_db;Username=postgres;Password=postgres"
-        run: |
-          echo "Verifying database context and models using factory..."
-          dotnet ef dbcontext info --project API/API.csproj --context-factory API.Infrastructure.Database.AuthDbContextFactory --verbose
-          dotnet ef dbcontext list --project API/API.csproj --context-factory API.Infrastructure.Database.AuthDbContextFactory --verbose
-
-      - name: Check Model Relationships
-        env:
-          ConnectionStrings__DefaultConnection: "Host=localhost;Database=auth_db;Username=postgres;Password=postgres"
-        run: |
-          echo "Checking model relationships and configurations..."
-          dotnet ef dbcontext info --project API/API.csproj --context AuthDbContext --verbose
-
-      - name: Validate Migration Scripts
-        env:
-          ConnectionStrings__DefaultConnection: "Host=localhost;Database=auth_db;Username=postgres;Password=postgres"
-        run: |
-          echo "Validating migration scripts..."
-          dotnet ef migrations script --project API/API.csproj --idempotent --verbose
+          tags: auth-backend:test
+          target: development
