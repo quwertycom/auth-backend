@@ -30,6 +30,14 @@ public static class DatabaseServiceExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IVerificationRepository, VerificationRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
+        using (var serviceProvider = services.BuildServiceProvider())
+        {
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+                dbContext.Database.Migrate();
+            }
+        }
 
         return services;
     }

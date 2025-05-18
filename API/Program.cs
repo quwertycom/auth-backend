@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using API.Shared.Extensions;
 using FastEndpoints;
-using DotNetEnv;
 
 namespace API;
 
