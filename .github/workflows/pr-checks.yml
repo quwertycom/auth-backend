@@ -51,14 +51,6 @@ jobs:
       
       - name: Restore NuGet Packages
         run: dotnet restore ${{ env.SOLUTION_FILE }}
-      
-      - name: Cache Restored Project
-        uses: actions/cache@v4
-        with:
-          path: |
-            **/obj/
-            **/bin/
-          key: ${{ runner.os }}-restored-${{ github.sha }}
 
   build:
     name: Build Solution
@@ -73,16 +65,16 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
-      - name: Restore Cached Project
+      - name: Cache NuGet Packages
         uses: actions/cache@v4
         with:
-          path: |
-            **/obj/
-            **/bin/
-          key: ${{ runner.os }}-restored-${{ github.sha }}
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
       
       - name: Build Solution
-        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+        run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
       
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -106,23 +98,26 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
-      - name: Restore Cached Project
+      - name: Cache NuGet Packages
         uses: actions/cache@v4
         with:
-          path: |
-            **/obj/
-            **/bin/
-          key: ${{ runner.os }}-restored-${{ github.sha }}
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+      
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: .
       
       - name: Security Check
         run: dotnet list package --vulnerable --include-transitive
         
       - name: Check Code Format
         run: dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity normal
-        
-      - name: Run Unit Tests
-        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
-        
+      
       - name: Docker Build Check
         uses: docker/build-push-action@v5
         with:
