@@ -125,17 +125,11 @@ jobs:
       - name: List docker containers
         run: docker ps
 
-      - name: Get health route with retry
-        run: |
-          for i in $(seq 1 10); do
-            echo "Attempt $i of 10: Checking health endpoint..."
-            sleep 5
-            if curl --fail http://localhost:8000/health; then
-              echo "Health check successful."
-              exit 0
-            else
-              echo "Health check failed. Retrying..."
-            fi
-          done
-          echo "Health check failed after 10 attempts."
-          exit 1
+      - name: Wait for API service to become healthy
+        run: docker compose wait api --healthy
+
+      - name: Final Health Check Confirmation
+        run: curl --fail http://localhost:8000/health
+
+      - name: Stop and remove containers
+        run: docker compose down
