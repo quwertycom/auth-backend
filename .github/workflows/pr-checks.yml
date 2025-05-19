@@ -126,7 +126,12 @@ jobs:
       
       - name: Start API and Wait
         run: |
-          cd API
+          # Navigate to the directory containing the built API.dll
+          # The artifact is downloaded to the workspace root, and the build output structure is preserved.
+          # Assuming the project is in ./API and built for net8.0 Release configuration.
+          cd API/bin/Release/net8.0
+          
+          # Run the API executable
           dotnet API.dll &
           API_PID=$!
           echo "API PID: $API_PID"
@@ -134,12 +139,14 @@ jobs:
           echo "Waiting for API to start..."
           # Wait for up to 60 seconds for the API to start
           for i in {1..60}; do
+            # Use curl with the full path relative to the workspace root
             if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
               echo "API is up!"
               break
             fi
             if [ $i -eq 60 ]; then
               echo "API failed to start within 60 seconds. Showing logs:"
+              # You might need to adjust paths here if logs are elsewhere
               jobs
               ps -ef | grep dotnet
               exit 1
