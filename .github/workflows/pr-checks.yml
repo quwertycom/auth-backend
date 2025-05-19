@@ -125,8 +125,25 @@ jobs:
       - name: List docker containers
         run: docker ps
 
-      - name: Wait for API service to become healthy using docker inspect
-        run: docker inspect -f '{{.State.Health.Status}}' api | grep -q healthy
+      - name: Wait for API health check
+        run: |
+          echo "Waiting for API to be healthy..."
+          for i in {1..30}; do
+            HEALTH_STATUS=$(docker inspect -f '{{.State.Health.Status}}' qauth-api 2>/dev/null || echo "starting")
+            echo "Current health status: $HEALTH_STATUS"
+            if [ "$HEALTH_STATUS" = "healthy" ]; then
+              echo "API is healthy!"
+              exit 0
+            fi
+            if [ "$HEALTH_STATUS" = "unhealthy" ]; then
+              echo "API is unhealthy! Check container logs."
+              exit 1
+            fi
+            echo "Waiting for 5 seconds..."
+            sleep 5
+          done
+          echo "Timed out waiting for API to be healthy."
+          exit 1
 
       - name: Final Health Check Confirmation
         run: curl --fail http://localhost:8000/health
