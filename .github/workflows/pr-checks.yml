@@ -129,20 +129,29 @@ jobs:
         run: |
           echo "Waiting for API to be healthy..."
           for i in {1..30}; do
-            HEALTH_STATUS=$(docker inspect -f '{{.State.Health.Status}}' qauth-api 2>/dev/null || echo "starting")
+            CONTAINER_ID=$(docker-compose ps -q api)
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "API container not found. Waiting..."
+              sleep 5
+              continue
+            fi
+            
+            HEALTH_STATUS=$(docker inspect -f '{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
             echo "Current health status: $HEALTH_STATUS"
             if [ "$HEALTH_STATUS" = "healthy" ]; then
               echo "API is healthy!"
               exit 0
             fi
             if [ "$HEALTH_STATUS" = "unhealthy" ]; then
-              echo "API is unhealthy! Check container logs."
+              echo "API is unhealthy! Displaying container logs:"
+              docker logs $CONTAINER_ID
               exit 1
             fi
             echo "Waiting for 5 seconds..."
             sleep 5
           done
-          echo "Timed out waiting for API to be healthy."
+          echo "Timed out waiting for API to be healthy. Displaying container logs:"
+          docker logs $CONTAINER_ID
           exit 1
 
       - name: Final Health Check Confirmation
