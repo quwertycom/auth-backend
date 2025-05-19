@@ -129,7 +129,7 @@ jobs:
         run: |
           echo "Waiting for API to be healthy..."
           for i in {1..30}; do
-            CONTAINER_ID=$(docker-compose ps -q api)
+            CONTAINER_ID=$(docker compose ps -q api)
             if [ -z "$CONTAINER_ID" ]; then
               echo "API container not found. Waiting..."
               sleep 5
