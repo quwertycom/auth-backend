@@ -125,8 +125,8 @@ jobs:
       - name: List docker containers
         run: docker ps
 
-      - name: Wait for API service to become healthy
-        run: docker compose wait api --healthy
+      - name: Wait for API service to become healthy using docker inspect
+        run: docker inspect -f '{{.State.Health.Status}}' api | grep -q healthy
 
       - name: Final Health Check Confirmation
         run: curl --fail http://localhost:8000/health
