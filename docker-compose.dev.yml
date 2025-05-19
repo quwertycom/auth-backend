@@ -1,6 +1,5 @@
 # Development compose file
-version: '3.8'
-
+version: "3.8"
 services:
   api:
     build:
@@ -10,6 +9,7 @@ services:
     container_name: qauth-api-dev
     ports:
       - "8000:8000"
+      - "2500:2444"
     networks:
       - qauth-network
     volumes:
@@ -22,18 +22,18 @@ services:
       - ASPNETCORE_URLS=http://+:8000
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - ASPNETCORE_DETAILED_ERRORS=1
-      
+
       # Database settings
       - POSTGRES_HOST=db
       - POSTGRES_DATABASE=${POSTGRES_DB:-qauth_db_dev}
       - POSTGRES_USER=${POSTGRES_USER:-qauth_user_dev}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-qauth_password_dev}
-      
+
       # JWT settings
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-secret-key-for-jwt-token-authentication}
       - JWT_ISSUER=auth-backend-dev
       - JWT_AUDIENCE=auth-client-dev
-      
+
       # Email settings (configured for MailHog)
       - EMAIL_HOST=mailhog
       - EMAIL_PORT=1025
@@ -43,20 +43,20 @@ services:
       - EMAIL_FROM_EMAIL=${EMAIL_FROM:-noreply@example.com}
       - EMAIL_TIMEOUT=10000
       - EMAIL_USE_DEFAULT_CREDENTIALS=false
-      
+
       # Snowflake settings
       - SNOWFLAKE_DATACENTER_ID=1
       - SNOWFLAKE_WORKER_ID=1
       - SNOWFLAKE_EPOCH=2024-01-01T00:00:00Z
-      
+
       # PasswordHasher settings
       - PASSWORD_HASHER_ITERATIONS=10000
       - PASSWORD_HASHER_SALT_SIZE=16
       - PASSWORD_HASHER_KEY_SIZE=32
-      
+
       # API settings
       - API_SETTINGS_PORT=${API_PORT:-8000}
-      
+
       # Docker indicator
       - DOCKER_RUNNING=true
     healthcheck:
@@ -83,7 +83,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qauth_user_dev} -d ${POSTGRES_DB:-qauth_db_dev}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-qauth_user_dev} -d ${POSTGRES_DB:-qauth_db_dev}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -109,4 +113,4 @@ volumes:
 networks:
   qauth-network:
     name: qauth-network-dev
-    driver: bridge 
+    driver: bridge

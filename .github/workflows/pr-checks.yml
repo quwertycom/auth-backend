@@ -84,9 +84,23 @@ jobs:
             !**/bin/Release/**/ref/**
             
   health-check:
-    name: Health Checks
+    name: API Health Check
     needs: build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -110,52 +124,46 @@ jobs:
           name: build-artifacts
           path: .
       
-      - name: Build docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: API
-          file: API/Dockerfile
-          push: false
-          tags: auth-backend:pr
-          target: build
-
-      - name: Run docker container
-        run: IMAGE_TAG=pr docker compose up -d
-
-      - name: List docker containers
-        run: docker ps
-
-      - name: Wait for API health check
+      - name: Start API and Wait
         run: |
-          echo "Waiting for API to be healthy..."
-          for i in {1..30}; do
-            CONTAINER_ID=$(docker compose ps -q api)
-            if [ -z "$CONTAINER_ID" ]; then
-              echo "API container not found. Waiting..."
-              sleep 5
-              continue
+          cd API
+          dotnet API.dll &
+          API_PID=$!
+          echo "API PID: $API_PID"
+          
+          echo "Waiting for API to start..."
+          # Wait for up to 60 seconds for the API to start
+          for i in {1..60}; do
+            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
+              echo "API is up!"
+              break
             fi
-            
-            HEALTH_STATUS=$(docker inspect -f '{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
-            echo "Current health status: $HEALTH_STATUS"
-            if [ "$HEALTH_STATUS" = "healthy" ]; then
-              echo "API is healthy!"
-              exit 0
-            fi
-            if [ "$HEALTH_STATUS" = "unhealthy" ]; then
-              echo "API is unhealthy! Displaying container logs:"
-              docker logs $CONTAINER_ID
+            if [ $i -eq 60 ]; then
+              echo "API failed to start within 60 seconds. Showing logs:"
+              jobs
+              ps -ef | grep dotnet
               exit 1
             fi
-            echo "Waiting for 5 seconds..."
-            sleep 5
+            echo "Attempt $i: API not ready yet... waiting 2 seconds"
+            sleep 2
           done
-          echo "Timed out waiting for API to be healthy. Displaying container logs:"
-          docker logs $CONTAINER_ID
-          exit 1
-
-      - name: Final Health Check Confirmation
-        run: curl --fail http://localhost:8000/health
-
-      - name: Stop and remove containers
-        run: docker compose down
+      
+      - name: Check API Endpoints
+        run: |
+          # Perform health check
+          echo "Performing health check..."
+          HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health)
+          if [ "$HEALTH_RESPONSE" != "200" ]; then
+            echo "Health check failed with status $HEALTH_RESPONSE"
+            exit 1
+          fi
+          echo "Health check successful!"
+          
+          # Check if API is accessible
+          echo "Checking API base endpoint..."
+          API_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Accept: application/json" http://localhost:8000/api)
+          if [ "$API_RESPONSE" != "200" ] && [ "$API_RESPONSE" != "404" ]; then
+            echo "API check failed with status $API_RESPONSE"
+            exit 1
+          fi
+          echo "API check successful!"
