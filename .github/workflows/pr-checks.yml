@@ -93,6 +93,44 @@ jobs:
             **/bin/Release/**/*.pdb
             **/bin/Release/**/*.runtimeconfig.json
             !**/bin/Release/**/ref/**
+    
+  unit-tests:
+    name: Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./build-artifacts
+
+      - name: Run Unit Tests
+        run: dotnet test ${{ github.workspace }}/Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./test-results
+            
+            
 
   publish:
     name: Publish production version
