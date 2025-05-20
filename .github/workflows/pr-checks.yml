@@ -121,16 +121,71 @@ jobs:
           name: build-artifacts
           path: ./build-artifacts
 
-      - name: Run Unit Tests
-        run: dotnet test ${{ github.workspace }}/Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build
+      - name: Run Unit Tests and Generate Report
+        run: |
+          dotnet test ${{ github.workspace }}/Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build --logger "junit;LogFileName=test-results.xml" --results-directory ./test-results
+        # Continue even if tests fail, so the report can be generated and uploaded/summarized
+        continue-on-error: true
 
-      - name: Upload Test Results
+      - name: Generate Test Summary
+        run: |
+          TEST_RESULTS_FILE="./test-results/TestResults.xml" # Test results file path
+          SUMMARY_FILE="$GITHUB_STEP_SUMMARY"
+
+          if [ ! -f "$TEST_RESULTS_FILE" ]; then
+            echo "### Unit Test Summary" >> "$SUMMARY_FILE"
+            echo "" >> "$SUMMARY_FILE"
+            echo ":warning: Test results file not found at \`$TEST_RESULTS_FILE\`." >> "$SUMMARY_FILE"
+            if [ "${{ steps['Run Unit Tests and Generate Report'].outcome }}" == "failure" ]; then
+              echo ":x: Unit tests failed. Check logs for details." >> "$SUMMARY_FILE"
+            else
+              echo ":question: Unit tests might not have run or failed to produce a report. Check logs." >> "$SUMMARY_FILE"
+            fi
+          else
+            echo "### Unit Test Summary" >> "$SUMMARY_FILE"
+            echo "" >> "$SUMMARY_FILE"
+
+            TEST_SUMMARY=$(grep "Test Run Summary" ${RUNNER_TEMP}/*.*.stdout || true) # Get summary from logs
+            FAILED_TESTS=$(grep "Failed:" ${RUNNER_TEMP}/*.*.stdout || true)
+            PASSED_TESTS=$(grep "Passed:" ${RUNNER_TEMP}/*.*.stdout || true)
+            SKIPPED_TESTS=$(grep "Skipped:" ${RUNNER_TEMP}/*.*.stdout || true)
+            TOTAL_TESTS=$(grep "Total tests:" ${RUNNER_TEMP}/*.*.stdout || true)
+            ELAPSED_TIME=$(grep "Elapsed time:" ${RUNNER_TEMP}/*.*.stdout || true)
+
+
+            if [ -n "$TEST_SUMMARY" ]; then
+                echo "$TEST_SUMMARY" >> "$SUMMARY_FILE"
+                echo "$TOTAL_TESTS" >> "$SUMMARY_FILE"
+                echo "$PASSED_TESTS" >> "$SUMMARY_FILE"
+                echo "$FAILED_TESTS" >> "$SUMMARY_FILE"
+                echo "$SKIPPED_TESTS" >> "$SUMMARY_FILE"
+                echo "$ELAPSED_TIME" >> "$SUMMARY_FILE"
+                echo "" >> "$SUMMARY_FILE"
+
+                if [[ "$FAILED_TESTS" == *"Failed: "*[1-9]* ]]; then
+                    echo ":x: Some tests failed. See the [full logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})." >> "$SUMMARY_FILE"
+                else
+                    echo ":heavy_check_mark: All tests passed." >> "$SUMMARY_FILE"
+                fi
+
+            else
+                echo "Could not parse test summary from logs." >> "$SUMMARY_FILE"
+                echo "Check the [full logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details." >> "$SUMMARY_FILE"
+                if [ "${{ steps['Run Unit Tests and Generate Report'].outcome }}" == "failure" ]; then
+                  echo ":x: Unit tests failed." >> "$SUMMARY_FILE"
+                fi
+            fi
+
+          fi
+        shell: bash
+
+      - name: Upload Test Results Artifact (Optional)
+        if: always() # Upload even if the previous steps failed
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: ./test-results
-            
-            
+          name: test-results-junit-report
+          path: ./test-results/TestResults.xml
+          retention-days: 5
 
   publish:
     name: Publish production version
