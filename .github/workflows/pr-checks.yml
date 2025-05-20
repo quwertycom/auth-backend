@@ -26,6 +26,16 @@ env:
   JWT_ISSUER: auth-backend-dev
   JWT_AUDIENCE: auth-client-dev
 
+  # Sample Email Settings (for workflow testing)
+  EMAIL_HOST: smtp.example.com
+  EMAIL_PORT: 587
+  EMAIL_ENABLE_SSL: true
+  EMAIL_USERNAME: workflow_test_user
+  EMAIL_PASSWORD: workflow_test_password
+  EMAIL_FROM_DEFAULT: noreply@example.com
+  EMAIL_TIMEOUT: 10000
+  EMAIL_USE_DEFAULT_CREDENTIALS: false
+
 jobs:
   restore:
     name: Restore Dependencies
@@ -81,30 +91,17 @@ jobs:
           path: |
             **/bin/Release/**/*.dll
             **/bin/Release/**/*.pdb
+            **/bin/Release/**/*.runtimeconfig.json
             !**/bin/Release/**/ref/**
-            
-  health-check:
-    name: API Health Check
+
+  publish:
+    name: Publish production version
     needs: build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
+    
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -117,60 +114,115 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-      
+
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
-          path: .
-      
-      - name: Start API and Wait
-        run: |
-          # Navigate to the directory containing the built API.dll
-          # The artifact is downloaded to the workspace root, and the build output structure is preserved.
-          # Assuming the project is in ./API and built for net8.0 Release configuration.
-          cd API/bin/Release/net8.0
+          path: ./build-artifacts
+
+      - name: Create Production Build
+        run: dotnet publish ${{ env.SOLUTION_FILE }} --configuration Release --output ./publish-output
+
+      - name: Upload Publish Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-artifacts
+          path: ./publish-output
+
+  health-check:
+    name: API Health Check
+    needs: publish
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+     
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download Publish Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: publish-artifacts
+          path: ./publish-output
           
-          # Run the API executable
+      - name: Start API Service and Run Health Checks
+        run: |
+          # Navigate to the published API directory.
+          cd ./publish-output
+          
+          # Run the API in the background.
           dotnet API.dll &
           API_PID=$!
           echo "API PID: $API_PID"
           
           echo "Waiting for API to start..."
-          # Wait for up to 60 seconds for the API to start
-          for i in {1..60}; do
-            # Use curl with the full path relative to the workspace root
-            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
-              echo "API is up!"
+          # Give the API time to initialize.
+          sleep 5
+          
+          # Wait for the API to respond to health checks.
+          for i in {1..30}; do
+            if curl -s -f http://127.0.0.1:8000/health > /dev/null 2>&1; then
+              echo "API is up and responding to health checks!"
+              sleep 2 # Allow services to fully initialize.
               break
             fi
-            if [ $i -eq 60 ]; then
-              echo "API failed to start within 60 seconds. Showing logs:"
-              # You might need to adjust paths here if logs are elsewhere
-              jobs
+            
+            if [ $i -eq 30 ]; then # If API did not start in time.
+              echo "API failed to respond to health checks within 60 seconds. Diagnostic info:"
+              echo "Process status:"
               ps -ef | grep dotnet
+              echo "Netstat output:"
+              netstat -tlpn | grep 8000
+              echo "Trying to access health endpoint with full output:"
+              curl -v http://127.0.0.1:8000/health
+              curl -v http://localhost:8000/health
               exit 1
             fi
+            
             echo "Attempt $i: API not ready yet... waiting 2 seconds"
             sleep 2
           done
-      
-      - name: Check API Endpoints
-        run: |
-          # Perform health check
+          
+          # Perform health check on /health endpoint.
           echo "Performing health check..."
-          HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health)
+          HEALTH_RESPONSE=$(curl -s -w '%{http_code}' -o /dev/null http://127.0.0.1:8000/health)
           if [ "$HEALTH_RESPONSE" != "200" ]; then
             echo "Health check failed with status $HEALTH_RESPONSE"
+            echo "Full response from health endpoint:"
+            curl -v http://127.0.0.1:8000/health
             exit 1
           fi
           echo "Health check successful!"
           
-          # Check if API is accessible
+          # Perform health check on /api endpoint.
           echo "Checking API base endpoint..."
-          API_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Accept: application/json" http://localhost:8000/api)
+          API_RESPONSE=$(curl -s -w '%{http_code}' -o /dev/null -H 'Accept: application/json' http://127.0.0.1:8000/api)
           if [ "$API_RESPONSE" != "200" ] && [ "$API_RESPONSE" != "404" ]; then
             echo "API check failed with status $API_RESPONSE"
+            echo "Full response from API endpoint:"
+            curl -v -H 'Accept: application/json' http://127.0.0.1:8000/api
             exit 1
           fi
           echo "API check successful!"
+          
+          # Kill the API process to clean up.
+          kill $API_PID || true
