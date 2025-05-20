@@ -123,13 +123,17 @@ jobs:
 
       - name: Run Unit Tests and Generate Report
         run: |
-          dotnet test ${{ github.workspace }}/Tests/API.Tests.Unit/API.Tests.Unit.csproj --configuration Release --no-build --logger "junit;LogFileName=test-results.xml" --results-directory ./test-results
+          # Ensure the test-results directory exists
+          mkdir -p ./test-results
+          dotnet test ${{ github.workspace }}/Tests/API.Tests.Unit/API.Tests.Unit.csproj --no-build --logger "trx;LogFileName=test-results.trx" --results-directory ./test-results
+          echo "Listing contents of ./test-results to check for the report:"
+          ls -R ./test-results
         # Continue even if tests fail, so the report can be generated and uploaded/summarized
         continue-on-error: true
 
       - name: Generate Test Summary
         run: |
-          TEST_RESULTS_FILE="./test-results/TestResults.xml" # Test results file path
+          TEST_RESULTS_FILE="./test-results/test-results.trx" # Test results file path
           SUMMARY_FILE="$GITHUB_STEP_SUMMARY"
 
           if [ ! -f "$TEST_RESULTS_FILE" ]; then
@@ -183,8 +187,8 @@ jobs:
         if: always() # Upload even if the previous steps failed
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-junit-report
-          path: ./test-results/TestResults.xml
+          name: test-results-trx-report
+          path: ./test-results/test-results.trx
           retention-days: 5
 
   publish:
