@@ -89,10 +89,8 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            **/bin/Release/**/*.dll
-            **/bin/Release/**/*.pdb
-            **/bin/Release/**/*.runtimeconfig.json
-            !**/bin/Release/**/ref/**
+            **/bin/Release/
+            **/obj/Release/
     
   unit-tests:
     name: Unit Tests
@@ -121,14 +119,8 @@ jobs:
           name: build-artifacts
           path: ./build-artifacts
 
-      - name: Run Unit Tests and Generate Report
-        run: |
-          # Ensure the test-results directory exists
-          mkdir -p ./test-results
-          dotnet test ${{ github.workspace }}/Tests/API.Tests.Unit/API.Tests.Unit.csproj --no-build --logger "trx;LogFileName=test-results.trx" --results-directory ./test-results
-          echo "Listing contents of ./test-results to check for the report:"
-          ls -R ./test-results
-        # Continue even if tests fail, so the report can be generated and uploaded/summarized
+      - name: Run Unit Tests
+        run: dotnet test Tests/API.Tests.Unit/API.Tests.Unit.csproj --no-build --verbosity normal
         continue-on-error: true
 
       - name: Generate Test Summary
